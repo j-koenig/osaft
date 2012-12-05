@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:paddingLeft="10dp"
+    android:paddingRight="10dp" >
+
+	<TextView
+		android:id="@+id/availableText"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="@string/available_text" />
+	
+	<CheckBox
+		android:id="@+id/browserHCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/availableText"
+		android:text="@string/browserH_check" />
+	
+	<CheckBox
+		android:id="@+id/browserSCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/browserHCheck"
+		android:text="@string/browserS_check" />
+	
+	<CheckBox
+		android:id="@+id/calendarCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/browserSCheck"
+		android:text="@string/calendar_check" />
+	
+	<CheckBox
+		android:id="@+id/callCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/calendarCheck"
+		android:text="@string/call_check" />
+	
+	<CheckBox
+		android:id="@+id/contactCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/callCheck"
+		android:text="@string/contact_check" />
+	
+	<CheckBox
+		android:id="@+id/mmsCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/contactCheck"
+		android:text="@string/mms_check" />
+	
+	<CheckBox
+		android:id="@+id/smsCheck"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/mmsCheck"
+		android:text="@string/sms_check" />
+
+	<RelativeLayout
+		android:id="@+id/InnerRelativeLayout"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:gravity="right" >
+		
+		<Button
+			android:id="@+id/captureButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:onClick="capture"
+			android:text="@string/caputure_button" />
+		
+		<Button
+			android:id="@+id/deselectallButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toLeftOf="@id/captureButton"
+			android:onClick="unselectAll"
+			android:text="@string/deselectall_button" />
+
+		<Button
+			android:id="@+id/selectallButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toLeftOf="@id/deselectallButton"
+			android:onClick="selectAll"
+			android:text="@string/selectall_button" />
+		
+	</RelativeLayout>
+
+</RelativeLayout>

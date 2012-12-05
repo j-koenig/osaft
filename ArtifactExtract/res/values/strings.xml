@@ -1,0 +1,17 @@
+<resources>
+
+	<string name="app_name">ArtifactExtract</string>
+	<string name="title_activity_artifact_extract">ArtifactExtract</string>
+	<string name="available_text">Available providers:</string>
+	<string name="browserH_check">Browser History/Bookmarks</string>
+	<string name="browserS_check">Browser Search History</string>
+	<string name="calendar_check">Calendar Events</string>
+	<string name="call_check">Call Logs</string>
+	<string name="contact_check">Contacts</string>
+	<string name="mms_check">MMS</string>
+	<string name="sms_check">SMS</string>
+	<string name="caputure_button">Extract</string>
+	<string name="deselectall_button">Deselect All</string>
+	<string name="selectall_button">Select All</string>
+
+</resources>
