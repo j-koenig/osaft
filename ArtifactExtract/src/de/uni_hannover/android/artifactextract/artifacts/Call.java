@@ -7,6 +7,8 @@ public class Call implements Artifact {
 	private int type;
 	private boolean newCall;
 
+	public static String FILENAME = "CallLogs";
+
 	/**
 	 * 
 	 * @param name
@@ -18,7 +20,8 @@ public class Call implements Artifact {
 	 *            time in seconds
 	 * @param type
 	 *            1 if incoming, 2 if outgoing, 3 if missed (see
-	 *            https://developer.android.com/reference/android/provider/CallLog.Calls.html)
+	 *            https://developer
+	 *            .android.com/reference/android/provider/CallLog.Calls.html)
 	 * @param newCall
 	 *            true if call was not acknowledged yet
 	 * 
@@ -43,9 +46,11 @@ public class Call implements Artifact {
 
 	@Override
 	public String getCSV() {
-		return name.replace(",", "ESCAPED_COMMA") + ", " + number + ", " + date + ", " + duration
-				+ ", " + newCall + ", " + type + ", " + numberLabel.replace(",", "ESCAPED_COMMA")
-				+ ", " + numberType.replace(",", "ESCAPED_COMMA");
-	}
+		String res = (name != null) ? name.replace(",", "ESCAPED_COMMA") : " " + ",";
+		res += number + "," + date + "," + duration + "," + newCall + "," + type + ",";
+		res += (numberLabel != null) ? numberLabel.replace(",", "ESCAPED_COMMA") : " " + ",";
+		res += (numberType != null) ? numberType.replace(",", "ESCAPED_COMMA") : " ";
+		return res;
 
+	}
 }

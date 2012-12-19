@@ -86,7 +86,7 @@ public class Gatherer {
 				BrowserHistory bd = new BrowserHistory(title, url, is_bookmark, created, visits);
 				browserHistory.add(bd);
 			}
-			SDCardHandler.writeCSV(savePath, "BrowserHistory", browserHistory);
+			SDCardHandler.writeCSV(savePath, BrowserHistory.FILENAME, browserHistory);
 		} catch (IOException e) {
 			view.showIOError("browser history");
 		} finally {
@@ -105,7 +105,7 @@ public class Gatherer {
 				BrowserSearch bs = new BrowserSearch(search, date);
 				browserSearches.add(bs);
 			}
-			SDCardHandler.writeCSV(savePath, "BrowserSearchHistory", browserSearches);
+			SDCardHandler.writeCSV(savePath, BrowserSearch.FILENAME, browserSearches);
 		} catch (IOException e) {
 			view.showIOError("browser search history");
 		} finally {
@@ -166,7 +166,7 @@ public class Gatherer {
 						calendar, location);
 				events.add(event);
 			}
-			SDCardHandler.writeCSV(savePath, "CalendarEvents", events);
+			SDCardHandler.writeCSV(savePath, CalendarEvent.FILENAME, events);
 		} catch (IOException e) {
 			view.showIOError("calendar events");
 		} finally {
@@ -188,7 +188,7 @@ public class Gatherer {
 						callCursor.getString(7));
 				calls.add(call);
 			}
-			SDCardHandler.writeCSV(savePath, "CallLogs", calls);
+			SDCardHandler.writeCSV(savePath, Call.FILENAME, calls);
 		} catch (IOException e) {
 			view.showIOError("call logs");
 		} finally {
@@ -246,7 +246,7 @@ public class Gatherer {
 			getContactsPhoto(id);
 		}
 		try {
-			SDCardHandler.writeCSV(savePath, "Contacts", contacts);
+			SDCardHandler.writeCSV(savePath, Contact.FILENAME, contacts);
 		} catch (IOException e) {
 			view.showIOError("contacts");
 		}
@@ -289,7 +289,7 @@ public class Gatherer {
 				MMS mms = new MMS(sender, text, id, date, read);
 				mmss.add(mms);
 			}
-			SDCardHandler.writeCSV(savePath, "MMS", mmss);
+			SDCardHandler.writeCSV(savePath, MMS.FILENAME, mmss);
 		} catch (IOException e) {
 			view.showIOError("MMS");
 		} finally {
@@ -448,7 +448,7 @@ public class Gatherer {
 			}
 		}
 		try {
-			SDCardHandler.writeCSV(savePath, "SMS", smss);
+			SDCardHandler.writeCSV(savePath, SMS.FILENAME, smss);
 		} catch (IOException e) {
 			view.showIOError("SMS");
 		}

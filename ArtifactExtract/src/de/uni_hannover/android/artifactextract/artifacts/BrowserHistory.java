@@ -6,6 +6,8 @@ public class BrowserHistory implements Artifact {
 	public boolean is_bookmark;
 	public long created;
 	public int visits;
+	
+	public static String FILENAME = "BrowserHistory";
 
 	/**  
 	 * @param title title of the website

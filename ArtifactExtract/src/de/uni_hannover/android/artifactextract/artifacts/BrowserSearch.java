@@ -5,6 +5,8 @@ public class BrowserSearch implements Artifact{
 	private String search;
 	private long date;
 	
+	public static String FILENAME = "BrowserSearchHistory";
+	
 	/**
 	 * 
 	 * @param search the string that was searched

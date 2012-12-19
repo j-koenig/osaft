@@ -9,6 +9,8 @@ public class Contact implements Artifact {
 
 	private String name, organisation, notes, id, skypename;
 	private ArrayList<String> numbers, emails, addresses, ims, websites;
+	
+	public static String FILENAME = "Contacts";
 
 	public Contact(String id) {
 		name = null;

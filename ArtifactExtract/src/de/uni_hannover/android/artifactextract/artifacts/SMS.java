@@ -13,6 +13,8 @@ public class SMS implements Artifact {
 	public static final int STATUS_QUEUED = 4;
 	public static final int STATUS_OUTBOX = 5;
 	public static final int STATUS_UNDELIVERED = 6;
+	
+	public static final String FILENAME = "SMS";
 
 	/**
 	 * 

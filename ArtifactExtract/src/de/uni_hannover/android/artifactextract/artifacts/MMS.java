@@ -5,6 +5,8 @@ public class MMS implements Artifact {
 	private String sender, text, id;
 	private long date;
 	private boolean read;
+	
+	public static String FILENAME = "MMS";
 
 	/**
 	 * 

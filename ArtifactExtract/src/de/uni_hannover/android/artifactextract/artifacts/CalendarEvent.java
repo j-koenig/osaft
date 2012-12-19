@@ -9,6 +9,8 @@ public class CalendarEvent implements Artifact {
 	private boolean allday;
 	private String calendar;
 	private String location;
+	
+	public static String FILENAME = "CalendarEvents";
 
 	/**
 	 * 
