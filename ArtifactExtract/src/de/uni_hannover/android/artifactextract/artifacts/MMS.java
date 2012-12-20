@@ -26,7 +26,7 @@ public class MMS implements Artifact {
 
 	@Override
 	public String getCSV() {
-		return id + ", " + sender + ", " + date + ", " + text.replace(",", "ESCAPED_COMMA") + ", "
+		return id + "," + sender + "," + date + "," + text.replace(",", "ESCAPED_COMMA") + ","
 				+ read;
 	}
 

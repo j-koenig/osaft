@@ -9,7 +9,7 @@ public class Contact implements Artifact {
 
 	private String name, organisation, notes, id, skypename;
 	private ArrayList<String> numbers, emails, addresses, ims, websites;
-	
+
 	public static String FILENAME = "Contacts";
 
 	public Contact(String id) {
@@ -26,42 +26,67 @@ public class Contact implements Artifact {
 	}
 
 	public String getCSV() {
-		String res = id + ", ";
+		String res = id + ",";
 		if (name != null) {
-			res += "Name: " + name.replace(",", "ESCAPED_COMMA") + ", ";
+			res += "Name:" + name.replace(",", "ESCAPED_COMMA") + ",";
 		}
 		if (organisation != null) {
-			res += "Organisation: " + organisation.replace(",", "ESCAPED_COMMA") + ", ";
+			res += "Organisation: " + organisation.replace(",", "ESCAPED_COMMA") + ",";
 		}
-		for (int i = 0; i < numbers.size(); i++) {
-			res += "Number: " + numbers.get(i).replace(",", "ESCAPED_COMMA") + ", ";
-		}
-		for (int i = 0; i < emails.size(); i++) {
-			if (!emails.get(i).equals("")) {
-				res += "Email: " + emails.get(i).replace(",", "ESCAPED_COMMA") + ", ";
+		if (numbers.size() > 0) {
+			res += "Numbers:";
+			for (int i = 0; i < numbers.size(); i++) {
+				res += numbers.get(i).replace(",", "ESCAPED_COMMA") + ";";
 			}
+			res = res.substring(0, res.length() - 1);
+			res += ",";
 		}
-		for (int i = 0; i < addresses.size(); i++) {
-			res += "Address: " + addresses.get(i).replace(",", "ESCAPED_COMMA") + ", ";
+		if (emails.size() > 0) {
+			res += "Emailaddresses:";
+			for (int i = 0; i < emails.size(); i++) {
+				if (!emails.get(i).equals("")) {
+					res += emails.get(i).replace(",", "ESCAPED_COMMA") + ";";
+				}
+			}
+			res = res.substring(0, res.length() - 1);
+			res += ",";
 		}
-		for (int i = 0; i < websites.size(); i++) {
-			res += "Website: " + websites.get(i).replace(",", "ESCAPED_COMMA") + ", ";
+		if (addresses.size() > 0) {
+			res += "Addresses:";
+			for (int i = 0; i < addresses.size(); i++) {
+				res += addresses.get(i).replace(",", "ESCAPED_COMMA") + ";";
+			}
+			res = res.substring(0, res.length() - 1);
+			res += ",";
 		}
-		for (int i = 0; i < ims.size(); i++) {
-			res += ims.get(i).replace(",", "ESCAPED_COMMA") + ", ";
+		if (websites.size() > 0) {
+			res += "Webistes:";
+			for (int i = 0; i < websites.size(); i++) {
+				res += websites.get(i).replace(",", "ESCAPED_COMMA") + ";";
+			}
+			res = res.substring(0, res.length() - 1);
+			res += ",";
+		}
+		if (ims.size() > 0) {
+			res += "IMs:";
+			for (int i = 0; i < ims.size(); i++) {
+				res += ims.get(i).replace(",", "ESCAPED_COMMA") + ";";
+			}
+			res = res.substring(0, res.length() - 1);
+			res += ",";
 		}
 		if ((notes != null) && (!notes.equals(""))) {
-			res += "Notes: " + notes.replace(",", "ESCAPED_COMMA") + ", ";
+			res += "Notes:" + notes.replace(",", "ESCAPED_COMMA") + ",";
 		}
 		if (skypename != null) {
-			res += "Skype Nickname: " + skypename.replace(",", "ESCAPED_COMMA") + ", ";
+			res += "Skype Nickname:" + skypename.replace(",", "ESCAPED_COMMA") + ",";
 		}
 		if (res == "") {
 			Log.e("Contact.getCSV()", "emtpy contact");
 			return "Empty Contact";
 		}
 
-		return res.substring(0, res.length() - 2);
+		return res.substring(0, res.length() - 1);
 	}
 
 	/**
@@ -75,9 +100,11 @@ public class Contact implements Artifact {
 	 * @param imProtocol
 	 *            if data is information about an IM account this parameter
 	 *            tells which protocol is used for the given account (see
-	 *            https://developer.android.com/reference/android/provider/ContactsContract.CommonDataKinds.Im.html)
-	 * @param customProtocol 
-	 * 	          if imProtocol is -1 this parameter is used to deliver the name of the protocol
+	 *            https://developer.android.com/reference/android/provider/
+	 *            ContactsContract.CommonDataKinds.Im.html)
+	 * @param customProtocol
+	 *            if imProtocol is -1 this parameter is used to deliver the name
+	 *            of the protocol
 	 */
 	public void addInfo(String mime, String data, int imProtocol, String customProtocol) {
 		if (mime.equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
@@ -97,9 +124,9 @@ public class Contact implements Artifact {
 		} else if (mime.equals(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)) {
 			// imProtocol == -1 => custom IM protocol
 			if (imProtocol == -1) {
-				ims.add(customProtocol + ": " + data);
+				ims.add(customProtocol + ":" + data);
 			} else {
-				ims.add(imProtocolAsString(imProtocol) + ": " + data);
+				ims.add(imProtocolAsString(imProtocol) + ":" + data);
 			}
 		} else if (mime.equals("vnd.android.cursor.item/com.skype.android.skypecall.action")) {
 			skypename = data;

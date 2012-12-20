@@ -34,8 +34,8 @@ public class CalendarEvent implements Artifact {
 	}
 
 	public String getCSV() {
-		return calendar + ", " + title.replace(",", "ESCAPED_COMMA") + ", "
-				+ description.replace(",", "ESCAPED_COMMA") + ", " + start + ", " + end + ", "
-				+ location.replace(",", "ESCAPED_COMMA") + ", " + allday;
+		return calendar + "," + title.replace(",", "ESCAPED_COMMA") + ","
+				+ description.replace(",", "ESCAPED_COMMA") + "," + start + "," + end + ","
+				+ location.replace(",", "ESCAPED_COMMA") + "," + allday;
 	}
 }

@@ -49,27 +49,8 @@ public class SDCardHandler {
 	public static void writeCSV(String directory, String type, ArrayList<Artifact> artifactList)
 			throws IOException {
 
-		//TODO: write first lines
-		
 		BufferedWriter writer = new BufferedWriter(new FileWriter(
 				new File(directory, type + ".csv")));
-
-		if (type.equals(BrowserHistory.FILENAME)) {
-
-		} else if (type.equals(BrowserSearch.FILENAME)) {
-
-		} else if (type.equals(CalendarEvent.FILENAME)) {
-			writer.write("Calendar, Title, Description, Start, End, Location, Allday");
-			writer.newLine();
-		} else if (type.equals(Call.FILENAME)) {
-
-		} else if (type.equals(Contact.FILENAME)) {
-
-		} else if (type.equals(MMS.FILENAME)) {
-
-		} else if (type.equals(SMS.FILENAME)) {
-
-		}
 
 		for (Artifact artifact : artifactList) {
 			writer.write(artifact.getCSV());

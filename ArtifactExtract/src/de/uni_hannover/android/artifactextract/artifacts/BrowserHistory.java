@@ -6,15 +6,20 @@ public class BrowserHistory implements Artifact {
 	public boolean is_bookmark;
 	public long created;
 	public int visits;
-	
+
 	public static String FILENAME = "BrowserHistory";
 
-	/**  
-	 * @param title title of the website
-	 * @param url url of website
-	 * @param is_bookmark false if site was just visited but is no bookmark
-	 * @param created time in seconds since the epoch
-	 * @param visits number of visits
+	/**
+	 * @param title
+	 *            title of the website
+	 * @param url
+	 *            url of website
+	 * @param is_bookmark
+	 *            false if site was just visited but is no bookmark
+	 * @param created
+	 *            time in seconds since the epoch
+	 * @param visits
+	 *            number of visits
 	 */
 	public BrowserHistory(String title, String url, boolean is_bookmark, long created, int visits) {
 		this.title = title;
@@ -26,8 +31,8 @@ public class BrowserHistory implements Artifact {
 
 	@Override
 	public String getCSV() {
-		return title.replace(",", "ESCAPED_COMMA") + ", " + url + ", " + visits + ", " + created
-				+ ", " + is_bookmark;
+		return title.replace(",", "ESCAPED_COMMA") + "," + url + "," + visits + "," + created + ","
+				+ is_bookmark;
 	}
 
 }

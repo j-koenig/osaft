@@ -19,7 +19,7 @@ public class BrowserSearch implements Artifact{
 
 	@Override
 	public String getCSV() {
-		return date + ", " + search.replace(",", "ESCAPED_COMMA");
+		return date + "," + search.replace(",", "ESCAPED_COMMA");
 	}
 
 }

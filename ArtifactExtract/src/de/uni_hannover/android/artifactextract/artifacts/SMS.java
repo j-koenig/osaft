@@ -13,7 +13,7 @@ public class SMS implements Artifact {
 	public static final int STATUS_QUEUED = 4;
 	public static final int STATUS_OUTBOX = 5;
 	public static final int STATUS_UNDELIVERED = 6;
-	
+
 	public static final String FILENAME = "SMS";
 
 	/**
@@ -42,8 +42,8 @@ public class SMS implements Artifact {
 
 	@Override
 	public String getCSV() {
-		return address + ", " + date + ", " + body.replace(",", "ESCAPED_COMMA") + ", " + read
-				+ ", " + seen + ", " + status;
+		return address + "," + date + "," + body.replace(",", "ESCAPED_COMMA") + "," + read + ","
+				+ seen + "," + status;
 	}
 
 }

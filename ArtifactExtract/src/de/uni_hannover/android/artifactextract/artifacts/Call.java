@@ -46,7 +46,7 @@ public class Call implements Artifact {
 
 	@Override
 	public String getCSV() {
-		String res = (name != null) ? name.replace(",", "ESCAPED_COMMA") : " " + ",";
+		String res = (name != null) ? name.replace(",", "ESCAPED_COMMA") + "," : " ,";
 		res += number + "," + date + "," + duration + "," + newCall + "," + type + ",";
 		res += (numberLabel != null) ? numberLabel.replace(",", "ESCAPED_COMMA") : " " + ",";
 		res += (numberType != null) ? numberType.replace(",", "ESCAPED_COMMA") : " ";
