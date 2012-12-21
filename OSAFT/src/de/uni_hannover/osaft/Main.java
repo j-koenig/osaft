@@ -22,7 +22,7 @@ public class Main {
 		PluginManager pm = PluginManagerFactory.createPluginManager();
 		pm.addPluginsFrom(new File("bin/").toURI());
 		PluginManagerUtil pmu = new PluginManagerUtil(pm);
-		View frame = new View(pmu);
+		View frame = new View("OSAFT", pmu);
 		frame.setVisible(true);
 	}
 

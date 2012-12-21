@@ -1,9 +1,9 @@
-package de.uni_hannover.osaft.plugins;
-
-import java.awt.TextField;
+package de.uni_hannover.osaft.plugins.general;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
@@ -26,8 +26,13 @@ public class GeneralInformationView implements ViewPlugin {
 	}
 
 	@Override
-	public JPanel getView() {
+	public JComponent getView() {
 		return panel;		
+	}
+
+	@Override
+	public void triggered() {
+		System.out.println("general wurde gewählt");
 	}
 
 }
