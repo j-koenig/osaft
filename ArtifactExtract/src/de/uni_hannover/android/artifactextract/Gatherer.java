@@ -22,6 +22,7 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
+import android.util.Log;
 import android.util.SparseArray;
 import de.uni_hannover.android.artifactextract.artifacts.Artifact;
 import de.uni_hannover.android.artifactextract.artifacts.BrowserHistory;
@@ -240,7 +241,10 @@ public class Gatherer {
 			try {
 				while (contactCursor.moveToNext()) {
 					String mime = contactCursor.getString(0);
-					String data = contactCursor.getString(1).replace("\n", " ").replace("\r", " ");
+					String data = contactCursor.getString(1);
+					if (data != null) {
+						data = data.replace("\n", " ").replace("\r", " ");
+					}
 					int improtocol = contactCursor.getInt(2);
 					String customProtocol = contactCursor.getString(3);
 					con.addInfo(mime, data, improtocol, customProtocol);
@@ -293,7 +297,13 @@ public class Gatherer {
 				String id = mmsCursor.getString(0);
 				long date = mmsCursor.getLong(1);
 				boolean read = mmsCursor.getString(2).equals("1");
-				String text = getMMSText(id).replace("\n", " ").replace("\r", " ");
+				String text = getMMSText(id);
+				if (text != null) {
+					text = text.replace("\n", " ").replace("\r", " ");
+				} else {
+					text = "";
+				}
+					
 				String sender = getMMSAddress(id);
 				getMMSData(id);
 				MMS mms = new MMS(sender, text, id, date, read);
@@ -436,6 +446,7 @@ public class Gatherer {
 	}
 
 	public void getSMS() {
+
 		String[] projection = new String[] { "address", "body", "date", "read", "seen" };
 		String sort = "date ASC";
 		String[] smsStatus = new String[] { "inbox", "sent", "draft", "failed", "queued", "outbox",
