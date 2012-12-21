@@ -79,7 +79,7 @@ public class Gatherer {
 		try {
 			while (browserCursor.moveToNext()) {
 				boolean is_bookmark = browserCursor.getString(0).equals("1");
-				String title = browserCursor.getString(1);
+				String title = browserCursor.getString(1).replace("\n", " ").replace("\r", " ");
 				String url = browserCursor.getString(2);
 				int visits = browserCursor.getInt(3);
 				long created = browserCursor.getLong(4);
@@ -102,7 +102,7 @@ public class Gatherer {
 		Cursor browserCursor = cr.query(Browser.SEARCHES_URI, projection, null, null, null);
 		try {
 			while (browserCursor.moveToNext()) {
-				String search = browserCursor.getString(0);
+				String search = browserCursor.getString(0).replace("\n", " ").replace("\r", " ");
 				long date = browserCursor.getLong(1);
 				BrowserSearch bs = new BrowserSearch(search, date);
 				browserSearches.add(bs);
@@ -159,12 +159,12 @@ public class Gatherer {
 		try {
 			while (eventCursor.moveToNext()) {
 				String calendar = calendars.get(eventCursor.getInt(0));
-				String title = eventCursor.getString(1);
-				String description = eventCursor.getString(2);
+				String title = eventCursor.getString(1).replace("\n", " ").replace("\r", " ");
+				String description = eventCursor.getString(2).replace("\n", " ").replace("\r", " ");
 				long begin = eventCursor.getLong(3);
 				long end = eventCursor.getLong(4);
 				boolean allday = !eventCursor.getString(5).equals("0");
-				String location = eventCursor.getString(6);
+				String location = eventCursor.getString(6).replace("\n", " ").replace("\r", " ");
 
 				CalendarEvent event = new CalendarEvent(begin, end, title, description, allday,
 						calendar, location);
@@ -240,7 +240,7 @@ public class Gatherer {
 			try {
 				while (contactCursor.moveToNext()) {
 					String mime = contactCursor.getString(0);
-					String data = contactCursor.getString(1);
+					String data = contactCursor.getString(1).replace("\n", " ").replace("\r", " ");
 					int improtocol = contactCursor.getInt(2);
 					String customProtocol = contactCursor.getString(3);
 					con.addInfo(mime, data, improtocol, customProtocol);
@@ -293,7 +293,7 @@ public class Gatherer {
 				String id = mmsCursor.getString(0);
 				long date = mmsCursor.getLong(1);
 				boolean read = mmsCursor.getString(2).equals("1");
-				String text = getMMSText(id);
+				String text = getMMSText(id).replace("\n", " ").replace("\r", " ");
 				String sender = getMMSAddress(id);
 				getMMSData(id);
 				MMS mms = new MMS(sender, text, id, date, read);
@@ -448,7 +448,7 @@ public class Gatherer {
 			try {
 				while (smsCursor.moveToNext()) {
 					String address = smsCursor.getString(0);
-					String body = smsCursor.getString(1);
+					String body = smsCursor.getString(1).replace("\n", " ").replace("\r", " ");
 					long date = smsCursor.getLong(2);
 					boolean read = smsCursor.getString(3).equals("1");
 					boolean seen = smsCursor.getString(4).equals("1");

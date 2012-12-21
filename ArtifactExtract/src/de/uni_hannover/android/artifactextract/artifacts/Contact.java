@@ -31,12 +31,12 @@ public class Contact implements Artifact {
 			res += "Name:" + name.replace(",", "ESCAPED_COMMA") + ",";
 		}
 		if (organisation != null) {
-			res += "Organisation: " + organisation.replace(",", "ESCAPED_COMMA") + ",";
+			res += "Organisation:" + organisation.replace(",", "ESCAPED_COMMA") + ",";
 		}
 		if (numbers.size() > 0) {
 			res += "Numbers:";
 			for (int i = 0; i < numbers.size(); i++) {
-				res += numbers.get(i).replace(",", "ESCAPED_COMMA") + ";";
+				res += numbers.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 			}
 			res = res.substring(0, res.length() - 1);
 			res += ",";
@@ -45,7 +45,7 @@ public class Contact implements Artifact {
 			res += "Emailaddresses:";
 			for (int i = 0; i < emails.size(); i++) {
 				if (!emails.get(i).equals("")) {
-					res += emails.get(i).replace(",", "ESCAPED_COMMA") + ";";
+					res += emails.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 				}
 			}
 			res = res.substring(0, res.length() - 1);
@@ -54,15 +54,15 @@ public class Contact implements Artifact {
 		if (addresses.size() > 0) {
 			res += "Addresses:";
 			for (int i = 0; i < addresses.size(); i++) {
-				res += addresses.get(i).replace(",", "ESCAPED_COMMA") + ";";
+				res += addresses.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 			}
 			res = res.substring(0, res.length() - 1);
 			res += ",";
 		}
 		if (websites.size() > 0) {
-			res += "Webistes:";
+			res += "Websites:";
 			for (int i = 0; i < websites.size(); i++) {
-				res += websites.get(i).replace(",", "ESCAPED_COMMA") + ";";
+				res += websites.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 			}
 			res = res.substring(0, res.length() - 1);
 			res += ",";
@@ -70,7 +70,7 @@ public class Contact implements Artifact {
 		if (ims.size() > 0) {
 			res += "IMs:";
 			for (int i = 0; i < ims.size(); i++) {
-				res += ims.get(i).replace(",", "ESCAPED_COMMA") + ";";
+				res += ims.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 			}
 			res = res.substring(0, res.length() - 1);
 			res += ",";
