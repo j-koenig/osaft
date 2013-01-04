@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import android.R.bool;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
@@ -216,7 +217,8 @@ public class Gatherer {
 		try {
 			while (idCursor.moveToNext()) {
 				String id = idCursor.getString(0);
-				if (id != null) {
+				// only add non-null ids and new ids
+				if (id != null && contactIds.indexOf(id) == -1) {
 					contactIds.add(id);
 				}
 			}
@@ -303,10 +305,10 @@ public class Gatherer {
 				} else {
 					text = "";
 				}
-					
+
 				String sender = getMMSAddress(id);
-				getMMSData(id);
-				MMS mms = new MMS(sender, text, id, date, read);
+				boolean hasAttachment = getMMSData(id);
+				MMS mms = new MMS(sender, text, id, date, read, hasAttachment);
 				mmss.add(mms);
 			}
 			if (mmss.size() > 0) {
@@ -394,23 +396,28 @@ public class Gatherer {
 
 	// differentiates between audio and image attachments and calls the proper
 	// method to save the attachment
-	private void getMMSData(String id) {
+	private boolean getMMSData(String id) {
 
 		Cursor mmsCursor = cr.query(Uri.parse("content://mms/" + id + "/part"), null, null, null,
 				null);
+		boolean hasAttachment = false;
 		try {
 			while (mmsCursor.moveToNext()) {
 				String mime = mmsCursor.getString(3);
 				String[] mimeSplit = mime.split("/");
 				if (mimeSplit[0].equals("image")) {
 					saveMMSPicture(id, mimeSplit[1]);
+					hasAttachment = true;
 				} else if (mimeSplit[0].equals("audio")) {
 					saveMMSAudio(id, mimeSplit[1]);
+					hasAttachment = true;
 				}
 			}
 		} finally {
 			mmsCursor.close();
 		}
+
+		return hasAttachment;
 
 	}
 

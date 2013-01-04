@@ -4,7 +4,7 @@ public class MMS implements Artifact {
 
 	private String sender, text, id;
 	private long date;
-	private boolean read;
+	private boolean read, hasAttachment;
 	
 	public static String FILENAME = "MMS";
 
@@ -16,18 +16,19 @@ public class MMS implements Artifact {
 	 * @param date time in seconds since epoch
 	 * @param read true if mms was read by receiver
 	 */
-	public MMS(String sender, String text, String id, long date, boolean read) {
+	public MMS(String sender, String text, String id, long date, boolean read, boolean hasAttachment) {
 		this.sender = sender;
 		this.text = text;
 		this.id = id;
 		this.date = date;
 		this.read = read;
+		this.hasAttachment = hasAttachment;
 	}
 
 	@Override
 	public String getCSV() {
 		return id + "," + sender + "," + date + "," + text.replace(",", "ESCAPED_COMMA") + ","
-				+ read;
+				+ read + "," + hasAttachment;
 	}
 
 }

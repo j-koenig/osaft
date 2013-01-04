@@ -1,6 +1,7 @@
-package de.uni_hannover.osaft.plugins.connnectorappdata;
+package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -13,28 +14,34 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
+import de.uni_hannover.osaft.plugins.connnectorappdata.ConnectorAppDataController;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
 
 @PluginImplementation
-public class ConnectorAppDataView implements ViewPlugin, ActionListener {
+public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSelectionListener {
 
-	// TODO: filechooser für überordner von csv dateien, filechooser in jedem
-	// tab wäre bisschen übertrieben
+	// TODO:
 	// panels nur adden, wenn dateien dazu gefunden wurden
 
 	private JTabbedPane tabs;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserSPanel, callPanel, contactPanel,
 			mmsPanel, preferencesPanel;
+	private MMSInfoPanel mmsInfo;
 	// TODO: wech
 	JFrame frame;
 	private ConnectorAppDataController controller;
@@ -45,6 +52,7 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 	private JTable calendarTable, callTable, browserHTable, browserSTable, contactTable, mmsTable,
 			smsTable;
 	private Vector<JPanel> tabVector;
+	private JTextArea smsTextArea;
 
 	/**
 	 * @wbp.parser.entryPoint
@@ -55,9 +63,6 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 		tabVector = new Vector<JPanel>();
 		initGUI();
 		fc = new JFileChooser();
-
-		// tun, wenn erstes mal dir gewählt wurde
-		// fc.setCurrentDirectory(dir)
 
 		fc.setAcceptAllFileFilterUsed(false);
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -97,7 +102,9 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 		browserSTable = new JTable();
 		contactTable = new JTable();
 		mmsTable = new JTable();
+		mmsTable.getSelectionModel().addListSelectionListener(this);
 		smsTable = new JTable();
+		smsTable.getSelectionModel().addListSelectionListener(this);
 
 		// columns are sortable:
 		calendarTable.setAutoCreateRowSorter(true);
@@ -136,9 +143,23 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 
 		mmsScrollPane = new JScrollPane(mmsTable);
 		mmsPanel.add(mmsScrollPane, BorderLayout.CENTER);
+		mmsInfo = new MMSInfoPanel();
+		mmsInfo.setPreferredSize(new Dimension(300, 0));
+		mmsPanel.add(mmsInfo, BorderLayout.EAST);
+		mmsPanel.add(new JTextField("Search"), BorderLayout.NORTH);
 
 		smsScrollPane = new JScrollPane(smsTable);
 		smsPanel.add(smsScrollPane, BorderLayout.CENTER);
+		JPanel smsTextPanel = new JPanel(new BorderLayout());
+		smsTextArea = new JTextArea();
+		smsTextArea.setEditable(false);
+		smsTextArea.setLineWrap(true);
+		smsTextArea.setWrapStyleWord(true);
+		smsTextPanel.add(new JScrollPane(smsTextArea));
+		smsTextPanel.add(new JLabel("Text:"), BorderLayout.NORTH);
+		smsTextPanel.setPreferredSize(new Dimension(300, 100));
+		
+		smsPanel.add(smsTextPanel, BorderLayout.EAST);
 
 		openCSVButton = new JButton("Open CSV Files");
 		openCSVButton.addActionListener(this);
@@ -171,7 +192,6 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 
 	@Override
 	public void triggered() {
-		System.out.println("app wurde gewählt");
 
 	}
 
@@ -181,7 +201,13 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File folder = fc.getSelectedFile();
-				controller.iterateChosenFolder(folder);
+
+				if (controller.iterateChosenFolder(folder)) {
+					fc.setCurrentDirectory(folder);
+				} else {
+					JOptionPane.showMessageDialog(tabs, "No csv files found in this folder",
+							"Error", JOptionPane.ERROR_MESSAGE);
+				}
 				calendarScrollPane.validate();
 			}
 		}
@@ -194,51 +220,35 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 		}
 	}
 
-	// unschön:
-
-	public void addBrowserHistoryTab(CustomDefaultTableModel model) {
-		browserHTable.setModel(model);
-		// tabs.add(browserHPanel, 0);
-		tabVector.add(browserHPanel);
+	public void addTab(String sourceFile, CustomDefaultTableModel model) {
+		if (sourceFile.equals(ConnectorAppDataController.BROWSER_HISTORY_FILENAME)) {
+			browserHTable.setModel(model);
+			tabVector.add(browserHPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.BROWSER_SEARCH_FILENAME)) {
+			browserSTable.setModel(model);
+			tabVector.add(browserSPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.CALENDAR_FILENAME)) {
+			calendarTable.setModel(model);
+			tabVector.add(calendarPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.CALLS_FILENAME)) {
+			callTable.setModel(model);
+			tabVector.add(callPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.CONTACTS_FILENAME)) {
+			contactTable.setModel(model);
+			tabVector.add(contactPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.MMS_FILENAME)) {
+			mmsTable.setModel(model);
+			tabVector.add(mmsPanel);
+		} else if (sourceFile.equals(ConnectorAppDataController.SMS_FILENAME)) {
+			smsTable.setModel(model);
+			tabVector.add(smsPanel);
+		}
 	}
 
-	public void addBrowserSearchTab(CustomDefaultTableModel model) {
-		browserSTable.setModel(model);
-		// tabs.add(browserSPanel, 0);
-		tabVector.add(browserSPanel);
-	}
-
-	public void addCalendarTab(CustomDefaultTableModel model) {
-		calendarTable.setModel(model);
-		// tabs.add(calendarPanel, 0);
-		tabVector.add(calendarPanel);
-	}
-
-	public void addCallTab(CustomDefaultTableModel model) {
-		callTable.setModel(model);
-		// tabs.add(callPanel, 0);
-		tabVector.add(callPanel);
-	}
-
-	public void addContactTab(CustomDefaultTableModel model) {
-		contactTable.setModel(model);
-		// tabs.add(contactPanel, 0);
-		tabVector.add(contactPanel);
-	}
-
-	public void addMMSTab(CustomDefaultTableModel model) {
-		mmsTable.setModel(model);
-		// tabs.add(mmsPanel, 0);
-		tabVector.add(mmsPanel);
-	}
-
-	public void addSMSTab(CustomDefaultTableModel model) {
-		smsTable.setModel(model);
-		// tabs.add(smsPanel, 0);
-		tabVector.add(smsPanel);
-	}
-
-	public void addTabs() {
+	// shows tabs in alphabetic order
+	public void showTabs() {
+		tabs.removeAll();
+		tabs.add(preferencesPanel);
 		Collections.sort(tabVector, new Comparator<JPanel>() {
 			public int compare(JPanel p1, JPanel p2) {
 				return p1.getName().compareTo(p2.getName());
@@ -248,8 +258,25 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener {
 		for (int i = tabVector.size() - 1; i >= 0; i--) {
 			tabs.add(tabVector.get(i), 0);
 		}
-
 		tabVector.clear();
+	}
+
+	@Override
+	public void valueChanged(ListSelectionEvent e) {
+		if (e.getSource().equals(smsTable.getSelectionModel())) {
+			int selectedRow = smsTable.getSelectedRow();
+			if (selectedRow != -1) {
+				smsTextArea.setText("" + smsTable.getValueAt(selectedRow, 2));
+			}
+		} else if (e.getSource().equals(mmsTable.getSelectionModel())) {
+			int selectedRow = mmsTable.getSelectedRow();
+			if (selectedRow != -1) {
+				String id = (String) mmsTable.getValueAt(selectedRow, 0);
+				String text = (String) mmsTable.getValueAt(selectedRow, 3);
+				boolean hasAttachment = (Boolean) mmsTable.getValueAt(selectedRow, 5);
+				mmsInfo.setInfo(id, text, hasAttachment, fc.getCurrentDirectory());
+			}
+		}
 	}
 
 }
