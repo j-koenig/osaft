@@ -1,4 +1,4 @@
-package de.uni_hannover.osaft.plugins.connnectorappdata;
+package de.uni_hannover.osaft.plugins.connnectorappdata.controller;
 
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Date;
 
-import javax.swing.JMenuItem;
 import javax.swing.JTable;
 
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;

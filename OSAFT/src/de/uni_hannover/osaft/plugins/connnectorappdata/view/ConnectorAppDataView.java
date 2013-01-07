@@ -3,9 +3,6 @@ package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -19,7 +16,6 @@ import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -37,23 +33,24 @@ import javax.swing.event.ListSelectionListener;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
-import de.uni_hannover.osaft.plugins.connnectorappdata.ConnectorAppDataController;
+import de.uni_hannover.osaft.plugins.connnectorappdata.controller.ConnectorAppDataController;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
+
+//TODO: columns automatisch adjusten?
+//TODO: fenster für kontakt, ähnlich mmsinfopanel
+//TODO: verschieben von columns verhindern
 
 @PluginImplementation
 public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, ActionListener,
 		ListSelectionListener {
 
-	// TODO: kontextmenü um aus tabellen zu kopieren
-
 	private JTabbedPane tabs;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserSPanel, callPanel, contactPanel,
 			mmsPanel, preferencesPanel;
 	private MMSInfoPanel mmsInfo;
-	// TODO: wech
-	JFrame frame;
+	private ContactInfoPanel contactInfo;
 	private ConnectorAppDataController controller;
 	private JButton openCSVButton, pushAppButton, pullCSVButton;
 	private JFileChooser fc;
@@ -87,8 +84,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	}
 
 	public void initGUI() {
-		// TODO: jframe wieder entfernen, nur für window builder genutzt
-		frame = new JFrame();
 		tabs = new JTabbedPane();
 
 		calendarPanel = new JPanel(new BorderLayout(0, 0));
@@ -117,6 +112,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		browserHTable = new JTable();
 		browserSTable = new JTable();
 		contactTable = new JTable();
+		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
 		mmsTable.getSelectionModel().addListSelectionListener(this);
 		smsTable = new JTable();
@@ -164,6 +160,9 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 		contactScrollPane = new JScrollPane(contactTable);
 		contactPanel.add(contactScrollPane, BorderLayout.CENTER);
+		contactInfo = new ContactInfoPanel();
+		contactInfo.setPreferredSize(new Dimension(300, 0));
+		contactPanel.add(contactInfo, BorderLayout.EAST);
 
 		mmsScrollPane = new JScrollPane(mmsTable);
 		mmsPanel.add(mmsScrollPane, BorderLayout.CENTER);
@@ -201,16 +200,13 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		tabs.add(preferencesPanel);
 
 		contextMenu = new JPopupMenu();
-		copyCell = new JMenuItem("Copy cell");
+		copyCell = new JMenuItem("Copy cell to clipboard");
 		copyCell.addActionListener(this);
-		copyRow = new JMenuItem("Copy row");
+		copyRow = new JMenuItem("Copy row to clipboard");
 		copyRow.addActionListener(this);
 
 		contextMenu.add(copyCell);
 		contextMenu.add(copyRow);
-
-		frame.getContentPane().add(tabs);
-
 	}
 
 	@Override
@@ -225,7 +221,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void triggered() {
-
+		// TODO: soll was passieren?
 	}
 
 	@Override
@@ -315,18 +311,42 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
+		int selectedRow;
 		if (e.getSource().equals(smsTable.getSelectionModel())) {
-			int selectedRow = smsTable.getSelectedRow();
+			selectedRow = smsTable.getSelectedRow();
 			if (selectedRow != -1) {
 				smsTextArea.setText("" + smsTable.getValueAt(selectedRow, 2));
 			}
 		} else if (e.getSource().equals(mmsTable.getSelectionModel())) {
-			int selectedRow = mmsTable.getSelectedRow();
+			selectedRow = mmsTable.getSelectedRow();
 			if (selectedRow != -1) {
-				String id = (String) mmsTable.getValueAt(selectedRow, 0);
-				String text = (String) mmsTable.getValueAt(selectedRow, 3);
+				String id = mmsTable.getValueAt(selectedRow, 0).toString();
+				String text = mmsTable.getValueAt(selectedRow, 3).toString();
 				boolean hasAttachment = (Boolean) mmsTable.getValueAt(selectedRow, 5);
 				mmsInfo.setInfo(id, text, hasAttachment, fc.getCurrentDirectory());
+			}
+		} else if (e.getSource().equals(contactTable.getSelectionModel())) {
+			selectedRow = contactTable.getSelectedRow();
+			if (selectedRow != -1) {
+				String id = contactTable.getValueAt(selectedRow, 0).toString();
+				String name = contactTable.getValueAt(selectedRow, 1).toString();
+				String numbers = contactTable.getValueAt(selectedRow, 2).toString();
+				String organisation = contactTable.getValueAt(selectedRow, 3).toString();
+				String emails = contactTable.getValueAt(selectedRow, 4).toString();
+				String addresses = contactTable.getValueAt(selectedRow, 5).toString();
+				String websites = contactTable.getValueAt(selectedRow, 6).toString();
+				String im = contactTable.getValueAt(selectedRow, 7).toString();
+				String skype = contactTable.getValueAt(selectedRow, 8).toString();
+				String notes = contactTable.getValueAt(selectedRow, 9).toString();
+				File f = new File(fc.getCurrentDirectory() + "/data/contact_" + id + ".jpg");
+				System.out.println(f);
+				System.out.println(f.isFile());
+				if (f.isFile()) {
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes, f);
+				}
+				else {
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes);					
+				}
 			}
 		}
 	}
