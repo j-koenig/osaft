@@ -1,7 +1,6 @@
 package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -24,12 +23,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 
 //GENERATED WITH WINDOWBUILDER
 public class MMSInfoPanel extends JPanel implements ActionListener {
 
-	private JButton btnOpenFile;
+	private JButton btnOpenFile, btnOpenFolder;
 	private GridBagLayout gbl_mmsInfo;
 	private JTextArea txtrText;
 	private JLabel lblPreview, lblActualFilename;
@@ -84,6 +82,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 
 		btnOpenFile = new JButton("Open File");
 		btnOpenFile.addActionListener(this);
+		btnOpenFile.setEnabled(false);
 
 		lblActualFilename = new JLabel("");
 		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
@@ -101,7 +100,9 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		gbc_btnOpenFile.gridy = 3;
 		add(btnOpenFile, gbc_btnOpenFile);
 
-		JButton btnOpenFolder = new JButton("Open Folder");
+		btnOpenFolder = new JButton("Open Folder");
+		btnOpenFolder.addActionListener(this);
+		btnOpenFolder.setEnabled(false);
 		GridBagConstraints gbc_btnOpenFolder = new GridBagConstraints();
 		gbc_btnOpenFolder.gridwidth = 2;
 		gbc_btnOpenFolder.fill = GridBagConstraints.BOTH;
@@ -139,6 +140,18 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
+		
+		//TODO: funzt das auf windows? hier in eclipse nich...
+		else if (e.getSource().equals(btnOpenFolder)) {
+			Desktop dt = Desktop.getDesktop();
+			System.out.println(currentFile.getParent());
+			try {
+				dt.open(new File(currentFile.getParent()));
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
 
 	}
 
@@ -148,6 +161,9 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		File dataDir = new File(directory + "/data/");
 
 		if (hasAttachment) {
+			btnOpenFile.setEnabled(true);
+			btnOpenFolder.setEnabled(true);
+			
 			String filenameWithoutExtension = "mms_" + id;
 
 			File[] files = dataDir.listFiles();
@@ -177,11 +193,18 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 					e.printStackTrace();
 				}
 			}
+			else {
+				lblPreview.setIcon(null);
+				lblPreview.setText("Preview not possible");
+				lblPreview.revalidate();
+			}
 		} else {
 			lblActualFilename.setText("");
 			lblPreview.setIcon(null);
 			lblPreview.setText("Preview not possible");
 			lblPreview.revalidate();
+			btnOpenFile.setEnabled(false);
+			btnOpenFolder.setEnabled(false);
 		}
 	}
 

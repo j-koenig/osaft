@@ -2,8 +2,14 @@ package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,13 +21,16 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -31,12 +40,13 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.ConnectorAppDataController;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
+import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 
 @PluginImplementation
-public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSelectionListener {
+public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, ActionListener,
+		ListSelectionListener {
 
-	// TODO:
-	// panels nur adden, wenn dateien dazu gefunden wurden
+	// TODO: kontextmenü um aus tabellen zu kopieren
 
 	private JTabbedPane tabs;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserSPanel, callPanel, contactPanel,
@@ -53,6 +63,12 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 			smsTable;
 	private Vector<JPanel> tabVector;
 	private JTextArea smsTextArea;
+	private JPopupMenu contextMenu;
+	private JMenuItem copyCell, copyRow;
+
+	// used for contextmenu
+	private int currentX, currentY;
+	private JTable currentTable;
 
 	/**
 	 * @wbp.parser.entryPoint
@@ -125,6 +141,14 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 		mmsTable.setDefaultRenderer(Date.class, cdcr);
 		smsTable.setDefaultRenderer(Date.class, cdcr);
 
+		calendarTable.addMouseListener(this);
+		callTable.addMouseListener(this);
+		browserHTable.addMouseListener(this);
+		browserSTable.addMouseListener(this);
+		contactTable.addMouseListener(this);
+		mmsTable.addMouseListener(this);
+		smsTable.addMouseListener(this);
+
 		// put scrollpane-wrapped tables into panels
 		calendarScrollPane = new JScrollPane(calendarTable);
 		calendarPanel.add(calendarScrollPane, BorderLayout.CENTER);
@@ -158,7 +182,7 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 		smsTextPanel.add(new JScrollPane(smsTextArea));
 		smsTextPanel.add(new JLabel("Text:"), BorderLayout.NORTH);
 		smsTextPanel.setPreferredSize(new Dimension(300, 100));
-		
+
 		smsPanel.add(smsTextPanel, BorderLayout.EAST);
 
 		openCSVButton = new JButton("Open CSV Files");
@@ -175,6 +199,15 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 		preferencesPanel.add(openCSVButton);
 		preferencesPanel.add(pushAppButton);
 		tabs.add(preferencesPanel);
+
+		contextMenu = new JPopupMenu();
+		copyCell = new JMenuItem("Copy cell");
+		copyCell.addActionListener(this);
+		copyRow = new JMenuItem("Copy row");
+		copyRow.addActionListener(this);
+
+		contextMenu.add(copyCell);
+		contextMenu.add(copyRow);
 
 		frame.getContentPane().add(tabs);
 
@@ -218,6 +251,13 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 					"Information", JOptionPane.INFORMATION_MESSAGE);
 			controller.pushApp();
 		}
+
+		if (e.getSource().equals(copyCell)) {
+			controller.copySelectionToClipboard(currentX, currentY, currentTable, true);
+		}
+		if (e.getSource().equals(copyRow)) {
+			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
+		}
 	}
 
 	public void addTab(String sourceFile, CustomDefaultTableModel model) {
@@ -236,9 +276,21 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 		} else if (sourceFile.equals(ConnectorAppDataController.CONTACTS_FILENAME)) {
 			contactTable.setModel(model);
 			tabVector.add(contactPanel);
+			contactTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			TableColumnAdjuster tca = new TableColumnAdjuster(contactTable);
+			tca.adjustColumns();
 		} else if (sourceFile.equals(ConnectorAppDataController.MMS_FILENAME)) {
 			mmsTable.setModel(model);
 			tabVector.add(mmsPanel);
+			mmsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+			TableColumnAdjuster tca = new TableColumnAdjuster(mmsTable);
+			tca.adjustColumns();
+			// mmsTable.getColumnModel().getColumn(0).setPreferredWidth(1);
+			// mmsTable.getColumnModel().getColumn(1).setPreferredWidth(50);
+			// mmsTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+			// mmsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+			// mmsTable.getColumnModel().getColumn(4).setPreferredWidth(1);
+			// mmsTable.getColumnModel().getColumn(5).setPreferredWidth(1);
 		} else if (sourceFile.equals(ConnectorAppDataController.SMS_FILENAME)) {
 			smsTable.setModel(model);
 			tabVector.add(smsPanel);
@@ -277,6 +329,42 @@ public class ConnectorAppDataView implements ViewPlugin, ActionListener, ListSel
 				mmsInfo.setInfo(id, text, hasAttachment, fc.getCurrentDirectory());
 			}
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if (SwingUtilities.isRightMouseButton(e)) {
+			if (e.getSource().equals(browserHTable)) {
+				openContextMenu(e, browserHTable);
+			} else if (e.getSource().equals(browserSTable)) {
+				openContextMenu(e, browserSTable);
+			} else if (e.getSource().equals(calendarTable)) {
+				openContextMenu(e, calendarTable);
+			} else if (e.getSource().equals(callTable)) {
+				openContextMenu(e, callTable);
+			} else if (e.getSource().equals(contactTable)) {
+				openContextMenu(e, contactTable);
+			} else if (e.getSource().equals(mmsTable)) {
+				openContextMenu(e, mmsTable);
+			} else if (e.getSource().equals(smsTable)) {
+				openContextMenu(e, smsTable);
+			}
+		}
+	}
+
+	private void openContextMenu(MouseEvent e, JTable table) {
+
+		// selects the row which was right-clicked
+		Point p = e.getPoint();
+		int rowNumber = table.rowAtPoint(p);
+		table.getSelectionModel().setSelectionInterval(rowNumber, rowNumber);
+
+		currentX = e.getX();
+		currentY = e.getY();
+		currentTable = table;
+
+		contextMenu.show(table, currentX, currentY);
+
 	}
 
 }

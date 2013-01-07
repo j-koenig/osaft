@@ -1,5 +1,9 @@
 package de.uni_hannover.osaft.plugins.connnectorappdata;
 
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,14 +12,15 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Date;
 
+import javax.swing.JMenuItem;
+import javax.swing.JTable;
+
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 
 //TODO: suche implementieren
-//TODO: extra dialog, der sich öffnet bei klick auf mms eintrag oder kontakt eintrag
 //TODO: escaped commas ersetzen!
 //TODO: in SMS statt der Nummer den namen anzeigen
-//TODO: kontakte geht gar nich mehr?
 
 public class ConnectorAppDataController {
 	public static String BROWSER_HISTORY_FILENAME = "BrowserHistory.csv";
@@ -192,7 +197,7 @@ public class ConnectorAppDataController {
 			Date date = new Date(Long.parseLong(values[2]));
 			String text = values[3];
 			text = text.replace("ESCAPED_COMMA", ",");
-			boolean read = Boolean.parseBoolean(values[4]);			
+			boolean read = Boolean.parseBoolean(values[4]);
 			boolean hasAttachment = Boolean.parseBoolean(values[5]);
 			mmsTableModel.addRow(new Object[] { id, number, date, text, read, hasAttachment });
 		}
@@ -312,6 +317,35 @@ public class ConnectorAppDataController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable,
+			boolean copyCell) {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		// find out which row or which cell is selected (variables
+		// current... have been set in mouseClicked())
+		Point p = new Point(currentX, currentY);
+		int rowNumber = currentTable.rowAtPoint(p);
+		int columnNumber = currentTable.columnAtPoint(p);
+		String dataToClipboard = "";
+
+		if (copyCell) {
+			// just get the current cell
+			dataToClipboard = currentTable.getModel().getValueAt(rowNumber, columnNumber).toString();
+		} else {
+			StringBuilder sb = new StringBuilder();
+			// iterate over all columns of selected row
+			for (int i = 0; i < currentTable.getColumnCount(); i++) {
+				sb.append(currentTable.getColumnName(i));
+				sb.append(": ");
+				sb.append(currentTable.getModel().getValueAt(rowNumber, i));
+				sb.append(", ");
+			}
+			dataToClipboard = sb.substring(0, sb.length() - 2).toString();
+		}
+		// save string to clipboard
+		StringSelection strSel = new StringSelection(dataToClipboard);
+		clipboard.setContents(strSel, null);
 	}
 
 }
