@@ -1,16 +1,15 @@
 package de.uni_hannover.android.artifactextract;
 
-import de.uni_hannover.android.artifactextract.util.SDCardHandler;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Toast;
+import de.uni_hannover.android.artifactextract.util.SDCardHandler;
 
 //main activity
 public class ArtifactExtract extends Activity {

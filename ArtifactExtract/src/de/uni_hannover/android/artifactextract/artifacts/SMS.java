@@ -1,8 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+import android.util.Log;
+
 public class SMS implements Artifact {
 
-	private String body, address;
+	private String body, address, personID;
 	private long date;
 	private boolean read, seen;
 	private int status;
@@ -31,19 +33,21 @@ public class SMS implements Artifact {
 	 * @param status
 	 *            status of the sms
 	 */
-	public SMS(String address, String body, long date, boolean read, boolean seen, int status) {
+	public SMS(String address, String personID, String body, long date, boolean read, boolean seen,
+			int status) {
 		this.address = address;
 		this.body = body;
 		this.date = date;
 		this.read = read;
 		this.seen = seen;
 		this.status = status;
+		this.personID = personID;
 	}
 
 	@Override
 	public String getCSV() {
-		return address + "," + date + "," + body.replace(",", "ESCAPED_COMMA") + "," + read + ","
-				+ seen + "," + status;
+		return address + "," + ((personID == null) ? "" : personID) + "," + date + ","
+				+ body.replace(",", "ESCAPED_COMMA") + "," + read + "," + seen + "," + status;
 	}
 
 }

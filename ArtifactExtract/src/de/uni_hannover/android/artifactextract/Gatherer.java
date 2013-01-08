@@ -454,7 +454,7 @@ public class Gatherer {
 
 	public void getSMS() {
 
-		String[] projection = new String[] { "address", "body", "date", "read", "seen" };
+		String[] projection = new String[] { "address", "body", "date", "read", "seen", "person" };
 		String sort = "date ASC";
 		String[] smsStatus = new String[] { "inbox", "sent", "draft", "failed", "queued", "outbox",
 				"undelivered" };
@@ -470,7 +470,8 @@ public class Gatherer {
 					long date = smsCursor.getLong(2);
 					boolean read = smsCursor.getString(3).equals("1");
 					boolean seen = smsCursor.getString(4).equals("1");
-					SMS sms = new SMS(address, body, date, read, seen, i);
+					String person = smsCursor.getString(5);
+					SMS sms = new SMS(address, person, body, date, read, seen, i);
 					smss.add(sms);
 				}
 			} finally {
