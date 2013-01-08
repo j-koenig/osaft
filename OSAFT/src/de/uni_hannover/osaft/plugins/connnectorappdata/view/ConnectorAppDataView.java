@@ -55,7 +55,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JButton openCSVButton, pushAppButton, pullCSVButton;
 	private JFileChooser fc;
 	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserSScrollPane,
-			contactScrollPane, mmsScrollPane, smsScrollPane;
+			contactScrollPane, mmsScrollPane, smsScrollPane, contactInfoScroll;
 	private JTable calendarTable, callTable, browserHTable, browserSTable, contactTable, mmsTable,
 			smsTable;
 	private Vector<JPanel> tabVector;
@@ -161,8 +161,11 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		contactScrollPane = new JScrollPane(contactTable);
 		contactPanel.add(contactScrollPane, BorderLayout.CENTER);
 		contactInfo = new ContactInfoPanel();
-		contactInfo.setPreferredSize(new Dimension(300, 0));
-		contactPanel.add(contactInfo, BorderLayout.EAST);
+		contactInfo.setPreferredSize(new Dimension(280, 740));
+		contactInfoScroll = new JScrollPane(contactInfo, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		contactInfoScroll.setPreferredSize(new Dimension(300, 0));
+		contactPanel.add(contactInfoScroll, BorderLayout.EAST);
 
 		mmsScrollPane = new JScrollPane(mmsTable);
 		mmsPanel.add(mmsScrollPane, BorderLayout.CENTER);
@@ -342,10 +345,11 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 				System.out.println(f);
 				System.out.println(f.isFile());
 				if (f.isFile()) {
-					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes, f);
-				}
-				else {
-					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes);					
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
+							im, skype, notes, f);
+				} else {
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
+							im, skype, notes);
 				}
 			}
 		}
