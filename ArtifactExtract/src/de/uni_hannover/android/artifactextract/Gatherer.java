@@ -9,7 +9,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import android.R.bool;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
@@ -23,7 +22,6 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
-import android.util.Log;
 import android.util.SparseArray;
 import de.uni_hannover.android.artifactextract.artifacts.Artifact;
 import de.uni_hannover.android.artifactextract.artifacts.BrowserHistory;
@@ -36,7 +34,7 @@ import de.uni_hannover.android.artifactextract.artifacts.SMS;
 import de.uni_hannover.android.artifactextract.util.SDCardHandler;
 
 public class Gatherer {
-	// TODO: mms video?
+	// TODO: mms video and ohter data?
 
 	private String savePath, dataPath;
 	// storages for all different artifacts:
@@ -306,7 +304,10 @@ public class Gatherer {
 					text = "";
 				}
 
-				String sender = getMMSAddress(id);
+				String[] numberAndContactId = getMMSAddress(id);
+
+				String sender = numberAndContactId[0];
+				//String contactId = numberAndContactId[1];
 				boolean hasAttachment = getMMSData(id);
 				MMS mms = new MMS(sender, text, id, date, read, hasAttachment);
 				mmss.add(mms);
@@ -377,16 +378,19 @@ public class Gatherer {
 	}
 
 	// gets the phone number for a given mms id
-	private String getMMSAddress(String id) {
+	private String[] getMMSAddress(String id) {
 
 		String selection = new String("msg_id=" + id);
 		Uri addressUri = Uri.parse("content://mms/" + id + "/addr");
 		Cursor addressCursor = cr.query(addressUri, null, selection, null, null);
-		String result = null;
+		String result[] = new String[2];
 
 		try {
 			if (addressCursor.moveToNext()) {
-				result = addressCursor.getString(addressCursor.getColumnIndex("address"));
+				result[0] = addressCursor.getString(addressCursor.getColumnIndex("address"));
+				// should return the contact_id as a link to the contacts table,
+				// but did not work in my testcases
+				result[1] = addressCursor.getString(addressCursor.getColumnIndex("contact_id"));
 			}
 		} finally {
 			addressCursor.close();

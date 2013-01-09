@@ -38,7 +38,7 @@ public class Contact implements Artifact {
 			for (int i = 0; i < numbers.size(); i++) {
 				res += numbers.get(i).replace(",", "ESCAPED_COMMA") + "; ";
 			}
-			res = res.substring(0, res.length() - 1);
+			res = res.substring(0, res.length() - 2);
 			res += ",";
 		}
 		if (emails.size() > 0) {
