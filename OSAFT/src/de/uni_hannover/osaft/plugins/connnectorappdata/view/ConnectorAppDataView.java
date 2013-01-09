@@ -5,9 +5,12 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -35,16 +38,14 @@ import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.controller.ConnectorAppDataController;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
-import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
+import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 
 //TODO: columns automatisch adjusten?
-//TODO: fenster für kontakt, ähnlich mmsinfopanel
-//TODO: verschieben von columns verhindern
 
 @PluginImplementation
 public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, ActionListener,
-		ListSelectionListener {
+		ListSelectionListener, KeyListener {
 
 	private JTabbedPane tabs;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserSPanel, callPanel, contactPanel,
@@ -62,6 +63,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JTextArea smsTextArea;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
+	private JTextField contactSearch;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -107,6 +109,8 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		smsPanel = new JPanel(new BorderLayout(0, 0));
 		smsPanel.setName("SMS");
 
+		ArrayList<JTable> tables = new ArrayList<JTable>();
+
 		calendarTable = new JTable();
 		callTable = new JTable();
 		browserHTable = new JTable();
@@ -117,33 +121,61 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		mmsTable.getSelectionModel().addListSelectionListener(this);
 		smsTable = new JTable();
 		smsTable.getSelectionModel().addListSelectionListener(this);
-
-		// columns are sortable:
-		calendarTable.setAutoCreateRowSorter(true);
-		callTable.setAutoCreateRowSorter(true);
-		browserHTable.setAutoCreateRowSorter(true);
-		browserSTable.setAutoCreateRowSorter(true);
-		contactTable.setAutoCreateRowSorter(true);
-		mmsTable.setAutoCreateRowSorter(true);
-		smsTable.setAutoCreateRowSorter(true);
+		tables.add(calendarTable);
+		tables.add(callTable);
+		tables.add(browserHTable);
+		tables.add(browserSTable);
+		tables.add(contactTable);
+		tables.add(smsTable);
+		tables.add(mmsTable);
 
 		// Date objects will be rendered differently
 		CustomDateCellRenderer cdcr = new CustomDateCellRenderer();
-		calendarTable.setDefaultRenderer(Date.class, cdcr);
-		callTable.setDefaultRenderer(Date.class, cdcr);
-		browserHTable.setDefaultRenderer(Date.class, cdcr);
-		browserSTable.setDefaultRenderer(Date.class, cdcr);
-		contactTable.setDefaultRenderer(Date.class, cdcr);
-		mmsTable.setDefaultRenderer(Date.class, cdcr);
-		smsTable.setDefaultRenderer(Date.class, cdcr);
 
-		calendarTable.addMouseListener(this);
-		callTable.addMouseListener(this);
-		browserHTable.addMouseListener(this);
-		browserSTable.addMouseListener(this);
-		contactTable.addMouseListener(this);
-		mmsTable.addMouseListener(this);
-		smsTable.addMouseListener(this);
+		for (int i = 0; i < tables.size(); i++) {
+			tables.get(i).setDefaultRenderer(Date.class, cdcr);
+			// columns are sortable:
+			tables.get(i).setAutoCreateRowSorter(true);
+			// reorder of columns is disabled
+			tables.get(i).getTableHeader().setReorderingAllowed(false);
+			tables.get(i).addMouseListener(this);
+		}
+
+		// TODO: weg:
+		// // columns are sortable:
+		// calendarTable.setAutoCreateRowSorter(true);
+		// callTable.setAutoCreateRowSorter(true);
+		// browserHTable.setAutoCreateRowSorter(true);
+		// browserSTable.setAutoCreateRowSorter(true);
+		// contactTable.setAutoCreateRowSorter(true);
+		// mmsTable.setAutoCreateRowSorter(true);
+		// smsTable.setAutoCreateRowSorter(true);
+		//
+		// //reorder of columns is disabled
+		// calendarTable.getTableHeader().setReorderingAllowed(false);
+		// callTable.getTableHeader().setReorderingAllowed(false);
+		// browserHTable.getTableHeader().setReorderingAllowed(false);
+		// browserSTable.getTableHeader().setReorderingAllowed(false);
+		// contactTable.getTableHeader().setReorderingAllowed(false);
+		// mmsTable.getTableHeader().setReorderingAllowed(false);
+		// smsTable.getTableHeader().setReorderingAllowed(false);
+		//
+		//
+		// calendarTable.setDefaultRenderer(Date.class, cdcr);
+		// callTable.setDefaultRenderer(Date.class, cdcr);
+		// browserHTable.setDefaultRenderer(Date.class, cdcr);
+		// browserSTable.setDefaultRenderer(Date.class, cdcr);
+		// contactTable.setDefaultRenderer(Date.class, cdcr);
+		// mmsTable.setDefaultRenderer(Date.class, cdcr);
+		// smsTable.setDefaultRenderer(Date.class, cdcr);
+		//
+		// calendarTable.addMouseListener(this);
+		// callTable.addMouseListener(this);
+		// browserHTable.addMouseListener(this);
+		// browserSTable.addMouseListener(this);
+		// contactTable.addMouseListener(this);
+		// mmsTable.addMouseListener(this);
+		// smsTable.addMouseListener(this);
 
 		// put scrollpane-wrapped tables into panels
 		calendarScrollPane = new JScrollPane(calendarTable);
@@ -166,6 +198,9 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		contactInfoScroll.setPreferredSize(new Dimension(300, 0));
 		contactPanel.add(contactInfoScroll, BorderLayout.EAST);
+		contactSearch = new JTextField();
+		contactSearch.addKeyListener(this);
+		contactPanel.add(contactSearch, BorderLayout.NORTH);
 
 		mmsScrollPane = new JScrollPane(mmsTable);
 		mmsPanel.add(mmsScrollPane, BorderLayout.CENTER);
@@ -259,7 +294,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		}
 	}
 
-	public void addTab(String sourceFile, CustomDefaultTableModel model) {
+	public void addTab(String sourceFile, LiveSearchTableModel model) {
 		if (sourceFile.equals(ConnectorAppDataController.BROWSER_HISTORY_FILENAME)) {
 			browserHTable.setModel(model);
 			tabVector.add(browserHPanel);
@@ -309,6 +344,15 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		for (int i = tabVector.size() - 1; i >= 0; i--) {
 			tabs.add(tabVector.get(i), 0);
 		}
+
+		// if sms.csv found and contacts.csv found change the column header in
+		// sms table to "Name"
+		if (tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
+			smsTable.getTableHeader().getColumnModel().getColumn(1).setHeaderValue("Name");
+		} else {
+			smsTable.getTableHeader().getColumnModel().getColumn(1).setHeaderValue("Contact ID");
+		}
+
 		tabVector.clear();
 	}
 
@@ -318,7 +362,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		if (e.getSource().equals(smsTable.getSelectionModel())) {
 			selectedRow = smsTable.getSelectedRow();
 			if (selectedRow != -1) {
-				smsTextArea.setText("" + smsTable.getValueAt(selectedRow, 2));
+				smsTextArea.setText("" + smsTable.getValueAt(selectedRow, 3));
 			}
 		} else if (e.getSource().equals(mmsTable.getSelectionModel())) {
 			selectedRow = mmsTable.getSelectedRow();
@@ -342,8 +386,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 				String skype = contactTable.getValueAt(selectedRow, 8).toString();
 				String notes = contactTable.getValueAt(selectedRow, 9).toString();
 				File f = new File(fc.getCurrentDirectory() + "/data/contact_" + id + ".jpg");
-				System.out.println(f);
-				System.out.println(f.isFile());
 				if (f.isFile()) {
 					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
 							im, skype, notes, f);
@@ -388,6 +430,33 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		currentTable = table;
 
 		contextMenu.show(table, currentX, currentY);
+
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if (e.getSource().equals(contactSearch)) {
+			String search = contactSearch.getText();
+			LiveSearchTableModel contactTableModel = (LiveSearchTableModel) contactTable.getModel();
+			if (!search.equals("")) {
+				contactTableModel.filterData(search);
+			}
+			else {
+				contactTableModel.resetData();
+			}
+			contactScrollPane.getVerticalScrollBar().setValue(0);
+		}
+
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
 
 	}
 

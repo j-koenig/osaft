@@ -14,12 +14,10 @@ import java.util.Date;
 
 import javax.swing.JTable;
 
-import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDefaultTableModel;
+import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 
 //TODO: suche implementieren
-//TODO: escaped commas ersetzen!
-//TODO: in SMS statt der Nummer den namen anzeigen
 
 public class ConnectorAppDataController {
 	public static String BROWSER_HISTORY_FILENAME = "BrowserHistory.csv";
@@ -30,24 +28,28 @@ public class ConnectorAppDataController {
 	public static String MMS_FILENAME = "MMS.csv";
 	public static String SMS_FILENAME = "SMS.csv";
 
+	private boolean smsFound, contactsFound;
+
 	private ConnectorAppDataView view;
-	private CustomDefaultTableModel calendarTableModel, callsTableModel, browserHistoryTableModel,
+	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
 
 	public ConnectorAppDataController(ConnectorAppDataView view) {
 		this.view = view;
-		calendarTableModel = new CustomDefaultTableModel(new Object[] { "Calendar", "Title",
+		smsFound = false;
+		contactsFound = false;
+		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title",
 				"Description", "Start", "End", "Location", "Allday" });
-		callsTableModel = new CustomDefaultTableModel(new Object[] { "Name", "Number", "Date",
-				"Duration (in s)", "New Call", "Type", "Number Label", "Number Type" });
-		browserHistoryTableModel = new CustomDefaultTableModel(new Object[] { "Title", "URL",
+		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date",
+				"Duration (in s)", "New Call", "Type", "Number Type" });
+		browserHistoryTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL",
 				"Visits", "Created", "Bookmark?" });
-		browserSearchTableModel = new CustomDefaultTableModel(new Object[] { "Date", "Search" });
-		contactsTableModel = new CustomDefaultTableModel(new Object[] { "ID", "Name", "Numbers",
+		browserSearchTableModel = new LiveSearchTableModel(new Object[] { "Date", "Search" });
+		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers",
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes" });
-		smsTableModel = new CustomDefaultTableModel(new Object[] { "Number", "Date", "Text",
-				"Read", "Seen", "Status" });
-		mmsTableModel = new CustomDefaultTableModel(new Object[] { "ID", "Number", "Date", "Text",
+		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Contact ID", "Date",
+				"Text", "Read", "Seen", "Status" });
+		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text",
 				"Read", "Attachment" });
 	}
 
@@ -67,6 +69,11 @@ public class ConnectorAppDataController {
 				processedSomething = true;
 			}
 		}
+
+		if (smsFound && contactsFound) {
+			addNameToSMSTable();
+		}
+
 		view.showTabs();
 		return processedSomething;
 	}
@@ -78,10 +85,12 @@ public class ConnectorAppDataController {
 			br = new BufferedReader(new FileReader(f));
 			if (f.getName().equals(SMS_FILENAME)) {
 				processSMS(br);
+				smsFound = true;
 			} else if (f.getName().equals(MMS_FILENAME)) {
 				processMMS(br);
 			} else if (f.getName().equals(CONTACTS_FILENAME)) {
 				processContacts(br);
+				contactsFound = true;
 			} else if (f.getName().equals(CALLS_FILENAME)) {
 				processCalls(br);
 			} else if (f.getName().equals(CALENDAR_FILENAME)) {
@@ -93,9 +102,10 @@ public class ConnectorAppDataController {
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IndexOutOfBoundsException e) {
 			// TODO: könnte auch ne indexoutofbounds werfen (wenn datei kaputt
 			// is und array nicht 8 einträge hat)!
-			e.printStackTrace();
 		} finally {
 			if (br != null) {
 				try {
@@ -160,7 +170,7 @@ public class ConnectorAppDataController {
 					organisation = organisation.replace("ESCAPED_COMMA", ",");
 				} else if (values[i].contains("Numbers:")) {
 					numbers = values[i].substring("Numbers:".length());
-					numbers = numbers.replace("ESCAPED_COMMA", ",");
+					numbers = numbers.replace("ESCAPED_COMMA", ",").replace(";", ",");
 				} else if (values[i].contains("Emailaddresses:")) {
 					email = values[i].substring("Emailaddresses:".length());
 					email = email.replace("ESCAPED_COMMA", ",");
@@ -208,12 +218,13 @@ public class ConnectorAppDataController {
 		while ((curLine = br.readLine()) != null) {
 			String[] values = curLine.split(",");
 			String number = values[0];
-			Date date = new Date(Long.parseLong(values[1]));
-			String text = values[2];
+			String contactId = values[1];
+			Date date = new Date(Long.parseLong(values[2]));
+			String text = values[3];
 			text = text.replace("ESCAPED_COMMA", ",");
-			boolean read = Boolean.parseBoolean(values[3]);
-			boolean seen = Boolean.parseBoolean(values[4]);
-			int status = Integer.parseInt(values[5]);
+			boolean read = Boolean.parseBoolean(values[4]);
+			boolean seen = Boolean.parseBoolean(values[5]);
+			int status = Integer.parseInt(values[6]);
 			String statusAsText = "unknown";
 			switch (status) {
 			case 0:
@@ -240,7 +251,8 @@ public class ConnectorAppDataController {
 			default:
 				break;
 			}
-			smsTableModel.addRow(new Object[] { number, date, text, read, seen, statusAsText });
+			smsTableModel.addRow(new Object[] { number, contactId, date, text, read, seen,
+					statusAsText });
 		}
 		view.addTab(SMS_FILENAME, smsTableModel);
 	}
@@ -251,7 +263,7 @@ public class ConnectorAppDataController {
 			String[] values = curLine.split(",");
 			String name = (values[0].equals(" ")) ? "unknown" : values[0];
 			name = name.replace("ESCAPED_COMMA", ",");
-			String number = values[1];
+			String number = (values[1].equals("-2")) ? "private number" : values[1];
 			Date date = new Date(Long.parseLong(values[2]));
 			int duration = Integer.parseInt(values[3]);
 			boolean newCall = Boolean.parseBoolean(values[4]);
@@ -269,13 +281,82 @@ public class ConnectorAppDataController {
 			default:
 				break;
 			}
-			// TODO: dunno was damit zu machen
+
 			String numberLabel = values[6];
-			numberLabel = numberLabel.replace("ESCAPED_COMMA", ",");
-			String numberType = values[7];
-			numberType = numberType.replace("ESCAPED_COMMA", ",");
+			String numberTypeAsInt = values[7];
+			String numberType = "";
+
+			switch (Integer.parseInt(numberTypeAsInt)) {
+			case 0:
+				numberType = numberLabel;
+				break;
+			case 1:
+				numberType = "Home";
+				break;
+			case 2:
+				numberType = "Mobile";
+				break;
+			case 3:
+				numberType = "Work";
+				break;
+			case 4:
+				numberType = "Fax Work";
+				break;
+			case 5:
+				numberType = "Fax Home";
+				break;
+			case 6:
+				numberType = "Pager";
+				break;
+			case 7:
+				numberType = "Other";
+				break;
+			case 8:
+				numberType = "Callback";
+				break;
+			case 9:
+				numberType = "Car";
+				break;
+			case 10:
+				numberType = "Company Main";
+				break;
+			case 11:
+				numberType = "ISDN";
+				break;
+			case 12:
+				numberType = "Main";
+				break;
+			case 13:
+				numberType = "Other Fax";
+				break;
+			case 14:
+				numberType = "Radio";
+				break;
+			case 15:
+				numberType = "Telex";
+				break;
+			case 16:
+				numberType = "TTY TDD";
+				break;
+			case 17:
+				numberType = "Work Mobile";
+				break;
+			case 18:
+				numberType = "Work Pager";
+				break;
+			case 19:
+				numberType = "Assistant";
+				break;
+			case 20:
+				numberType = "MMS";
+				break;
+
+			default:
+				break;
+			}
+
 			callsTableModel.addRow(new Object[] { name, number, date, duration, newCall, type,
-					numberLabel, numberType });
+					numberType });
 		}
 		view.addTab(CALLS_FILENAME, callsTableModel);
 	}
@@ -330,7 +411,8 @@ public class ConnectorAppDataController {
 
 		if (copyCell) {
 			// just get the current cell
-			dataToClipboard = currentTable.getModel().getValueAt(rowNumber, columnNumber).toString();
+			dataToClipboard = currentTable.getModel().getValueAt(rowNumber, columnNumber)
+					.toString();
 		} else {
 			StringBuilder sb = new StringBuilder();
 			// iterate over all columns of selected row
@@ -345,6 +427,24 @@ public class ConnectorAppDataController {
 		// save string to clipboard
 		StringSelection strSel = new StringSelection(dataToClipboard);
 		clipboard.setContents(strSel, null);
+	}
+
+	private void addNameToSMSTable() {
+
+		for (int i = 0; i < smsTableModel.getRowCount(); i++) {
+			String smsContactId = smsTableModel.getValueAt(i, 1).toString();
+			for (int j = 0; j < contactsTableModel.getRowCount(); j++) {
+				String contactId = contactsTableModel.getValueAt(j, 0).toString();
+				if (smsContactId.equals(contactId)) {
+					String name = contactsTableModel.getValueAt(j, 1).toString();
+					smsTableModel.setValueAt(name, i, 1);
+					break;
+				}
+			}
+		}
+
+		smsFound = false;
+		contactsFound = false;
 	}
 
 }

@@ -1,7 +1,6 @@
 package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -14,13 +13,16 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.BoundedRangeModel;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 
+//CREATED WITH WINDOWBUILDER
 public class ContactInfoPanel extends JPanel implements ActionListener {
 
 	/**
@@ -40,15 +42,17 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 	private JTextField txtIm;
 	private JTextField txtSkype;
 	private JTextField txtNotes;
+	private JButton btnOpenFolder;
+	private JScrollBar scrollBar_1;
 
 	public ContactInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
-		gridBagLayout.rowHeights = new int[] { 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		gridBagLayout.rowHeights = new int[] { 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0 };
 		gridBagLayout.columnWeights = new double[] { 1.0, 1.0, Double.MIN_VALUE };
-		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		setLayout(gridBagLayout);
 
 		JLabel lblContactPhoto = new JLabel("Contact Picture");
@@ -77,13 +81,24 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_btnOpenPicture.gridx = 0;
 		gbc_btnOpenPicture.gridy = 2;
 		add(btnOpenPicture, gbc_btnOpenPicture);
+		
+		btnOpenFolder = new JButton("Open Folder");
+		btnOpenFolder.setEnabled(false);
+		btnOpenFolder.addActionListener(this);
+		GridBagConstraints gbc_btnOpenFolder = new GridBagConstraints();
+		gbc_btnOpenFolder.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnOpenFolder.gridwidth = 2;
+		gbc_btnOpenFolder.insets = new Insets(0, 0, 5, 0);
+		gbc_btnOpenFolder.gridx = 0;
+		gbc_btnOpenFolder.gridy = 3;
+		add(btnOpenFolder, gbc_btnOpenFolder);
 
 		JLabel lblName = new JLabel("Name:");
 		GridBagConstraints gbc_lblName = new GridBagConstraints();
 		gbc_lblName.anchor = GridBagConstraints.WEST;
 		gbc_lblName.insets = new Insets(0, 0, 5, 5);
 		gbc_lblName.gridx = 0;
-		gbc_lblName.gridy = 3;
+		gbc_lblName.gridy = 4;
 		add(lblName, gbc_lblName);
 		
 		txtName = new JTextField();
@@ -93,7 +108,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtName.insets = new Insets(0, 0, 5, 0);
 		gbc_txtName.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtName.gridx = 0;
-		gbc_txtName.gridy = 4;
+		gbc_txtName.gridy = 5;
 		add(txtName, gbc_txtName);
 		txtName.setColumns(10);
 
@@ -102,7 +117,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblNumbers.anchor = GridBagConstraints.WEST;
 		gbc_lblNumbers.insets = new Insets(0, 0, 5, 5);
 		gbc_lblNumbers.gridx = 0;
-		gbc_lblNumbers.gridy = 5;
+		gbc_lblNumbers.gridy = 6;
 		add(lblNumbers, gbc_lblNumbers);
 
 		txtNumbers = new JTextField("");
@@ -112,15 +127,15 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblActualnumbers.gridwidth = 2;
 		gbc_lblActualnumbers.insets = new Insets(0, 0, 5, 0);
 		gbc_lblActualnumbers.gridx = 0;
-		gbc_lblActualnumbers.gridy = 6;
-		add(txtNumbers, gbc_lblActualnumbers);
+		gbc_lblActualnumbers.gridy = 7;
+		add(txtNumbers, gbc_lblActualnumbers);		
 
 		JLabel lblOrganisation = new JLabel("Organisation:");
 		GridBagConstraints gbc_lblOrganisation = new GridBagConstraints();
 		gbc_lblOrganisation.anchor = GridBagConstraints.WEST;
 		gbc_lblOrganisation.insets = new Insets(0, 0, 5, 5);
 		gbc_lblOrganisation.gridx = 0;
-		gbc_lblOrganisation.gridy = 7;
+		gbc_lblOrganisation.gridy = 9;
 		add(lblOrganisation, gbc_lblOrganisation);
 		
 		txtOrganisation = new JTextField();
@@ -130,7 +145,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtOrganisation.insets = new Insets(0, 0, 5, 0);
 		gbc_txtOrganisation.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtOrganisation.gridx = 0;
-		gbc_txtOrganisation.gridy = 8;
+		gbc_txtOrganisation.gridy = 10;
 		add(txtOrganisation, gbc_txtOrganisation);
 		txtOrganisation.setColumns(10);
 
@@ -139,7 +154,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblEmail.anchor = GridBagConstraints.WEST;
 		gbc_lblEmail.insets = new Insets(0, 0, 5, 5);
 		gbc_lblEmail.gridx = 0;
-		gbc_lblEmail.gridy = 9;
+		gbc_lblEmail.gridy = 11;
 		add(lblEmail, gbc_lblEmail);
 		
 		txtEmail = new JTextField();
@@ -149,7 +164,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtEmail.insets = new Insets(0, 0, 5, 0);
 		gbc_txtEmail.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtEmail.gridx = 0;
-		gbc_txtEmail.gridy = 10;
+		gbc_txtEmail.gridy = 12;
 		add(txtEmail, gbc_txtEmail);
 		txtEmail.setColumns(10);
 
@@ -158,7 +173,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblAddress.anchor = GridBagConstraints.WEST;
 		gbc_lblAddress.insets = new Insets(0, 0, 5, 5);
 		gbc_lblAddress.gridx = 0;
-		gbc_lblAddress.gridy = 11;
+		gbc_lblAddress.gridy = 13;
 		add(lblAddress, gbc_lblAddress);
 		
 		txtAddress = new JTextField();
@@ -168,7 +183,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtAddress.insets = new Insets(0, 0, 5, 0);
 		gbc_txtAddress.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtAddress.gridx = 0;
-		gbc_txtAddress.gridy = 12;
+		gbc_txtAddress.gridy = 14;
 		add(txtAddress, gbc_txtAddress);
 		txtAddress.setColumns(10);
 
@@ -177,7 +192,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblWebsite.anchor = GridBagConstraints.WEST;
 		gbc_lblWebsite.insets = new Insets(0, 0, 5, 5);
 		gbc_lblWebsite.gridx = 0;
-		gbc_lblWebsite.gridy = 13;
+		gbc_lblWebsite.gridy = 15;
 		add(lblWebsite, gbc_lblWebsite);
 		
 		txtWebsite = new JTextField();
@@ -187,7 +202,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtWebsite.insets = new Insets(0, 0, 5, 0);
 		gbc_txtWebsite.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtWebsite.gridx = 0;
-		gbc_txtWebsite.gridy = 14;
+		gbc_txtWebsite.gridy = 16;
 		add(txtWebsite, gbc_txtWebsite);
 		txtWebsite.setColumns(10);
 
@@ -196,7 +211,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblIm.anchor = GridBagConstraints.WEST;
 		gbc_lblIm.insets = new Insets(0, 0, 5, 5);
 		gbc_lblIm.gridx = 0;
-		gbc_lblIm.gridy = 15;
+		gbc_lblIm.gridy = 17;
 		add(lblIm, gbc_lblIm);
 		
 		txtIm = new JTextField();
@@ -206,7 +221,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtIm.insets = new Insets(0, 0, 5, 0);
 		gbc_txtIm.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtIm.gridx = 0;
-		gbc_txtIm.gridy = 16;
+		gbc_txtIm.gridy = 18;
 		add(txtIm, gbc_txtIm);
 		txtIm.setColumns(10);
 
@@ -215,7 +230,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblSkype.anchor = GridBagConstraints.WEST;
 		gbc_lblSkype.insets = new Insets(0, 0, 5, 5);
 		gbc_lblSkype.gridx = 0;
-		gbc_lblSkype.gridy = 17;
+		gbc_lblSkype.gridy = 19;
 		add(lblSkype, gbc_lblSkype);
 		
 		txtSkype = new JTextField();
@@ -225,7 +240,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_txtSkype.insets = new Insets(0, 0, 5, 0);
 		gbc_txtSkype.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtSkype.gridx = 0;
-		gbc_txtSkype.gridy = 18;
+		gbc_txtSkype.gridy = 20;
 		add(txtSkype, gbc_txtSkype);
 		txtSkype.setColumns(10);
 
@@ -234,7 +249,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblNotes.anchor = GridBagConstraints.WEST;
 		gbc_lblNotes.insets = new Insets(0, 0, 5, 5);
 		gbc_lblNotes.gridx = 0;
-		gbc_lblNotes.gridy = 19;
+		gbc_lblNotes.gridy = 21;
 		add(lblNotes, gbc_lblNotes);
 		
 		txtNotes = new JTextField();
@@ -242,8 +257,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
 		gbc_txtNotes.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txtNotes.gridwidth = 2;
-		gbc_txtNotes.insets = new Insets(0, 0, 0, 5);
-		gbc_txtNotes.gridy = 20;
+		gbc_txtNotes.gridy = 22;
 		gbc_txtNotes.gridx = 0;
 		add(txtNotes, gbc_txtNotes);
 	}
@@ -258,6 +272,9 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+		}
+		if (e.getSource().equals(btnOpenFolder)) {
+			//TODO: ordner muss irgendwie geöffnet werden
 		}
 
 	}
