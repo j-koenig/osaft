@@ -22,6 +22,7 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
+import android.util.Log;
 import android.util.SparseArray;
 import de.uni_hannover.android.artifactextract.artifacts.Artifact;
 import de.uni_hannover.android.artifactextract.artifacts.BrowserHistory;
@@ -210,7 +211,7 @@ public class Gatherer {
 		ArrayList<String> contactIds = new ArrayList<String>();
 		Uri contactsUri = ContactsContract.RawContacts.CONTENT_URI;
 		String[] projection = new String[] { RawContacts.CONTACT_ID, RawContacts._ID };
-		Cursor idCursor = cr.query(contactsUri, projection, null, null, null);
+		Cursor idCursor = cr.query(contactsUri, projection, null, null, "contact_id asc");
 
 		try {
 			while (idCursor.moveToNext()) {
@@ -307,7 +308,7 @@ public class Gatherer {
 				String[] numberAndContactId = getMMSAddress(id);
 
 				String sender = numberAndContactId[0];
-				//String contactId = numberAndContactId[1];
+				// String contactId = numberAndContactId[1];
 				boolean hasAttachment = getMMSData(id);
 				MMS mms = new MMS(sender, text, id, date, read, hasAttachment);
 				mmss.add(mms);
@@ -474,8 +475,28 @@ public class Gatherer {
 					long date = smsCursor.getLong(2);
 					boolean read = smsCursor.getString(3).equals("1");
 					boolean seen = smsCursor.getString(4).equals("1");
-					String person = smsCursor.getString(5);
-					SMS sms = new SMS(address, person, body, date, read, seen, i);
+					String personID = smsCursor.getString(5);
+					String personName = "";
+
+					
+					//TODO: evtl anders lösen sonst für jede sms ein DB call
+					Uri contactUri = ContactsContract.RawContactsEntity.CONTENT_URI;
+					String[] contactProjection = new String[] { RawContactsEntity._ID,
+							RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 };
+					String contactSelection = ContactsContract.RawContactsEntity.MIMETYPE + " = '"
+							+ ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
+							+ "' AND " + RawContactsEntity._ID + " = " + personID;
+					Cursor contactCursor = cr.query(contactUri, contactProjection,
+							contactSelection, null, null);
+					try {
+						while (contactCursor.moveToNext()) {
+							personName = contactCursor.getString(2);
+						}
+					} finally {
+						contactCursor.close();
+					}
+
+					SMS sms = new SMS(address, personName, body, date, read, seen, i);
 					smss.add(sms);
 				}
 			} finally {

@@ -4,7 +4,7 @@ import android.util.Log;
 
 public class SMS implements Artifact {
 
-	private String body, address, personID;
+	private String body, address, personName;
 	private long date;
 	private boolean read, seen;
 	private int status;
@@ -22,6 +22,8 @@ public class SMS implements Artifact {
 	 * 
 	 * @param address
 	 *            number of receiver
+	 * @param personName
+	 *            name of receiver
 	 * @param body
 	 *            text of sms
 	 * @param date
@@ -33,7 +35,7 @@ public class SMS implements Artifact {
 	 * @param status
 	 *            status of the sms
 	 */
-	public SMS(String address, String personID, String body, long date, boolean read, boolean seen,
+	public SMS(String address, String personName, String body, long date, boolean read, boolean seen,
 			int status) {
 		this.address = address;
 		this.body = body;
@@ -41,12 +43,12 @@ public class SMS implements Artifact {
 		this.read = read;
 		this.seen = seen;
 		this.status = status;
-		this.personID = personID;
+		this.personName = personName;
 	}
 
 	@Override
 	public String getCSV() {
-		return address + "," + ((personID == null) ? "" : personID) + "," + date + ","
+		return address + "," + personName + "," + date + ","
 				+ body.replace(",", "ESCAPED_COMMA") + "," + read + "," + seen + "," + status;
 	}
 
