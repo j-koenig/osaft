@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -459,6 +460,27 @@ public class Gatherer {
 
 	public void getSMS() {
 
+		// hier alle kontakte holen und mit contact_id und name in hashmap
+		// speichern
+		SparseArray<String> contactNames = new SparseArray<String>();
+
+		Uri contactUri = ContactsContract.RawContactsEntity.CONTENT_URI;
+		String[] contactProjection = new String[] { RawContactsEntity._ID,
+				RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 };
+		String contactSelection = ContactsContract.RawContactsEntity.MIMETYPE + " = '"
+				+ ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE + "'";
+		Cursor contactCursor = cr
+				.query(contactUri, contactProjection, contactSelection, null, null);
+		try {
+			while (contactCursor.moveToNext()) {
+				int id = contactCursor.getInt(0);
+				String name = contactCursor.getString(2);
+				contactNames.put(id, name);
+			}
+		} finally {
+			contactCursor.close();
+		}
+
 		String[] projection = new String[] { "address", "body", "date", "read", "seen", "person" };
 		String sort = "date ASC";
 		String[] smsStatus = new String[] { "inbox", "sent", "draft", "failed", "queued", "outbox",
@@ -475,25 +497,11 @@ public class Gatherer {
 					long date = smsCursor.getLong(2);
 					boolean read = smsCursor.getString(3).equals("1");
 					boolean seen = smsCursor.getString(4).equals("1");
-					String personID = smsCursor.getString(5);
+					int personID = smsCursor.getInt(5);
 					String personName = "";
-
 					
-					//TODO: evtl anders lösen sonst für jede sms ein DB call
-					Uri contactUri = ContactsContract.RawContactsEntity.CONTENT_URI;
-					String[] contactProjection = new String[] { RawContactsEntity._ID,
-							RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 };
-					String contactSelection = ContactsContract.RawContactsEntity.MIMETYPE + " = '"
-							+ ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
-							+ "' AND " + RawContactsEntity._ID + " = " + personID;
-					Cursor contactCursor = cr.query(contactUri, contactProjection,
-							contactSelection, null, null);
-					try {
-						while (contactCursor.moveToNext()) {
-							personName = contactCursor.getString(2);
-						}
-					} finally {
-						contactCursor.close();
+					if (personID != 0) {
+						personName = contactNames.get(personID);
 					}
 
 					SMS sms = new SMS(address, personName, body, date, read, seen, i);
