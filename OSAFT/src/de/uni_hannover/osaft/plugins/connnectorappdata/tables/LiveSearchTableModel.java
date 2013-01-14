@@ -25,22 +25,30 @@ public class LiveSearchTableModel extends DefaultTableModel {
 	public boolean isCellEditable(int row, int column) {
 		return false;
 	}
-	
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public void addRow(Object[] row) {
 		super.addRow(row);
 		originalData = getDataVector();
 	}
 
-//	public Class<? extends Object> getColumnClass(int c) {
-//		return getValueAt(0, c).getClass();
-//	}
-	
+	// needed for custom cell rendering (in this case just
+	// CustomDateCellRenderer)
+	public Class<? extends Object> getColumnClass(int c) {
+		if (!getDataVector().isEmpty()) {
+			return getValueAt(0, c).getClass();
+		}
+		return Object.class;
+	}
+
 	public void resetData() {
 		setDataVector(originalData, columnNames);
 		fireTableDataChanged();
 	}
-	
+
+	// when the user types in the searchfield, the table will be filtered for
+	// this input
 	public void filterData(String filterString) {
 		filteredData.clear();
 		for (int i = 0; i < originalData.size(); i++) {

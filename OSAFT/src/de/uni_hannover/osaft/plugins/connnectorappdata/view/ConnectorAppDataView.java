@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -42,10 +44,12 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableMod
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 
 //TODO: columns automatisch adjusten?
+//TODO: um exceptions kümmern
+//TODO: fokusproblem, wenn man einmal in die searchbar geklickt hat
 
 @PluginImplementation
 public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, ActionListener,
-		ListSelectionListener, KeyListener {
+		ListSelectionListener, KeyListener, FocusListener {
 
 	private JTabbedPane tabs;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserSPanel, callPanel, contactPanel,
@@ -63,7 +67,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JTextArea smsTextArea;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
-	private JTextField contactSearch;
+	private JTextField contactSearch, calendarSearch, browserHSearch, browserSSearch, smsSearch, mmsSearch, callsSearch;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -73,6 +77,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	 * @wbp.parser.entryPoint
 	 */
 	@Init
+	//called, when plugin is initialized
 	public void init() {
 
 		tabVector = new Vector<JPanel>();
@@ -116,6 +121,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		browserHTable = new JTable();
 		browserSTable = new JTable();
 		contactTable = new JTable();
+		//selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
 		mmsTable.getSelectionModel().addListSelectionListener(this);
@@ -141,76 +147,72 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 			tables.get(i).addMouseListener(this);
 		}
 
-		// TODO: weg:
-		// // columns are sortable:
-		// calendarTable.setAutoCreateRowSorter(true);
-		// callTable.setAutoCreateRowSorter(true);
-		// browserHTable.setAutoCreateRowSorter(true);
-		// browserSTable.setAutoCreateRowSorter(true);
-		// contactTable.setAutoCreateRowSorter(true);
-		// mmsTable.setAutoCreateRowSorter(true);
-		// smsTable.setAutoCreateRowSorter(true);
-		//
-		// //reorder of columns is disabled
-		// calendarTable.getTableHeader().setReorderingAllowed(false);
-		// callTable.getTableHeader().setReorderingAllowed(false);
-		// browserHTable.getTableHeader().setReorderingAllowed(false);
-		// browserSTable.getTableHeader().setReorderingAllowed(false);
-		// contactTable.getTableHeader().setReorderingAllowed(false);
-		// mmsTable.getTableHeader().setReorderingAllowed(false);
-		// smsTable.getTableHeader().setReorderingAllowed(false);
-		//
-		//
-		// calendarTable.setDefaultRenderer(Date.class, cdcr);
-		// callTable.setDefaultRenderer(Date.class, cdcr);
-		// browserHTable.setDefaultRenderer(Date.class, cdcr);
-		// browserSTable.setDefaultRenderer(Date.class, cdcr);
-		// contactTable.setDefaultRenderer(Date.class, cdcr);
-		// mmsTable.setDefaultRenderer(Date.class, cdcr);
-		// smsTable.setDefaultRenderer(Date.class, cdcr);
-		//
-		// calendarTable.addMouseListener(this);
-		// callTable.addMouseListener(this);
-		// browserHTable.addMouseListener(this);
-		// browserSTable.addMouseListener(this);
-		// contactTable.addMouseListener(this);
-		// mmsTable.addMouseListener(this);
-		// smsTable.addMouseListener(this);
-
-		// put scrollpane-wrapped tables into panels
+		// put scrollpane-wrapped tables into panels, add listeners and searchbars
 		calendarScrollPane = new JScrollPane(calendarTable);
+		calendarSearch = new JTextField("Search");
+		calendarSearch.addKeyListener(this);
+		calendarSearch.addFocusListener(this);
+		calendarPanel.add(calendarSearch, BorderLayout.NORTH);
 		calendarPanel.add(calendarScrollPane, BorderLayout.CENTER);
 
 		callScrollPane = new JScrollPane(callTable);
+		callsSearch = new JTextField("Search");
+		callsSearch.addKeyListener(this);
+		callsSearch.addFocusListener(this);
+		callPanel.add(callsSearch, BorderLayout.NORTH);
 		callPanel.add(callScrollPane, BorderLayout.CENTER);
 
 		browserHScrollPane = new JScrollPane(browserHTable);
+		browserHSearch = new JTextField("Search");
+		browserHSearch.addFocusListener(this);
+		browserHSearch.addKeyListener(this);
+		browserHPanel.add(browserHSearch, BorderLayout.NORTH);
 		browserHPanel.add(browserHScrollPane, BorderLayout.CENTER);
 
 		browserSScrollPane = new JScrollPane(browserSTable);
+		browserSSearch = new JTextField("Search");
+		browserSSearch.addFocusListener(this);
+		browserSSearch.addKeyListener(this);
+		browserSPanel.add(browserSSearch, BorderLayout.NORTH);
 		browserSPanel.add(browserSScrollPane, BorderLayout.CENTER);
-
+		
+		//contacts, mms and sms also provide an "info"-panel
 		contactScrollPane = new JScrollPane(contactTable);
-		contactPanel.add(contactScrollPane, BorderLayout.CENTER);
+		JPanel contactWrapper = new JPanel(new BorderLayout());
+		contactWrapper.add(contactScrollPane, BorderLayout.CENTER);
+		contactSearch = new JTextField("Search");
+		contactSearch.addKeyListener(this);
+		contactSearch.addFocusListener(this);
+		contactWrapper.add(contactSearch, BorderLayout.NORTH);
+		contactPanel.add(contactWrapper, BorderLayout.CENTER);
 		contactInfo = new ContactInfoPanel();
 		contactInfo.setPreferredSize(new Dimension(280, 740));
 		contactInfoScroll = new JScrollPane(contactInfo, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		contactInfoScroll.setPreferredSize(new Dimension(300, 0));
 		contactPanel.add(contactInfoScroll, BorderLayout.EAST);
-		contactSearch = new JTextField();
-		contactSearch.addKeyListener(this);
-		contactPanel.add(contactSearch, BorderLayout.NORTH);
+		
 
 		mmsScrollPane = new JScrollPane(mmsTable);
-		mmsPanel.add(mmsScrollPane, BorderLayout.CENTER);
+		JPanel mmsWrapper = new JPanel(new BorderLayout());
+		mmsWrapper.add(mmsScrollPane, BorderLayout.CENTER);
+		mmsSearch = new JTextField("Search");
+		mmsSearch.addKeyListener(this);
+		mmsSearch.addFocusListener(this);
+		mmsWrapper.add(mmsSearch, BorderLayout.NORTH);
+		mmsPanel.add(mmsWrapper, BorderLayout.CENTER);
 		mmsInfo = new MMSInfoPanel();
 		mmsInfo.setPreferredSize(new Dimension(300, 0));
 		mmsPanel.add(mmsInfo, BorderLayout.EAST);
-		mmsPanel.add(new JTextField("Search"), BorderLayout.NORTH);
 
 		smsScrollPane = new JScrollPane(smsTable);
-		smsPanel.add(smsScrollPane, BorderLayout.CENTER);
+		JPanel smsWrapper = new JPanel(new BorderLayout());
+		smsWrapper.add(smsScrollPane, BorderLayout.CENTER);
+		smsSearch = new JTextField("Search");
+		smsSearch.addKeyListener(this);
+		smsSearch.addFocusListener(this);
+		smsWrapper.add(smsSearch, BorderLayout.NORTH);
+		smsPanel.add(smsWrapper, BorderLayout.CENTER);
 		JPanel smsTextPanel = new JPanel(new BorderLayout());
 		smsTextArea = new JTextArea();
 		smsTextArea.setEditable(false);
@@ -219,7 +221,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		smsTextPanel.add(new JScrollPane(smsTextArea));
 		smsTextPanel.add(new JLabel("Text:"), BorderLayout.NORTH);
 		smsTextPanel.setPreferredSize(new Dimension(300, 100));
-
 		smsPanel.add(smsTextPanel, BorderLayout.EAST);
 
 		openCSVButton = new JButton("Open CSV Files");
@@ -265,6 +266,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == openCSVButton) {
+			//open filechooser
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File folder = fc.getSelectedFile();
@@ -345,17 +347,10 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 			tabs.add(tabVector.get(i), 0);
 		}
 
-		// if sms.csv found and contacts.csv found change the column header in
-		// sms table to "Name"
-		if (tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
-			smsTable.getTableHeader().getColumnModel().getColumn(1).setHeaderValue("Name");
-		} else {
-			smsTable.getTableHeader().getColumnModel().getColumn(1).setHeaderValue("Contact ID");
-		}
-
 		tabVector.clear();
 	}
 
+	//update info-panels if selected row changed
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		int selectedRow;
@@ -440,24 +435,89 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+		String search = "";
+		LiveSearchTableModel model = null;
 		if (e.getSource().equals(contactSearch)) {
-			String search = contactSearch.getText();
-			LiveSearchTableModel contactTableModel = (LiveSearchTableModel) contactTable.getModel();
-			if (!search.equals("")) {
-				contactTableModel.filterData(search);
-			}
-			else {
-				contactTableModel.resetData();
-			}
-			contactScrollPane.getVerticalScrollBar().setValue(0);
+			search = contactSearch.getText();
+			model = (LiveSearchTableModel) contactTable.getModel();
 		}
+		else if (e.getSource().equals(browserHSearch)) {
+			search = browserHSearch.getText();
+			model = (LiveSearchTableModel) browserHTable.getModel();
+		}
+		else if (e.getSource().equals(browserSSearch)) {
+			search = browserSSearch.getText();
+			model = (LiveSearchTableModel) browserSTable.getModel();
+		}
+		else if (e.getSource().equals(callsSearch)) {
+			search = callsSearch.getText();
+			model = (LiveSearchTableModel) callTable.getModel();
+		}
+		else if (e.getSource().equals(calendarSearch)) {
+			search = calendarSearch.getText();
+			model = (LiveSearchTableModel) calendarTable.getModel();
+		}
+		else if (e.getSource().equals(smsSearch)) {
+			search = smsSearch.getText();
+			model = (LiveSearchTableModel) smsTable.getModel();
+		}
+		else if (e.getSource().equals(mmsSearch)) {
+			search = mmsSearch.getText();
+			model = (LiveSearchTableModel) mmsTable.getModel();
+		}		
+		if (!search.equals("")) {
+			model.filterData(search);
+		}
+		else {
+			model.resetData();
+		}
+		browserHScrollPane.getVerticalScrollBar().setValue(0);
+		browserSScrollPane.getVerticalScrollBar().setValue(0);
+		callScrollPane.getVerticalScrollBar().setValue(0);
+		calendarScrollPane.getVerticalScrollBar().setValue(0);
+		contactScrollPane.getVerticalScrollBar().setValue(0);
+		mmsScrollPane.getVerticalScrollBar().setValue(0);
+		smsScrollPane.getVerticalScrollBar().setValue(0);
 
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
+		
+	}
 
+	@Override
+	public void focusGained(FocusEvent e) {
+		if (e.getSource().equals(contactSearch)) {
+			contactSearch.setText("");
+		}
+		else if (e.getSource().equals(browserHSearch)) {
+			browserHSearch.setText("");
+		}
+		else if (e.getSource().equals(browserSSearch)) {
+			browserSSearch.setText("");
+		}
+		else if (e.getSource().equals(calendarSearch)) {
+			calendarSearch.setText("");
+		}
+		else if (e.getSource().equals(callsSearch)) {
+			callsSearch.setText("");
+		}
+		else if (e.getSource().equals(mmsSearch)) {
+			mmsSearch.setText("");
+		}
+		else if (e.getSource().equals(smsSearch)) {
+			smsSearch.setText("");
+		}
+		
+	}
+
+	@Override
+	public void focusLost(FocusEvent e) {
+//		if (e.getSource().equals(contactSearch)) {
+//			contactSearch.setText("Search");
+//		}
+		
 	}
 
 }

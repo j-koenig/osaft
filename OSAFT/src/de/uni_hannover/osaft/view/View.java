@@ -1,31 +1,27 @@
 package de.uni_hannover.osaft.view;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import net.xeoh.plugins.base.util.PluginManagerUtil;
 import de.uni_hannover.osaft.controller.Controller;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
-import javax.swing.JMenuBar;
-import java.awt.BorderLayout;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.swing.JMenu;
-import java.awt.SystemColor;
 
 public class View extends JFrame implements ActionListener {
 
@@ -77,9 +73,16 @@ public class View extends JFrame implements ActionListener {
 
 		mnEdit = new JMenu("Edit");
 		menuBar.add(mnEdit);
+		
+		
+		ArrayList<ViewPlugin> plugins = new ArrayList<ViewPlugin>(pmu.getPlugins(ViewPlugin.class));
+		Collections.sort(plugins, new Comparator<ViewPlugin>() {
+			public int compare(ViewPlugin p1, ViewPlugin p2) {
+				return p1.getName().compareTo(p2.getName());
+			}
+		});
 
-		for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator
-				.hasNext();) {
+		for (Iterator<ViewPlugin> iterator = plugins.iterator(); iterator.hasNext();) {
 			ViewPlugin vp = (ViewPlugin) iterator.next();
 			viewPluginList.add(vp);
 			JButton b = new JButton(vp.getName());

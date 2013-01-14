@@ -12,12 +12,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Date;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
-
-//TODO: suche implementieren
 
 public class ConnectorAppDataController {
 	public static String BROWSER_HISTORY_FILENAME = "BrowserHistory.csv";
@@ -28,16 +27,12 @@ public class ConnectorAppDataController {
 	public static String MMS_FILENAME = "MMS.csv";
 	public static String SMS_FILENAME = "SMS.csv";
 
-	private boolean smsFound, contactsFound;
-
 	private ConnectorAppDataView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
 
 	public ConnectorAppDataController(ConnectorAppDataView view) {
 		this.view = view;
-		smsFound = false;
-		contactsFound = false;
 		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title",
 				"Description", "Start", "End", "Location", "Allday" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date",
@@ -47,7 +42,7 @@ public class ConnectorAppDataController {
 		browserSearchTableModel = new LiveSearchTableModel(new Object[] { "Date", "Search" });
 		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers",
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes" });
-		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Contact ID", "Date",
+		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Name", "Date",
 				"Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text",
 				"Read", "Attachment" });
@@ -70,10 +65,6 @@ public class ConnectorAppDataController {
 			}
 		}
 
-		if (smsFound && contactsFound) {
-			addNameToSMSTable();
-		}
-
 		view.showTabs();
 		return processedSomething;
 	}
@@ -85,12 +76,10 @@ public class ConnectorAppDataController {
 			br = new BufferedReader(new FileReader(f));
 			if (f.getName().equals(SMS_FILENAME)) {
 				processSMS(br);
-				smsFound = true;
 			} else if (f.getName().equals(MMS_FILENAME)) {
 				processMMS(br);
 			} else if (f.getName().equals(CONTACTS_FILENAME)) {
 				processContacts(br);
-				contactsFound = true;
 			} else if (f.getName().equals(CALLS_FILENAME)) {
 				processCalls(br);
 			} else if (f.getName().equals(CALENDAR_FILENAME)) {
@@ -106,6 +95,7 @@ public class ConnectorAppDataController {
 		} catch (IndexOutOfBoundsException e) {
 			// TODO: könnte auch ne indexoutofbounds werfen (wenn datei kaputt
 			// is und array nicht 8 einträge hat)!
+			JOptionPane.showMessageDialog(view.getView(), "One or more csv files are corrupted", "Warning", JOptionPane.WARNING_MESSAGE);
 		} finally {
 			if (br != null) {
 				try {
@@ -218,7 +208,7 @@ public class ConnectorAppDataController {
 		while ((curLine = br.readLine()) != null) {
 			String[] values = curLine.split(",");
 			String number = values[0];
-			String contactId = values[1];
+			String contactName = values[1];
 			Date date = new Date(Long.parseLong(values[2]));
 			String text = values[3];
 			text = text.replace("ESCAPED_COMMA", ",");
@@ -251,7 +241,7 @@ public class ConnectorAppDataController {
 			default:
 				break;
 			}
-			smsTableModel.addRow(new Object[] { number, contactId, date, text, read, seen,
+			smsTableModel.addRow(new Object[] { number, contactName, date, text, read, seen,
 					statusAsText });
 		}
 		view.addTab(SMS_FILENAME, smsTableModel);
@@ -429,22 +419,6 @@ public class ConnectorAppDataController {
 		clipboard.setContents(strSel, null);
 	}
 
-	private void addNameToSMSTable() {
-
-		for (int i = 0; i < smsTableModel.getRowCount(); i++) {
-			String smsContactId = smsTableModel.getValueAt(i, 1).toString();
-			for (int j = 0; j < contactsTableModel.getRowCount(); j++) {
-				String contactId = contactsTableModel.getValueAt(j, 0).toString();
-				if (smsContactId.equals(contactId)) {
-					String name = contactsTableModel.getValueAt(j, 1).toString();
-					smsTableModel.setValueAt(name, i, 1);
-					break;
-				}
-			}
-		}
-
-		smsFound = false;
-		contactsFound = false;
-	}
+	
 
 }
