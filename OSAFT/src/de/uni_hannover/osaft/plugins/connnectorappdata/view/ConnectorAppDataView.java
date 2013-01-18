@@ -37,6 +37,7 @@ import javax.swing.event.ListSelectionListener;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
+import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.controller.ConnectorAppDataController;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
@@ -67,7 +68,9 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JTextArea smsTextArea;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
-	private JTextField contactSearch, calendarSearch, browserHSearch, browserSSearch, smsSearch, mmsSearch, callsSearch;
+	private JTextField contactSearch, calendarSearch, browserHSearch, browserSSearch, smsSearch,
+			mmsSearch, callsSearch;
+	private ADBThread adb;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -77,7 +80,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	 * @wbp.parser.entryPoint
 	 */
 	@Init
-	//called, when plugin is initialized
+	// called, when plugin is initialized
 	public void init() {
 
 		tabVector = new Vector<JPanel>();
@@ -121,7 +124,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		browserHTable = new JTable();
 		browserSTable = new JTable();
 		contactTable = new JTable();
-		//selectionlistener listens for selection changes in the table
+		// selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
 		mmsTable.getSelectionModel().addListSelectionListener(this);
@@ -147,7 +150,8 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 			tables.get(i).addMouseListener(this);
 		}
 
-		// put scrollpane-wrapped tables into panels, add listeners and searchbars
+		// put scrollpane-wrapped tables into panels, add listeners and
+		// searchbars
 		calendarScrollPane = new JScrollPane(calendarTable);
 		calendarSearch = new JTextField("Search");
 		calendarSearch.addKeyListener(this);
@@ -175,8 +179,8 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		browserSSearch.addKeyListener(this);
 		browserSPanel.add(browserSSearch, BorderLayout.NORTH);
 		browserSPanel.add(browserSScrollPane, BorderLayout.CENTER);
-		
-		//contacts, mms and sms also provide an "info"-panel
+
+		// contacts, mms and sms also provide an "info"-panel
 		contactScrollPane = new JScrollPane(contactTable);
 		JPanel contactWrapper = new JPanel(new BorderLayout());
 		contactWrapper.add(contactScrollPane, BorderLayout.CENTER);
@@ -191,7 +195,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		contactInfoScroll.setPreferredSize(new Dimension(300, 0));
 		contactPanel.add(contactInfoScroll, BorderLayout.EAST);
-		
 
 		mmsScrollPane = new JScrollPane(mmsTable);
 		JPanel mmsWrapper = new JPanel(new BorderLayout());
@@ -266,7 +269,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == openCSVButton) {
-			//open filechooser
+			// open filechooser
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File folder = fc.getSelectedFile();
@@ -350,7 +353,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		tabVector.clear();
 	}
 
-	//update info-panels if selected row changed
+	// update info-panels if selected row changed
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		int selectedRow;
@@ -430,7 +433,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
+		// not used
 	}
 
 	@Override
@@ -440,35 +443,28 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		if (e.getSource().equals(contactSearch)) {
 			search = contactSearch.getText();
 			model = (LiveSearchTableModel) contactTable.getModel();
-		}
-		else if (e.getSource().equals(browserHSearch)) {
+		} else if (e.getSource().equals(browserHSearch)) {
 			search = browserHSearch.getText();
 			model = (LiveSearchTableModel) browserHTable.getModel();
-		}
-		else if (e.getSource().equals(browserSSearch)) {
+		} else if (e.getSource().equals(browserSSearch)) {
 			search = browserSSearch.getText();
 			model = (LiveSearchTableModel) browserSTable.getModel();
-		}
-		else if (e.getSource().equals(callsSearch)) {
+		} else if (e.getSource().equals(callsSearch)) {
 			search = callsSearch.getText();
 			model = (LiveSearchTableModel) callTable.getModel();
-		}
-		else if (e.getSource().equals(calendarSearch)) {
+		} else if (e.getSource().equals(calendarSearch)) {
 			search = calendarSearch.getText();
 			model = (LiveSearchTableModel) calendarTable.getModel();
-		}
-		else if (e.getSource().equals(smsSearch)) {
+		} else if (e.getSource().equals(smsSearch)) {
 			search = smsSearch.getText();
 			model = (LiveSearchTableModel) smsTable.getModel();
-		}
-		else if (e.getSource().equals(mmsSearch)) {
+		} else if (e.getSource().equals(mmsSearch)) {
 			search = mmsSearch.getText();
 			model = (LiveSearchTableModel) mmsTable.getModel();
-		}		
+		}
 		if (!search.equals("")) {
 			model.filterData(search);
-		}
-		else {
+		} else {
 			model.resetData();
 		}
 		browserHScrollPane.getVerticalScrollBar().setValue(0);
@@ -483,40 +479,49 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		
+		// not used
 	}
 
 	@Override
 	public void focusGained(FocusEvent e) {
 		if (e.getSource().equals(contactSearch)) {
 			contactSearch.setText("");
-		}
-		else if (e.getSource().equals(browserHSearch)) {
+		} else if (e.getSource().equals(browserHSearch)) {
 			browserHSearch.setText("");
-		}
-		else if (e.getSource().equals(browserSSearch)) {
+		} else if (e.getSource().equals(browserSSearch)) {
 			browserSSearch.setText("");
-		}
-		else if (e.getSource().equals(calendarSearch)) {
+		} else if (e.getSource().equals(calendarSearch)) {
 			calendarSearch.setText("");
-		}
-		else if (e.getSource().equals(callsSearch)) {
+		} else if (e.getSource().equals(callsSearch)) {
 			callsSearch.setText("");
-		}
-		else if (e.getSource().equals(mmsSearch)) {
+		} else if (e.getSource().equals(mmsSearch)) {
 			mmsSearch.setText("");
-		}
-		else if (e.getSource().equals(smsSearch)) {
+		} else if (e.getSource().equals(smsSearch)) {
 			smsSearch.setText("");
 		}
-		
+
 	}
 
 	@Override
 	public void focusLost(FocusEvent e) {
-//		if (e.getSource().equals(contactSearch)) {
-//			contactSearch.setText("Search");
-//		}
+		// if (e.getSource().equals(contactSearch)) {
+		// contactSearch.setText("Search");
+		// }
+	}
+
+	@Override
+	public void setADBThread(ADBThread adb) {
+		this.adb = adb;
+	}
+
+	@Override
+	public void setCaseFolder(File caseFolder) {
+		// plugin doesn't need to save something
+	}
+
+	@Override
+	public void reactToADBResult(String result) {
+		// TODO Auto-generated method stub
 		
 	}
 
