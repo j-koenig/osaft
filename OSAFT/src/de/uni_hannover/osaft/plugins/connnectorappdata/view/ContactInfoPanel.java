@@ -13,13 +13,10 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.BoundedRangeModel;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 
 //CREATED WITH WINDOWBUILDER
@@ -43,7 +40,6 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 	private JTextField txtSkype;
 	private JTextField txtNotes;
 	private JButton btnOpenFolder;
-	private JScrollBar scrollBar_1;
 
 	public ContactInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -273,8 +269,15 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
-		if (e.getSource().equals(btnOpenFolder)) {
-			//TODO: ordner muss irgendwie geöffnet werden
+		//FIXME: läuft nur unter windows...
+		else if (e.getSource().equals(btnOpenFolder)) {
+			Desktop dt = Desktop.getDesktop();
+			try {
+				dt.open(new File(currentPic.getParent()));
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 
 	}
@@ -282,6 +285,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 	public void setInfo(String name, String numbers, String organisation, String emails,
 			String addresses, String websites, String im, String skype, String notes, File picFile) {
 		btnOpenPicture.setEnabled(true);
+		btnOpenFolder.setEnabled(true);
 		currentPic = picFile;
 
 		txtName.setText(name);
@@ -311,6 +315,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		lblPicture.setText("No Picture");
 		lblPicture.setIcon(null);
 		btnOpenPicture.setEnabled(false);
+		btnOpenFolder.setEnabled(false);
 		
 		txtName.setText(name);
 		txtNumbers.setText(numbers);

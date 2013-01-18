@@ -9,7 +9,7 @@ import javax.swing.UIManager;
 import net.xeoh.plugins.base.PluginManager;
 import net.xeoh.plugins.base.impl.PluginManagerFactory;
 import net.xeoh.plugins.base.util.PluginManagerUtil;
-import de.uni_hannover.osaft.view.View;
+import de.uni_hannover.osaft.view.OSAFTView;
 
 public class Main {
 
@@ -34,6 +34,13 @@ public class Main {
 			pluginFolder.mkdir();
 			pm.addPluginsFrom(pluginFolder.toURI());
 		}		
+		
+		//FIXME:scheint auch einfach so zu funzen!
+//		File pluginFolder = new File("plugins");
+//		if (!pluginFolder.exists()) {
+//			pluginFolder.mkdir();
+//		}
+//		pm.addPluginsFrom(new File("plugins").toURI());
 
 		try {
 			pm.addPluginsFrom(new URI("classpath://*"));
@@ -42,7 +49,7 @@ public class Main {
 			e.printStackTrace();
 		}
 		PluginManagerUtil pmu = new PluginManagerUtil(pm);
-		View frame = new View("OSAFT", pmu);
+		OSAFTView frame = new OSAFTView("OSAFT", pmu);
 		frame.setVisible(true);
 	}
 

@@ -141,7 +141,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 			}
 		}
 		
-		//TODO: funzt das auf windows? hier in eclipse nich...
+		//TODO: funzt unter windows, aber nicht ubuntu. ka...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
 			System.out.println(currentFile.getParent());
