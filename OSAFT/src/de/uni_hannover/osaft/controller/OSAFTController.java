@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
 
@@ -41,6 +42,8 @@ public class OSAFTController {
 		Thread adbThread = new Thread(adb);
 		adbThread.start();
 
+		//System.out.println(adb.getDevices());
+		
 	}
 
 	private void initProperties() {
@@ -196,6 +199,10 @@ public class OSAFTController {
 	public void dumpsys() {
 		
 
+	}
+	
+	public ArrayList<String> getDevices() {
+		return adb.getDevices();
 	}
 	
 }

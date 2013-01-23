@@ -3,6 +3,9 @@ package de.uni_hannover.osaft.view;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -10,8 +13,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -29,11 +34,12 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 //TODO: config file für pfad zu adb; adb auf pc, mac linux ausführbar machen
 //TODO: einstellungsmenü für pfad zu adb ändern
 //TODO: aktuellen casefolder irgendwo anzeigen (vllt im gleichen panel wie aktuell ausgewähltes phone)
+//TODO: refreshbutton für devices combobox 
 
 public class OSAFTView extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
-	private OSAFTController c;
+	private OSAFTController controller;
 	private JPanel viewPanel, buttonPanel;
 	private JScrollPane scrollButtonPane;
 	private ArrayList<ViewPlugin> viewPluginList;
@@ -45,35 +51,99 @@ public class OSAFTView extends JFrame implements ActionListener {
 	private JMenu mnEdit;
 	private JMenuItem mntmExit;
 	final private JDialog progressDialog;
+	private JLabel actualCurrentCaseLabel;
+	private JButton refreshDevicesButton;
+	private JComboBox devicesCombo;
 
 	public OSAFTView(String title, PluginManagerUtil pmu) {
 		super(title);
 		this.pmu = pmu;
-		progressDialog = new JDialog(this, "Executing ADB command", false);		
+		progressDialog = new JDialog(this, "Executing ADB command", false);
 		viewPluginList = new ArrayList<ViewPlugin>();
 		pluginButtonList = new ArrayList<JButton>();
-		
+
+		controller = new OSAFTController(this, pmu);
 		initGUI();
-		c = new OSAFTController(this, pmu);
 	}
 
 	private void initGUI() {
-				
-	    JProgressBar dpb = new JProgressBar();
-	    dpb.setIndeterminate(true);
-	    progressDialog.add(BorderLayout.CENTER, dpb);
-	    progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-	    progressDialog.setSize(300, 10);
-		progressDialog.setLocationRelativeTo(null);			
+
+		JProgressBar dpb = new JProgressBar();
+		dpb.setIndeterminate(true);
+		progressDialog.getContentPane().add(BorderLayout.CENTER, dpb);
+		progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		progressDialog.setSize(300, 10);
+		progressDialog.setLocationRelativeTo(null);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1200, 700);
 		getContentPane().setLayout(new BorderLayout(0, 0));
+
 		buttonPanel = new JPanel();
-		scrollButtonPane = new JScrollPane(buttonPanel);
-		getContentPane().add(scrollButtonPane, BorderLayout.WEST);
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-		
+		scrollButtonPane = new JScrollPane(buttonPanel);
+
+		// <created with WindowBuilder>
+		JPanel devicesPanel = new JPanel();
+		devicesPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		devicesPanel.setPreferredSize(new Dimension(0, 120));
+		GridBagLayout gbl_devicesPanel = new GridBagLayout();
+		gbl_devicesPanel.columnWidths = new int[] { 278, 0, 0 };
+		gbl_devicesPanel.rowHeights = new int[] { 35, 20, 28, 23, 0 };
+		gbl_devicesPanel.columnWeights = new double[] { 1.0, 0.0, Double.MIN_VALUE };
+		gbl_devicesPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		devicesPanel.setLayout(gbl_devicesPanel);
+		GridBagConstraints gbc_selectedPhoneLabel = new GridBagConstraints();
+		gbc_selectedPhoneLabel.anchor = GridBagConstraints.SOUTH;
+		gbc_selectedPhoneLabel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_selectedPhoneLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_selectedPhoneLabel.gridx = 0;
+		gbc_selectedPhoneLabel.gridy = 0;
+		JLabel selectedPhoneLabel = new JLabel("Selected phone:");
+		devicesPanel.add(selectedPhoneLabel, gbc_selectedPhoneLabel);
+
+		devicesCombo = new JComboBox();
+		GridBagConstraints gbc_devicesCombo = new GridBagConstraints();
+		gbc_devicesCombo.fill = GridBagConstraints.BOTH;
+		gbc_devicesCombo.insets = new Insets(0, 0, 5, 5);
+		gbc_devicesCombo.gridx = 0;
+		gbc_devicesCombo.gridy = 1;
+		devicesPanel.add(devicesCombo, gbc_devicesCombo);
+
+		fillDevicesComboBox();
+
+		refreshDevicesButton = new JButton("Refresh");
+		refreshDevicesButton.addActionListener(this);
+		GridBagConstraints gbc_refreshDevicesButton = new GridBagConstraints();
+		gbc_refreshDevicesButton.insets = new Insets(0, 0, 5, 0);
+		gbc_refreshDevicesButton.gridx = 1;
+		gbc_refreshDevicesButton.gridy = 1;
+		devicesPanel.add(refreshDevicesButton, gbc_refreshDevicesButton);
+		JLabel currentCaseLabel = new JLabel("Current case folder:");
+		GridBagConstraints gbc_currentCaseLabel = new GridBagConstraints();
+		gbc_currentCaseLabel.anchor = GridBagConstraints.SOUTH;
+		gbc_currentCaseLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_currentCaseLabel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_currentCaseLabel.gridx = 0;
+		gbc_currentCaseLabel.gridy = 2;
+		devicesPanel.add(currentCaseLabel, gbc_currentCaseLabel);
+
+		actualCurrentCaseLabel = new JLabel("FooBar");
+		GridBagConstraints gbc_actualCurrentCaseLabel = new GridBagConstraints();
+		gbc_actualCurrentCaseLabel.anchor = GridBagConstraints.NORTHWEST;
+		gbc_actualCurrentCaseLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_actualCurrentCaseLabel.gridx = 0;
+		gbc_actualCurrentCaseLabel.gridy = 3;
+		devicesPanel.add(actualCurrentCaseLabel, gbc_actualCurrentCaseLabel);
+
+		// </created with WindowBuilder>
+
+		JPanel buttonAndDevicesPanel = new JPanel(new BorderLayout());
+		buttonAndDevicesPanel.setPreferredSize(new Dimension(300, 0));
+		buttonAndDevicesPanel.add(devicesPanel, BorderLayout.NORTH);
+		buttonAndDevicesPanel.add(scrollButtonPane, BorderLayout.CENTER);
+
+		getContentPane().add(buttonAndDevicesPanel, BorderLayout.WEST);
 
 		viewPanelLayout = new CardLayout();
 		viewPanel = new JPanel(viewPanelLayout);
@@ -119,18 +189,32 @@ public class OSAFTView extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == mntmExit) {
 			System.exit(0);
+		} else if (e.getSource() == refreshDevicesButton) {
+			fillDevicesComboBox();
 		} else {
 			JButton b = (JButton) e.getSource();
 			int index = pluginButtonList.indexOf(b);
 			viewPanelLayout.show(viewPanel, String.valueOf(index));
 			viewPluginList.get(index).triggered();
-			//c.dumpsys();
+			// c.dumpsys();
 			// c.logcat();
 		}
 	}
-	
+
 	public JDialog getProgressDialog() {
 		return progressDialog;
+	}
+	
+	private void fillDevicesComboBox() {
+		ArrayList<String> devices = controller.getDevices();
+		devicesCombo.removeAllItems();
+		if(devices.size() == 0) {
+			devicesCombo.addItem("No device attached");
+			return;
+		}
+		for (int i = 0; i < devices.size(); i++) {
+			devicesCombo.addItem(devices.get(i));
+		}
 	}
 
 }

@@ -1,5 +1,10 @@
 package de.uni_hannover.osaft.adb;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -13,9 +18,11 @@ public class ADBThread implements Runnable {
 	private String adbExecutable;
 	// Singleton:
 	private static ADBThread instance;
+	private Runtime rt;
 
 	private ADBThread() {
 		commands = new LinkedBlockingQueue<ADBSwingWorker>();
+		rt = Runtime.getRuntime();
 	}
 
 	@Override
@@ -24,9 +31,10 @@ public class ADBThread implements Runnable {
 			try {
 				// Blocking queue blocks thread until something is added
 				ADBSwingWorker asw = commands.take();
-				//TODO: möglichkeit prozess zu unterbrechen?
+				// TODO: möglichkeit prozess zu unterbrechen?
 				asw.execute();
-				//wait for current swingworker (get() blocks the thread until swingworker is done)
+				// wait for current swingworker (get() blocks the thread until
+				// swingworker is done)
 				asw.get();
 				System.out.println("jaaa!");
 			} catch (InterruptedException e) {
@@ -63,6 +71,36 @@ public class ADBThread implements Runnable {
 	// commands.add(cmd);
 	// System.out.println("added command!");
 	// }
+
+	public ArrayList<String> getDevices() {
+		Process p;
+		ArrayList<String> output = new ArrayList<String>();
+		try {
+			p = rt.exec(adbExecutable + " devices");
+			Reader r = new InputStreamReader(p.getInputStream());
+			BufferedReader in = new BufferedReader(r);
+			String line;
+			
+			//skip daemon-status messages:
+			while(!(line = in.readLine()).contains("List of devices attached"))	{}
+			while ((line = in.readLine()) != null) {
+				if (!line.trim().equals("")) {
+					String[] split = line.split("\\s+");
+					output.add(split[0]);
+				}
+			}			
+			p.waitFor();
+
+			return output;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return output;
+	}
 
 	public static ADBThread getInstance() {
 		if (instance == null) {
