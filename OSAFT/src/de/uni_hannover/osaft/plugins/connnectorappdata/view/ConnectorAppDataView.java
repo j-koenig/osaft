@@ -90,7 +90,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		fc.setAcceptAllFileFilterUsed(false);
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-		controller = new ConnectorAppDataController(this);
+		controller = new ConnectorAppDataController(this, adb);
 	}
 
 	public void initGUI() {
@@ -285,10 +285,10 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		}
 
 		if (e.getSource() == pushAppButton) {
-			JOptionPane.showMessageDialog(tabs,
-					"Connector App will be pushed to phone. Please confirm install on the phone",
+			JOptionPane.showMessageDialog(tabs, "Connector App will be pushed to phone now.",
 					"Information", JOptionPane.INFORMATION_MESSAGE);
-			controller.pushApp();
+			//TODO: fehlermeldung wenn datei nich gefunden:
+			adb.executeAndReturn("install ArtifactExtract.apk", this);
 		}
 
 		if (e.getSource().equals(copyCell)) {
@@ -520,9 +520,9 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	}
 
 	@Override
-	public void reactToADBResult(String result) {
+	public void reactToADBResult(String result, String executedCommand) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

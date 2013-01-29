@@ -24,6 +24,7 @@ public class OSAFTController {
 	private JFileChooser fc;
 	private OSAFTView view;
 	private PluginManagerUtil pmu;
+	private String currentDevice;
 
 	public OSAFTController(OSAFTView view, PluginManagerUtil pmu) {
 		this.view = view;
@@ -196,9 +197,17 @@ public class OSAFTController {
 //		}
 //	}
 //
-	public void dumpsys() {
-		
+	public void dumpsys() {	
 
+	}
+	
+	public String getCurrentDevice() {
+		return currentDevice;
+	}
+	
+	public void setCurrentDevice(String currentDevice) {
+		this.currentDevice = currentDevice;
+		adb.setCurrentDevice(currentDevice);
 	}
 	
 	public ArrayList<String> getDevices() {

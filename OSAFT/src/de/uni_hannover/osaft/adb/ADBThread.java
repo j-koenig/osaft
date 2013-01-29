@@ -15,7 +15,7 @@ public class ADBThread implements Runnable {
 
 	private BlockingQueue<ADBSwingWorker> commands;
 	private OSAFTView view;
-	private String adbExecutable;
+	private String adbExecutable, currentDevice;
 	// Singleton:
 	private static ADBThread instance;
 	private Runtime rt;
@@ -34,7 +34,7 @@ public class ADBThread implements Runnable {
 				// TODO: möglichkeit prozess zu unterbrechen?
 				asw.execute();
 				// wait for current swingworker (get() blocks the thread until
-				// swingworker is done)
+				// swingworker is done):
 				asw.get();
 				System.out.println("jaaa!");
 			} catch (InterruptedException e) {
@@ -48,7 +48,6 @@ public class ADBThread implements Runnable {
 
 	}
 
-	// TODO: vor ausführen checken, ob device ausgewählt is
 	// TODO: unterscheidung zwischen win und unix (nötig?)
 	// TODO: eine methode, die es erlaubt auf der shell zu arbeiten
 	// TODO: checken ob pfad zu adb richtig is (also adb funktioniert)
@@ -61,7 +60,7 @@ public class ADBThread implements Runnable {
 		// doInBackground() an das übergebene plugin weiter (über die methode
 		// reactToADBResult())
 
-		ADBSwingWorker asw = new ADBSwingWorker(cmd, adbExecutable, view, plugin);
+		ADBSwingWorker asw = new ADBSwingWorker(cmd, adbExecutable, currentDevice, view, plugin);
 		commands.add(asw);
 		return asw;
 
@@ -115,6 +114,10 @@ public class ADBThread implements Runnable {
 
 	public void setADBExecutable(String path) {
 		adbExecutable = path;
+	}
+	
+	public void setCurrentDevice(String curDev) {
+		currentDevice = curDev;
 	}
 
 }

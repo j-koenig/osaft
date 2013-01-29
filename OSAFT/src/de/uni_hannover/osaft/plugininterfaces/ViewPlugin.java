@@ -28,6 +28,6 @@ public interface ViewPlugin extends Plugin {
 	public void setCaseFolder(File caseFolder);
 	
 	//when adb thread is ready, this method is called to update the gui after calling ADBThread.executeAndReturn() 
-	public void reactToADBResult(String result);
+	public void reactToADBResult(String result, String executedCommand);
 	
 }

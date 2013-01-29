@@ -15,6 +15,7 @@ import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
+import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 
@@ -30,9 +31,11 @@ public class ConnectorAppDataController {
 	private ConnectorAppDataView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+	private ADBThread adb;
 
-	public ConnectorAppDataController(ConnectorAppDataView view) {
+	public ConnectorAppDataController(ConnectorAppDataView view, ADBThread adb) {
 		this.view = view;
+		this.adb = adb;
 		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title",
 				"Description", "Start", "End", "Location", "Allday" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date",
@@ -370,23 +373,6 @@ public class ConnectorAppDataController {
 					location, allDay });
 		}
 		view.addTab(CALENDAR_FILENAME, calendarTableModel);
-	}
-
-	public void pushApp() {
-		System.out.println("da");
-		Runtime runtime = Runtime.getRuntime();
-		try {
-			String line;
-			Process p = runtime.exec("adb install /home/jannis/ArtifactExtract.apk");
-			Reader r = new InputStreamReader(p.getInputStream());
-			BufferedReader in = new BufferedReader(r);
-			while ((line = in.readLine()) != null)
-				System.out.println(line);
-			in.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable,

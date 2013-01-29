@@ -58,12 +58,15 @@ public class OSAFTView extends JFrame implements ActionListener {
 	public OSAFTView(String title, PluginManagerUtil pmu) {
 		super(title);
 		this.pmu = pmu;
+		// TODO: progressdialog is irgendwie hässlich, wenn der befehl nur kurz
+		// ausgeführt wird
 		progressDialog = new JDialog(this, "Executing ADB command", false);
 		viewPluginList = new ArrayList<ViewPlugin>();
 		pluginButtonList = new ArrayList<JButton>();
 
 		controller = new OSAFTController(this, pmu);
 		initGUI();
+		controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
 	}
 
 	private void initGUI() {
@@ -103,6 +106,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		devicesPanel.add(selectedPhoneLabel, gbc_selectedPhoneLabel);
 
 		devicesCombo = new JComboBox();
+		devicesCombo.addActionListener(this);
 		GridBagConstraints gbc_devicesCombo = new GridBagConstraints();
 		gbc_devicesCombo.fill = GridBagConstraints.BOTH;
 		gbc_devicesCombo.insets = new Insets(0, 0, 5, 5);
@@ -187,10 +191,14 @@ public class OSAFTView extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == mntmExit) {
+		if (e.getSource().equals(mntmExit)) {
 			System.exit(0);
-		} else if (e.getSource() == refreshDevicesButton) {
+		} else if (e.getSource().equals(refreshDevicesButton)) {
 			fillDevicesComboBox();
+		} else if (e.getSource().equals(devicesCombo)) {
+			if (!(devicesCombo.getItemCount() == 0)) {
+				controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
+			}
 		} else {
 			JButton b = (JButton) e.getSource();
 			int index = pluginButtonList.indexOf(b);
@@ -204,11 +212,11 @@ public class OSAFTView extends JFrame implements ActionListener {
 	public JDialog getProgressDialog() {
 		return progressDialog;
 	}
-	
+
 	private void fillDevicesComboBox() {
 		ArrayList<String> devices = controller.getDevices();
 		devicesCombo.removeAllItems();
-		if(devices.size() == 0) {
+		if (devices.size() == 0) {
 			devicesCombo.addItem("No device attached");
 			return;
 		}
