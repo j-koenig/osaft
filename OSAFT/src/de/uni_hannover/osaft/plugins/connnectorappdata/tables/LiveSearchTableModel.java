@@ -37,7 +37,11 @@ public class LiveSearchTableModel extends DefaultTableModel {
 	// CustomDateCellRenderer)
 	public Class<? extends Object> getColumnClass(int c) {
 		if (!getDataVector().isEmpty()) {
-			return getValueAt(0, c).getClass();
+			for (int i = 0; i < getRowCount(); i++) {
+				if (!(getValueAt(i, c) == null)) {
+					return getValueAt(i, c).getClass();
+				}
+			}
 		}
 		return Object.class;
 	}
