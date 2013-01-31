@@ -369,6 +369,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String id = mmsTable.getValueAt(selectedRow, 0).toString();
 				String text = mmsTable.getValueAt(selectedRow, 3).toString();
 				boolean hasAttachment = (Boolean) mmsTable.getValueAt(selectedRow, 5);
+				//TODO: hier casefolder
 				mmsInfo.setInfo(id, text, hasAttachment, fc.getCurrentDirectory());
 			}
 		} else if (e.getSource().equals(contactTable.getSelectionModel())) {
@@ -377,13 +378,14 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String id = contactTable.getValueAt(selectedRow, 0).toString();
 				String name = contactTable.getValueAt(selectedRow, 1).toString();
 				String numbers = contactTable.getValueAt(selectedRow, 2).toString();
-				String organisation = contactTable.getValueAt(selectedRow, 3).toString();
-				String emails = contactTable.getValueAt(selectedRow, 4).toString();
-				String addresses = contactTable.getValueAt(selectedRow, 5).toString();
-				String websites = contactTable.getValueAt(selectedRow, 6).toString();
-				String im = contactTable.getValueAt(selectedRow, 7).toString();
-				String skype = contactTable.getValueAt(selectedRow, 8).toString();
-				String notes = contactTable.getValueAt(selectedRow, 9).toString();
+				String organisation = contactTable.getValueAt(selectedRow, 5).toString();
+				String emails = contactTable.getValueAt(selectedRow, 6).toString();
+				String addresses = contactTable.getValueAt(selectedRow, 7).toString();
+				String websites = contactTable.getValueAt(selectedRow, 8).toString();
+				String im = contactTable.getValueAt(selectedRow, 9).toString();
+				String skype = contactTable.getValueAt(selectedRow, 10).toString();
+				String notes = contactTable.getValueAt(selectedRow, 11).toString();
+				//TODO:hier casefolder rein:
 				File f = new File(fc.getCurrentDirectory() + "/data/contact_" + id + ".jpg");
 				if (f.isFile()) {
 					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
