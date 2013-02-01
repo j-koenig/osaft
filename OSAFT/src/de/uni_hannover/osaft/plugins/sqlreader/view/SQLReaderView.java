@@ -280,6 +280,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	// shows tabs in alphabetic order
 	public void showTabs() {
+		if(tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
+			controller.addNamesToSMS();
+		}
 		tabs.removeAll();
 		tabs.add(preferencesPanel);
 		Collections.sort(tabVector, new Comparator<JPanel>() {

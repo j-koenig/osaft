@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.JTable;
@@ -46,6 +47,7 @@ public class SQLReaderController {
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String TWITTER_FILENAME = "<userid>.db";
 
+	// found these by examining the database with a browser:
 	public final static int MIMETYPE_NAME = 7;
 	public final static int MIMETYPE_NUMBER = 5;
 	public final static int MIMETYPE_EMAIL = 1;
@@ -60,6 +62,7 @@ public class SQLReaderController {
 	private SQLReaderView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserBookmarksTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+	private File curFolder;
 
 	public SQLReaderController(SQLReaderView view) {
 		this.view = view;
@@ -72,17 +75,18 @@ public class SQLReaderController {
 		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title", "Description", "Start", "End", "Duration",
 				"Location", "Repeat", "Allday", "Deleted?" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date", "Duration (in s)", "New Call", "Type",
-				"Number Type" });
+				"Number Type", "Location" });
 		browserHistoryTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL", "Visits", "Last Visit" });
 		browserBookmarksTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL", "Created", "Deleted?" });
 		browserSearchTableModel = new LiveSearchTableModel(new Object[] { "Date", "Search" });
 		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers", "Times Contacted", "Last Time Contacted",
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes", "Starred?", "Deleted?" });
-		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Name", "Date", "Text", "Read", "Seen", "Status" });
+		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Read", "Attachment" });
 	}
 
 	public boolean iterateChosenFolder(File folder) {
+		curFolder = folder;
 		boolean processedSomething = false;
 		// progressbar?
 		File[] files = folder.listFiles();
@@ -182,6 +186,7 @@ public class SQLReaderController {
 	}
 
 	private void processContacts(Statement statement) throws SQLException {
+		// CONTACTS:
 		ArrayList<Integer> contactIDs = new ArrayList<Integer>();
 		ResultSet rs = statement.executeQuery("SELECT _id FROM contacts");
 
@@ -272,6 +277,35 @@ public class SQLReaderController {
 		}
 
 		view.getContactTable().setModel(contactsTableModel);
+		// CALLS:
+		rs = statement.executeQuery("SELECT name, number, date, duration, new, type, numbertype, geocoded_location FROM calls");
+
+		while (rs.next()) {
+			String name = (rs.getString(1) == null) ? "unknown" : rs.getString(1);
+			String number = (rs.getString(2).equals("-2")) ? "private number" : rs.getString(2);
+			Date date = new Date(rs.getLong(3));
+			int duration = rs.getInt(4);
+			boolean newCall = rs.getInt(5) == 1;
+			String type = "";
+			switch (rs.getInt(6)) {
+			case 1:
+				type = "incoming";
+				break;
+			case 2:
+				type = "outgoing";
+				break;
+			case 3:
+				type = "missed";
+				break;
+			default:
+				break;
+			}
+			String numberType = decodeNumberType(rs.getInt(7));
+			String geoLocation = rs.getString(8);
+			callsTableModel.addRow(new Object[] { name, number, date, duration, newCall, type, numberType, geoLocation });
+		}
+
+		view.getCallTable().setModel(callsTableModel);
 		view.addTab(CONTACTS_FILENAME);
 	}
 
@@ -302,8 +336,96 @@ public class SQLReaderController {
 		return "";
 	}
 
+	private String decodeNumberType(int numberTypeAsInt) {
+		switch (numberTypeAsInt) {
+		case 1:
+			return "Home";
+		case 2:
+			return "Mobile";
+		case 3:
+			return "Work";
+		case 4:
+			return "Fax Work";
+		case 5:
+			return "Fax Home";
+		case 6:
+			return "Pager";
+		case 7:
+			return "Other";
+		case 8:
+			return "Callback";
+		case 9:
+			return "Car";
+		case 10:
+			return "Company Main";
+		case 11:
+			return "ISDN";
+		case 12:
+			return "Main";
+		case 13:
+			return "Other Fax";
+		case 14:
+			return "Radio";
+		case 15:
+			return "Telex";
+		case 16:
+			return "TTY TDD";
+		case 17:
+			return "Work Mobile";
+		case 18:
+			return "Work Pager";
+		case 19:
+			return "Assistant";
+		case 20:
+			return "MMS";
+		default:
+			break;
+		}
+		return "";
+	}
+
 	private void processSMSMMS(Statement statement) throws SQLException {
-		// MMS UND SMS
+		ResultSet rs = statement.executeQuery("SELECT address, person, date, body, read, seen, type FROM sms");
+
+		while (rs.next()) {
+			String number = rs.getString(1);
+			String person = (rs.getString(2) == null) ? "" : rs.getString(2);
+			Date date = new Date(rs.getLong(3));
+			String text = rs.getString(4);
+			boolean read = rs.getInt(5) == 1;
+			boolean seen = rs.getInt(6) == 1;
+			String[] smsStatus = new String[] { "Inbox", "Sent", "Draft", "Failed", "Queued", "Outbox", "Undelivered" };
+			String status = smsStatus[rs.getInt(7) - 1];
+			smsTableModel.addRow(new Object[] { number, person, date, text, read, seen, status });
+		}
+		view.getSmsTable().setModel(smsTableModel);
+
+		view.addTab(MMSSMS_FILENAME);
+	}
+
+	public void addNamesToSMS() {
+		try {
+			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + curFolder.getAbsolutePath() + File.separator
+					+ CONTACTS_FILENAME);
+			Statement statement = connection.createStatement();
+			ResultSet rs;
+			HashMap<Integer, String> contactNames = new HashMap<Integer, String>();
+			for (int i = 0; i < smsTableModel.getRowCount(); i++) {
+				if (!((String) smsTableModel.getValueAt(i, 1)).equals("")) {
+					int rawContactId = Integer.parseInt((String) smsTableModel.getValueAt(i, 1));
+					if (contactNames.get(rawContactId) == null) {
+						rs = statement.executeQuery("SELECT display_name FROM raw_contacts WHERE _id = " + rawContactId);
+						contactNames.put(rawContactId, rs.getString(1));
+						smsTableModel.setValueAt(rs.getString(1), i, 1);
+					} else {
+						smsTableModel.setValueAt(contactNames.get(rawContactId), i, 1);
+					}
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void processFacebook(Statement statement) throws SQLException {
