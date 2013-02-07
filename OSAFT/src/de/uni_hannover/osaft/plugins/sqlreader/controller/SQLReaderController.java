@@ -49,7 +49,7 @@ public class SQLReaderController {
 	public final static String TWITTER_FILENAME = "<userid>.db";
 	public final static String GTALK_FILENAME = "talk.db";
 
-	// found these by examining the database with a browser:
+	// found these by examining the database with a db-browser:
 	public final static int MIMETYPE_NAME = 7;
 	public final static int MIMETYPE_NUMBER = 5;
 	public final static int MIMETYPE_EMAIL = 1;
@@ -65,6 +65,7 @@ public class SQLReaderController {
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserBookmarksTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
 	private HashMap<String, LiveSearchTableModel> whatsAppTableModels;
+	private ArrayList<LiveSearchTableModel> webviewTableModels;
 	private File curFolder;
 	private HashMap<Integer, String> contactNames;
 
@@ -89,6 +90,9 @@ public class SQLReaderController {
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes", "Starred?", "Deleted?" });
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Attachment", "Mimetype" });
+		webviewTableModels = new ArrayList<LiveSearchTableModel>();
+		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Passord" }));
+		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Name", "Value" }));
 	}
 
 	public boolean iterateChosenFolder(File folder) {
@@ -129,6 +133,8 @@ public class SQLReaderController {
 				processFacebook(statement);
 			} else if (file.getName().equals(WHATSAPP_FILENAME)) {
 				processWhatsapp(statement);
+			} else if (file.getName().equals(WEBVIEW_FILENAME)) {
+				processWebview(statement);
 			}
 
 		} catch (SQLException e) {
@@ -481,6 +487,7 @@ public class SQLReaderController {
 	}
 
 	// TODO: media ordner von sdcard pullen
+	// TODO: gruppen anders behandeln? (zumindest received timestamp)
 	private void processWhatsapp(Statement statement) throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT key_remote_jid FROM chat_list");
 		ArrayList<String> ids = new ArrayList<String>();
@@ -498,7 +505,7 @@ public class SQLReaderController {
 					.executeQuery("SELECT _id, key_remote_jid, key_from_me, data, timestamp, media_mime_type, media_size, latitude, longitude, receipt_device_timestamp, thumb_image FROM messages WHERE key_remote_jid = '"
 							+ ids.get(i) + "' ORDER BY timestamp ASC");
 			while (rs.next()) {
-				String data = rs.getString(4);
+				String data = (rs.getString(4) == null) ? "" : rs.getString(4);
 				Date date = new Date(rs.getLong(5));
 				String latitude = rs.getString(8);
 				String longitude = rs.getString(9);
@@ -544,6 +551,31 @@ public class SQLReaderController {
 		return result;
 	}
 
+	private void processWebview(Statement statement) throws SQLException {
+		ResultSet rs = statement.executeQuery("SELECT host, username, password FROM password");
+		while (rs.next()) {
+			String host = (rs.getString(1) == null) ? "" : rs.getString(1);
+			String username = (rs.getString(2) == null) ? "" : rs.getString(2);
+			String password = (rs.getString(3) == null) ? "" : rs.getString(3);
+			webviewTableModels.get(0).addRow(new Object[] { host, username, password });
+		}
+		rs = statement.executeQuery("SELECT host, username, password FROM httpauth");
+		while (rs.next()) {
+			String host = (rs.getString(1) == null) ? "" : rs.getString(1);
+			String username = (rs.getString(2) == null) ? "" : rs.getString(2);
+			String password = (rs.getString(3) == null) ? "" : rs.getString(3);
+			webviewTableModels.get(0).addRow(new Object[] { host, username, password });
+		}
+		rs = statement.executeQuery("SELECT name, value FROM formdata");
+		while (rs.next()) {
+			String name = (rs.getString(1) == null) ? "" : rs.getString(1);
+			String value = (rs.getString(2) == null) ? "" : rs.getString(2);
+			webviewTableModels.get(1).addRow(new Object[] { name, value });
+		}
+		view.getWebviewTable().setModel(webviewTableModels.get(0));
+		view.addTab(WEBVIEW_FILENAME);		
+	}
+
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		// find out which row or which cell is selected (variables
@@ -576,6 +608,10 @@ public class SQLReaderController {
 		if (whatsAppTableModels.get(contactId) != null) {
 			view.getWhatsappTable().setModel(whatsAppTableModels.get(contactId));
 		}
+	}
+	
+	public void setWebviewTableModel(int index) {
+		view.getWebviewTable().setModel(webviewTableModels.get(index));
 	}
 
 }

@@ -34,10 +34,8 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.xml.bind.annotation.adapters.NormalizedStringAdapter;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
@@ -47,7 +45,6 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRend
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
-import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
 @PluginImplementation
@@ -55,13 +52,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	private JTabbedPane tabs;
 	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserBScrollPane, browserSScrollPane, contactScrollPane,
-			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane;
+			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane, webviewScrollPane;
 	private JTable calendarTable, callTable, browserHTable, browserBTable, browserSTable, contactTable, mmsTable, smsTable, whatsappTable,
-			facebookTable;
+			facebookTable, webviewTable;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserBPanel, browserSPanel, callPanel, contactPanel, mmsPanel,
-			preferencesPanel, whatsappPanel, facebookPanel;
+			preferencesPanel, whatsappPanel, facebookPanel, webviewPanel;
 	private JTextField contactSearch, calendarSearch, browserHSearch, browserBSearch, browserSSearch, smsSearch, mmsSearch, callsSearch,
-			whatsappSearch, facebookSearch;
+			whatsappSearch, facebookSearch, webviewSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -72,7 +69,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private SQLReaderController controller;
 	private File caseFolder;
 	private ADBThread adb;
-	private JComboBox whatsAppCombo;
+	private JComboBox whatsAppCombo, webviewCombo;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -132,6 +129,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		facebookPanel = new JPanel(new BorderLayout(0, 0));
 		facebookPanel.setName("Facebook");
+		
+		webviewPanel = new JPanel(new BorderLayout(0,0));
+		webviewPanel.setName("Webview");
 
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
@@ -145,6 +145,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		browserBTable = new JTable();
 		browserSTable = new JTable();
 		contactTable = new JTable();
+		webviewTable = new JTable();
 		// selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
@@ -165,6 +166,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(mmsTable);
 		tables.add(whatsappTable);
 		tables.add(facebookTable);
+		tables.add(webviewTable);
 
 		// TODO scheint hier irgendwie nich zu funzen, zumindest bei browser
 		// history nich...
@@ -285,6 +287,18 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookSearch.addKeyListener(this);
 		facebookPanel.add(facebookSearch, BorderLayout.NORTH);
 		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
+		
+		webviewScrollPane = new JScrollPane(webviewTable);
+		webviewSearch = new JTextField("Search");
+		webviewSearch.addFocusListener(this);
+		webviewSearch.addKeyListener(this);
+		webviewCombo = new JComboBox(new Object[] { "Passwords", "Formdata" });
+		webviewCombo.addActionListener(this);
+		JPanel webviewNorthPanel = new JPanel(new GridLayout(1, 2));
+		webviewNorthPanel.add(webviewCombo);
+		webviewNorthPanel.add(webviewSearch);
+		webviewPanel.add(webviewNorthPanel, BorderLayout.NORTH);
+		webviewPanel.add(webviewScrollPane, BorderLayout.CENTER);
 
 		contextMenu = new JPopupMenu();
 		copyCell = new JMenuItem("Copy cell to clipboard");
@@ -323,6 +337,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			tabVector.add(whatsappPanel);
 		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_FILENAME)) {
 			tabVector.add(facebookPanel);
+		} else if (sourceFile.equals(SQLReaderController.WEBVIEW_FILENAME)) {
+			tabVector.add(webviewPanel);
 		}
 	}
 
@@ -396,6 +412,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
 		} else if (e.getSource().equals(whatsAppCombo)) {
 			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
+		} else if(e.getSource().equals(webviewCombo)) {
+			controller.setWebviewTableModel(webviewCombo.getSelectedIndex());
 		}
 
 	}
@@ -554,6 +572,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		} else if (e.getSource().equals(facebookSearch)) {
 			search = facebookSearch.getText();
 			model = (LiveSearchTableModel) facebookTable.getModel();
+		} else if (e.getSource().equals(webviewSearch)) {
+			search = webviewSearch.getText();
+			model = (LiveSearchTableModel) webviewTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
@@ -570,6 +591,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		smsScrollPane.getVerticalScrollBar().setValue(0);
 		whatsappScrollPane.getVerticalScrollBar().setValue(0);
 		facebookScrollPane.getVerticalScrollBar().setValue(0);
+		webviewScrollPane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -653,6 +675,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JComboBox getWhatsappCombo() {
 		return whatsAppCombo;
+	}
+	
+	public JTable getWebviewTable() {
+		return webviewTable;
 	}
 
 }
