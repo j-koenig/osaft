@@ -27,12 +27,13 @@ import javax.swing.SwingConstants;
 //GENERATED WITH WINDOWBUILDER
 public class MMSInfoPanel extends JPanel implements ActionListener {
 
-	private JButton btnOpenFile, btnOpenFolder;
-	private GridBagLayout gbl_mmsInfo;
-	private JTextArea txtrText;
-	private JLabel lblPreview, lblActualFilename;
+	protected JButton btnOpenFile, btnOpenFolder;
+	protected GridBagLayout gbl_mmsInfo;
+	protected JTextArea txtrText;
+	protected JLabel  lblActualFilename;
+	protected JLabel lblPreview;
 	private JPanel panel;
-	private File currentFile;
+	protected File currentFile;
 
 	public MMSInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

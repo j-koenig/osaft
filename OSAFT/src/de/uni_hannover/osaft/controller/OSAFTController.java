@@ -68,6 +68,17 @@ public class OSAFTController {
 			changeADBPath();
 		}
 		adb.setADBExecutable(properties.getProperty("adb"));
+		
+		String possibleCaseFolder = properties.getProperty("casefolder");		
+		if(possibleCaseFolder != null) {
+			view.setCurrentCaseText(possibleCaseFolder);
+			caseFolder = new File(possibleCaseFolder);
+			//refresh path to casefolder for each plugin
+			for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
+				ViewPlugin plugin = (ViewPlugin) iterator.next();
+				plugin.setCaseFolder(caseFolder);
+			}
+		}
 
 	}
 
@@ -77,12 +88,7 @@ public class OSAFTController {
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			File file = fc.getSelectedFile();
 			properties.setProperty("adb", file.toString());
-			try {
-				properties.store(new FileOutputStream(new File("osaft.properties")), "");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			storeProperties();
 		} else if (returnVal == JFileChooser.CANCEL_OPTION) {
 			JOptionPane.showMessageDialog(view,
 					"This application won't work without adb. Please choose a valid executable",
@@ -101,6 +107,9 @@ public class OSAFTController {
 				ViewPlugin plugin = (ViewPlugin) iterator.next();
 				plugin.setCaseFolder(caseFolder);
 			}
+			view.setCurrentCaseText(caseFolder.toString());
+			properties.setProperty("casefolder", caseFolder.toString());
+			storeProperties();
 		}		
 	}
 
@@ -199,6 +208,15 @@ public class OSAFTController {
 //
 	public void dumpsys() {	
 
+	}
+	
+	private void storeProperties() {
+		try {
+			properties.store(new FileOutputStream(new File("osaft.properties")), "");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public String getCurrentDevice() {

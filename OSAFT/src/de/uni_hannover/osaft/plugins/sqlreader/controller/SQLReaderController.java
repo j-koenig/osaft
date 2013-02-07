@@ -29,6 +29,7 @@ public class SQLReaderController {
 	// TODO: ich raffe nicht, warum das date render ding nicht funzt in den
 	// tabellen
 
+	// Passwörter und cached formdata:
 	public final static String WEBVIEW_FILENAME = "webview.db";
 	// könnte auch anders heißen (auf huawei heißt es browser.db und hat anderen
 	// inhalt):
@@ -46,6 +47,7 @@ public class SQLReaderController {
 	public final static String WHATSAPP_FILENAME = "msgstore.db";
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String TWITTER_FILENAME = "<userid>.db";
+	public final static String GTALK_FILENAME = "talk.db";
 
 	// found these by examining the database with a browser:
 	public final static int MIMETYPE_NAME = 7;
@@ -62,10 +64,14 @@ public class SQLReaderController {
 	private SQLReaderView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserBookmarksTableModel,
 			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+	private HashMap<String, LiveSearchTableModel> whatsAppTableModels;
 	private File curFolder;
+	private HashMap<Integer, String> contactNames;
 
 	public SQLReaderController(SQLReaderView view) {
 		this.view = view;
+		contactNames = new HashMap<Integer, String>();
+		whatsAppTableModels = new HashMap<String, LiveSearchTableModel>();
 		try {
 			Class.forName("org.sqlite.JDBC");
 		} catch (ClassNotFoundException e) {
@@ -82,7 +88,7 @@ public class SQLReaderController {
 		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers", "Times Contacted", "Last Time Contacted",
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes", "Starred?", "Deleted?" });
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
-		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Read", "Attachment" });
+		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Attachment", "Mimetype" });
 	}
 
 	public boolean iterateChosenFolder(File folder) {
@@ -98,7 +104,7 @@ public class SQLReaderController {
 					|| fName.equals(CONTACTS_FILENAME) || fName.equals(COOKIES_FILENAME) || fName.equals(BROWSER_CACHED_GEOLOCATION)
 					|| fName.equals(MMSSMS_FILENAME) || fName.equals(MAPS_SEARCH_HISTORY_FILENAME)
 					|| fName.equals(MAPS_DESTINATION_HISTORY_FILENAME) || fName.equals(GMAIL_FILENAME) || fName.equals(FACEBOOK_FILENAME)
-					|| fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME)) {
+					|| fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME) || fName.equals(GTALK_FILENAME)) {
 				processDB(curFile);
 				processedSomething = true;
 			}
@@ -112,7 +118,7 @@ public class SQLReaderController {
 			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
 			Statement statement = connection.createStatement();
 			if (file.getName().equals(BROWSER_FILENAME)) {
-				processBrowser(statement);
+				processBrowser2(statement);
 			} else if (file.getName().equals(CALENDAR_FILENAME)) {
 				processCalendar(statement);
 			} else if (file.getName().equals(CONTACTS_FILENAME)) {
@@ -131,7 +137,7 @@ public class SQLReaderController {
 		}
 	}
 
-	private void processBrowser(Statement statement) throws SQLException {
+	private void processBrowser2(Statement statement) throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT title, url, folder, deleted, created FROM bookmarks");
 		while (rs.next()) {
 			// check, if bookmark is folder:
@@ -186,9 +192,15 @@ public class SQLReaderController {
 	}
 
 	private void processContacts(Statement statement) throws SQLException {
+		// FILL HASHMAP FOR LATER USAGE IN addNamesToSMS():
+		ResultSet rs = statement.executeQuery("SELECT _id, display_name FROM raw_contacts");
+		while (rs.next()) {
+			contactNames.put(rs.getInt(1), rs.getString(2));
+		}
+
 		// CONTACTS:
 		ArrayList<Integer> contactIDs = new ArrayList<Integer>();
-		ResultSet rs = statement.executeQuery("SELECT _id FROM contacts");
+		rs = statement.executeQuery("SELECT _id FROM contacts");
 
 		while (rs.next()) {
 			contactIDs.add(rs.getInt(1));
@@ -253,9 +265,11 @@ public class SQLReaderController {
 					byte[] photoByteArray = rs.getBytes(8);
 					if (photoByteArray != null) {
 						try {
+							// TODO: ordner erstellen, wenn nich da
 							InputStream in = new ByteArrayInputStream(photoByteArray);
 							BufferedImage photo = ImageIO.read(in);
-							ImageIO.write(photo, "png", new File("/home/jannis/" + id + ".png"));
+							ImageIO.write(photo, "png", new File(view.getCaseFolder() + File.separator + "contact_photos" + File.separator
+									+ id + ".png"));
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -385,8 +399,8 @@ public class SQLReaderController {
 	}
 
 	private void processSMSMMS(Statement statement) throws SQLException {
+		// SMS:
 		ResultSet rs = statement.executeQuery("SELECT address, person, date, body, read, seen, type FROM sms");
-
 		while (rs.next()) {
 			String number = rs.getString(1);
 			String person = (rs.getString(2) == null) ? "" : rs.getString(2);
@@ -400,31 +414,65 @@ public class SQLReaderController {
 		}
 		view.getSmsTable().setModel(smsTableModel);
 
+		// MMS:
+		// TODO: gucken wo der text für sms gespeichert wird
+
+		rs = statement.executeQuery("SELECT mid FROM part");
+		ArrayList<Integer> mids = new ArrayList<Integer>();
+
+		while (rs.next()) {
+			if (!mids.contains(rs.getInt(1))) {
+				mids.add(rs.getInt(1));
+			}
+		}
+
+		for (int i = 0; i < mids.size(); i++) {
+			// TODO: fragwürdig: type=137 bedeutet das absender?
+			rs = statement
+					.executeQuery("SELECT mid, name, _data, date, address, text, ct FROM (part JOIN pdu ON part.mid=pdu._id) JOIN addr ON part.mid=addr.msg_id WHERE addr.type=137 AND part.mid = "
+							+ mids.get(i));
+			int id = 0;
+			String name = "";
+			String data = "";
+			Date date = null;
+			String number = "";
+			String text = "";
+			String mimetype = "";
+			while (rs.next()) {
+				if (rs.getString(3) != null) {
+					id = rs.getInt(1);
+					name = rs.getString(2);
+					data = rs.getString(3).substring(rs.getString(3).lastIndexOf('/') + 1);
+					date = new Date(rs.getLong(4) * 1000);
+					number = rs.getString(5);
+					mimetype = rs.getString(7);
+				} else if (rs.getString(7).contains("text")) {
+					text = (rs.getString(6) != null) ? rs.getString(6) : "";
+				}
+			}
+			mmsTableModel.addRow(new Object[] { id, number, date, text, data, mimetype });
+		}
+
+		// for schleife über alle mms anhänge und die dann pullen (blödsinn,
+		// einfach während pull der ganzen dbs auch die app parts pullen
+		// [com.android.providers.telephony/app_parts])
+
+		view.getMmsTable().setModel(mmsTableModel);
 		view.addTab(MMSSMS_FILENAME);
 	}
 
 	public void addNamesToSMS() {
-		try {
-			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + curFolder.getAbsolutePath() + File.separator
-					+ CONTACTS_FILENAME);
-			Statement statement = connection.createStatement();
-			ResultSet rs;
-			HashMap<Integer, String> contactNames = new HashMap<Integer, String>();
-			for (int i = 0; i < smsTableModel.getRowCount(); i++) {
-				if (!((String) smsTableModel.getValueAt(i, 1)).equals("")) {
+		for (int i = 0; i < smsTableModel.getRowCount(); i++) {
+			if (!((String) smsTableModel.getValueAt(i, 1)).equals("")) {
+				try {
 					int rawContactId = Integer.parseInt((String) smsTableModel.getValueAt(i, 1));
-					if (contactNames.get(rawContactId) == null) {
-						rs = statement.executeQuery("SELECT display_name FROM raw_contacts WHERE _id = " + rawContactId);
-						contactNames.put(rawContactId, rs.getString(1));
-						smsTableModel.setValueAt(rs.getString(1), i, 1);
-					} else {
+					if (!(contactNames.get(rawContactId) == null)) {
 						smsTableModel.setValueAt(contactNames.get(rawContactId), i, 1);
 					}
+				} catch (NumberFormatException e) {
+					// already added names
 				}
 			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
@@ -432,8 +480,68 @@ public class SQLReaderController {
 		// FATZBUK
 	}
 
+	// TODO: media ordner von sdcard pullen
 	private void processWhatsapp(Statement statement) throws SQLException {
-		// WHATSAPP
+		ResultSet rs = statement.executeQuery("SELECT key_remote_jid FROM chat_list");
+		ArrayList<String> ids = new ArrayList<String>();
+		while (rs.next()) {
+			// TODO: was passiert bei gruppen?
+			ids.add(rs.getString(1));
+			view.getWhatsappCombo().addItem(rs.getString(1));
+			whatsAppTableModels.put(rs.getString(1), new LiveSearchTableModel(new Object[] { "Sent", "Received", "Sent Time",
+					"Received Timestamp", "Latitude", "Longitude", "Filename" }));
+		}
+
+		for (int i = 0; i < ids.size(); i++) {
+			LiveSearchTableModel currentModel = whatsAppTableModels.get(ids.get(i));
+			rs = statement
+					.executeQuery("SELECT _id, key_remote_jid, key_from_me, data, timestamp, media_mime_type, media_size, latitude, longitude, receipt_device_timestamp, thumb_image FROM messages WHERE key_remote_jid = '"
+							+ ids.get(i) + "' ORDER BY timestamp ASC");
+			while (rs.next()) {
+				String data = rs.getString(4);
+				Date date = new Date(rs.getLong(5));
+				String latitude = rs.getString(8);
+				String longitude = rs.getString(9);
+				String mimetype = rs.getString(6);
+				if (rs.getInt(3) == 0) {
+					if (mimetype != null) {
+						// received data
+						String filename = decodeMetadata(rs.getBytes(11));
+						currentModel.addRow(new Object[] { "", mimetype, null, date, latitude, longitude, filename });
+					} else {
+						// received a message
+						currentModel.addRow(new Object[] { "", data, null, date, latitude, longitude, "" });
+					}
+				} else if (rs.getInt(3) == 1) {
+					Date receiptDeviceTimestamp = new Date(rs.getLong(10));
+					if (mimetype != null) {
+						// sent data
+						String filename = decodeMetadata(rs.getBytes(11));
+						currentModel.addRow(new Object[] { mimetype, "", date, receiptDeviceTimestamp, latitude, longitude, filename });
+					} else {
+						// sent message
+						currentModel.addRow(new Object[] { data, "", date, receiptDeviceTimestamp, latitude, longitude, "" });
+					}
+				}
+			}
+		}
+		view.getWhatsappTable().setModel(whatsAppTableModels.get(ids.get(0)));
+		view.addTab(WHATSAPP_FILENAME);
+	}
+
+	private String decodeMetadata(byte[] metadata) {
+		String result = "";
+		if (metadata != null) {
+			for (int j = 0; j < metadata.length; j++) {
+				int character = new Integer(metadata[j] & 0xFF);
+				if (character > 32 && character < 127) {
+					result += (char) character;
+				}
+			}
+			result = result.substring(0, result.length() - 3);
+			result = result.substring(result.lastIndexOf("/") + 1);
+		}
+		return result;
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
@@ -462,6 +570,12 @@ public class SQLReaderController {
 		// save string to clipboard
 		StringSelection strSel = new StringSelection(dataToClipboard.replace("null", ""));
 		clipboard.setContents(strSel, null);
+	}
+
+	public void setWhatsappTableModel(String contactId) {
+		if (whatsAppTableModels.get(contactId) != null) {
+			view.getWhatsappTable().setModel(whatsAppTableModels.get(contactId));
+		}
 	}
 
 }

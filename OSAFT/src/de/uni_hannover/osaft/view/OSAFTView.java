@@ -8,6 +8,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -54,6 +55,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 	private JLabel actualCurrentCaseLabel;
 	private JButton refreshDevicesButton;
 	private JComboBox devicesCombo;
+	private JButton btnChange;
 
 	public OSAFTView(String title, PluginManagerUtil pmu) {
 		super(title);
@@ -64,8 +66,10 @@ public class OSAFTView extends JFrame implements ActionListener {
 		viewPluginList = new ArrayList<ViewPlugin>();
 		pluginButtonList = new ArrayList<JButton>();
 
+		actualCurrentCaseLabel = new JLabel("No folder chosen");
 		controller = new OSAFTController(this, pmu);
 		initGUI();
+		
 		controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
 	}
 
@@ -92,7 +96,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		devicesPanel.setPreferredSize(new Dimension(0, 120));
 		GridBagLayout gbl_devicesPanel = new GridBagLayout();
 		gbl_devicesPanel.columnWidths = new int[] { 278, 0, 0 };
-		gbl_devicesPanel.rowHeights = new int[] { 35, 20, 28, 23, 0 };
+		gbl_devicesPanel.rowHeights = new int[] { 35, 20, 28, 38, 0 };
 		gbl_devicesPanel.columnWeights = new double[] { 1.0, 0.0, Double.MIN_VALUE };
 		gbl_devicesPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		devicesPanel.setLayout(gbl_devicesPanel);
@@ -116,6 +120,15 @@ public class OSAFTView extends JFrame implements ActionListener {
 
 		fillDevicesComboBox();
 
+		btnChange = new JButton("Change");
+		btnChange.addActionListener(this);
+		GridBagConstraints gbc_btnChange = new GridBagConstraints();
+		gbc_btnChange.gridheight = 2;
+		gbc_btnChange.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnChange.gridx = 1;
+		gbc_btnChange.gridy = 2;
+		devicesPanel.add(btnChange, gbc_btnChange);
+
 		refreshDevicesButton = new JButton("Refresh");
 		refreshDevicesButton.addActionListener(this);
 		GridBagConstraints gbc_refreshDevicesButton = new GridBagConstraints();
@@ -123,6 +136,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		gbc_refreshDevicesButton.gridx = 1;
 		gbc_refreshDevicesButton.gridy = 1;
 		devicesPanel.add(refreshDevicesButton, gbc_refreshDevicesButton);
+
 		JLabel currentCaseLabel = new JLabel("Current case folder:");
 		GridBagConstraints gbc_currentCaseLabel = new GridBagConstraints();
 		gbc_currentCaseLabel.anchor = GridBagConstraints.SOUTH;
@@ -132,7 +146,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 		gbc_currentCaseLabel.gridy = 2;
 		devicesPanel.add(currentCaseLabel, gbc_currentCaseLabel);
 
-		actualCurrentCaseLabel = new JLabel("FooBar");
 		GridBagConstraints gbc_actualCurrentCaseLabel = new GridBagConstraints();
 		gbc_actualCurrentCaseLabel.anchor = GridBagConstraints.NORTHWEST;
 		gbc_actualCurrentCaseLabel.insets = new Insets(0, 0, 0, 5);
@@ -141,7 +154,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 		devicesPanel.add(actualCurrentCaseLabel, gbc_actualCurrentCaseLabel);
 
 		// </created with WindowBuilder>
-
 		JPanel buttonAndDevicesPanel = new JPanel(new BorderLayout());
 		buttonAndDevicesPanel.setPreferredSize(new Dimension(300, 0));
 		buttonAndDevicesPanel.add(devicesPanel, BorderLayout.NORTH);
@@ -199,6 +211,8 @@ public class OSAFTView extends JFrame implements ActionListener {
 			if (!(devicesCombo.getItemCount() == 0)) {
 				controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
 			}
+		} else if (e.getSource().equals(btnChange)) {
+			controller.changeCaseFolder();
 		} else {
 			JButton b = (JButton) e.getSource();
 			int index = pluginButtonList.indexOf(b);
@@ -223,6 +237,11 @@ public class OSAFTView extends JFrame implements ActionListener {
 		for (int i = 0; i < devices.size(); i++) {
 			devicesCombo.addItem(devices.get(i));
 		}
+	}
+	
+	public void setCurrentCaseText(String folder) {
+		actualCurrentCaseLabel.setText(folder.substring(folder.lastIndexOf(File.separatorChar) + 1));
+		actualCurrentCaseLabel.setToolTipText(folder);
 	}
 
 }

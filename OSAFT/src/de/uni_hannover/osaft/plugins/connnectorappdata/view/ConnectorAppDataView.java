@@ -398,21 +398,22 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
-			if (e.getSource().equals(browserHTable)) {
-				openContextMenu(e, browserHTable);
-			} else if (e.getSource().equals(browserSTable)) {
-				openContextMenu(e, browserSTable);
-			} else if (e.getSource().equals(calendarTable)) {
-				openContextMenu(e, calendarTable);
-			} else if (e.getSource().equals(callTable)) {
-				openContextMenu(e, callTable);
-			} else if (e.getSource().equals(contactTable)) {
-				openContextMenu(e, contactTable);
-			} else if (e.getSource().equals(mmsTable)) {
-				openContextMenu(e, mmsTable);
-			} else if (e.getSource().equals(smsTable)) {
-				openContextMenu(e, smsTable);
-			}
+//			if (e.getSource().equals(browserHTable)) {
+//				openContextMenu(e, browserHTable);
+//			} else if (e.getSource().equals(browserSTable)) {
+//				openContextMenu(e, browserSTable);
+//			} else if (e.getSource().equals(calendarTable)) {
+//				openContextMenu(e, calendarTable);
+//			} else if (e.getSource().equals(callTable)) {
+//				openContextMenu(e, callTable);
+//			} else if (e.getSource().equals(contactTable)) {
+//				openContextMenu(e, contactTable);
+//			} else if (e.getSource().equals(mmsTable)) {
+//				openContextMenu(e, mmsTable);
+//			} else if (e.getSource().equals(smsTable)) {
+//				openContextMenu(e, smsTable);
+//			}
+			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
 
@@ -484,22 +485,22 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void focusGained(FocusEvent e) {
-		if (e.getSource().equals(contactSearch)) {
-			contactSearch.setText("");
-		} else if (e.getSource().equals(browserHSearch)) {
-			browserHSearch.setText("");
-		} else if (e.getSource().equals(browserSSearch)) {
-			browserSSearch.setText("");
-		} else if (e.getSource().equals(calendarSearch)) {
-			calendarSearch.setText("");
-		} else if (e.getSource().equals(callsSearch)) {
-			callsSearch.setText("");
-		} else if (e.getSource().equals(mmsSearch)) {
-			mmsSearch.setText("");
-		} else if (e.getSource().equals(smsSearch)) {
-			smsSearch.setText("");
-		}
-
+//		if (e.getSource().equals(contactSearch)) {
+//			contactSearch.setText("");
+//		} else if (e.getSource().equals(browserHSearch)) {
+//			browserHSearch.setText("");
+//		} else if (e.getSource().equals(browserSSearch)) {
+//			browserSSearch.setText("");
+//		} else if (e.getSource().equals(calendarSearch)) {
+//			calendarSearch.setText("");
+//		} else if (e.getSource().equals(callsSearch)) {
+//			callsSearch.setText("");
+//		} else if (e.getSource().equals(mmsSearch)) {
+//			mmsSearch.setText("");
+//		} else if (e.getSource().equals(smsSearch)) {
+//			smsSearch.setText("");
+//		}
+		((JTextField) e.getSource()).setText("");
 	}
 
 	@Override

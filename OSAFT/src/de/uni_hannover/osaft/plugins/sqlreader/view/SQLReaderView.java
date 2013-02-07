@@ -2,6 +2,7 @@ package de.uni_hannover.osaft.plugins.sqlreader.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -32,8 +34,10 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.bind.annotation.adapters.NormalizedStringAdapter;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
@@ -47,18 +51,17 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
 @PluginImplementation
-public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener,
-		MouseListener, FocusListener, KeyListener {
+public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener, MouseListener, FocusListener, KeyListener {
 
 	private JTabbedPane tabs;
-	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserBScrollPane,
-			browserSScrollPane, contactScrollPane, mmsScrollPane, smsScrollPane, contactInfoScroll;
-	private JTable calendarTable, callTable, browserHTable, browserBTable, browserSTable,
-			contactTable, mmsTable, smsTable;
-	private JPanel calendarPanel, smsPanel, browserHPanel, browserBPanel, browserSPanel, callPanel,
-			contactPanel, mmsPanel, preferencesPanel;
-	private JTextField contactSearch, calendarSearch, browserHSearch, browserBSearch,
-			browserSSearch, smsSearch, mmsSearch, callsSearch;
+	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserBScrollPane, browserSScrollPane, contactScrollPane,
+			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane;
+	private JTable calendarTable, callTable, browserHTable, browserBTable, browserSTable, contactTable, mmsTable, smsTable, whatsappTable,
+			facebookTable;
+	private JPanel calendarPanel, smsPanel, browserHPanel, browserBPanel, browserSPanel, callPanel, contactPanel, mmsPanel,
+			preferencesPanel, whatsappPanel, facebookPanel;
+	private JTextField contactSearch, calendarSearch, browserHSearch, browserBSearch, browserSSearch, smsSearch, mmsSearch, callsSearch,
+			whatsappSearch, facebookSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -67,14 +70,17 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private Vector<JPanel> tabVector;
 
 	private SQLReaderController controller;
+	private File caseFolder;
+	private ADBThread adb;
+	private JComboBox whatsAppCombo;
 
 	// used for contextmenu
 	private int currentX, currentY;
 	private JTable currentTable;
 
-	// TODO: kann ich die einfach so übernehmen???
-	private MMSInfoPanel mmsInfo;
+	private DBMMSInfoPanel mmsInfo;
 	private ContactInfoPanel contactInfo;
+	private DBWhatsAppInfoPanel whatsappInfo;
 
 	@Override
 	@Init
@@ -91,6 +97,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	}
 
+	/**
+	 * @wbp.parser.entryPoint
+	 */
 	public void initGUI() {
 		tabs = new JTabbedPane();
 
@@ -118,6 +127,12 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		smsPanel = new JPanel(new BorderLayout(0, 0));
 		smsPanel.setName("SMS");
 
+		whatsappPanel = new JPanel(new BorderLayout(0, 0));
+		whatsappPanel.setName("WhatsApp");
+
+		facebookPanel = new JPanel(new BorderLayout(0, 0));
+		facebookPanel.setName("Facebook");
+
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
 		tabs.add(preferencesPanel);
@@ -136,6 +151,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		mmsTable.getSelectionModel().addListSelectionListener(this);
 		smsTable = new JTable();
 		smsTable.getSelectionModel().addListSelectionListener(this);
+		whatsappTable = new JTable();
+		whatsappTable.getSelectionModel().addListSelectionListener(this);
+		facebookTable = new JTable();
+		facebookTable.getSelectionModel().addListSelectionListener(this);
 		tables.add(calendarTable);
 		tables.add(callTable);
 		tables.add(browserHTable);
@@ -144,6 +163,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(contactTable);
 		tables.add(smsTable);
 		tables.add(mmsTable);
+		tables.add(whatsappTable);
+		tables.add(facebookTable);
 
 		// TODO scheint hier irgendwie nich zu funzen, zumindest bei browser
 		// history nich...
@@ -207,8 +228,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		contactPanel.add(contactWrapper, BorderLayout.CENTER);
 		contactInfo = new ContactInfoPanel();
 		contactInfo.setPreferredSize(new Dimension(280, 740));
-		contactInfoScroll = new JScrollPane(contactInfo, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		contactInfoScroll = new JScrollPane(contactInfo, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		contactInfoScroll.setPreferredSize(new Dimension(300, 0));
 		contactPanel.add(contactInfoScroll, BorderLayout.EAST);
 
@@ -220,7 +240,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		mmsSearch.addFocusListener(this);
 		mmsWrapper.add(mmsSearch, BorderLayout.NORTH);
 		mmsPanel.add(mmsWrapper, BorderLayout.CENTER);
-		mmsInfo = new MMSInfoPanel();
+		mmsInfo = new DBMMSInfoPanel();
 		mmsInfo.setPreferredSize(new Dimension(300, 0));
 		mmsPanel.add(mmsInfo, BorderLayout.EAST);
 
@@ -241,6 +261,30 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		smsTextPanel.add(new JLabel("Text:"), BorderLayout.NORTH);
 		smsTextPanel.setPreferredSize(new Dimension(300, 100));
 		smsPanel.add(smsTextPanel, BorderLayout.EAST);
+
+		whatsappScrollPane = new JScrollPane(whatsappTable);
+		whatsappSearch = new JTextField("Search");
+		whatsappSearch.addFocusListener(this);
+		whatsappSearch.addKeyListener(this);
+		whatsAppCombo = new JComboBox();
+		whatsAppCombo.addActionListener(this);
+		whatsappInfo = new DBWhatsAppInfoPanel();
+		whatsappInfo.setPreferredSize(new Dimension(300, 0));
+		JPanel whatsappNorthPanel = new JPanel(new GridLayout(1, 2));
+		whatsappNorthPanel.add(whatsAppCombo);
+		whatsappNorthPanel.add(whatsappSearch);
+		JPanel whatsappWrapper = new JPanel(new BorderLayout());
+		whatsappWrapper.add(whatsappNorthPanel, BorderLayout.NORTH);
+		whatsappWrapper.add(whatsappScrollPane, BorderLayout.CENTER);
+		whatsappPanel.add(whatsappWrapper, BorderLayout.CENTER);
+		whatsappPanel.add(whatsappInfo, BorderLayout.EAST);
+
+		facebookScrollPane = new JScrollPane(facebookTable);
+		facebookSearch = new JTextField("Search");
+		facebookSearch.addFocusListener(this);
+		facebookSearch.addKeyListener(this);
+		facebookPanel.add(facebookSearch, BorderLayout.NORTH);
+		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
 
 		contextMenu = new JPopupMenu();
 		copyCell = new JMenuItem("Copy cell to clipboard");
@@ -275,12 +319,16 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			mmsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			TableColumnAdjuster tca = new TableColumnAdjuster(mmsTable);
 			tca.adjustColumns();
+		} else if (sourceFile.equals(SQLReaderController.WHATSAPP_FILENAME)) {
+			tabVector.add(whatsappPanel);
+		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_FILENAME)) {
+			tabVector.add(facebookPanel);
 		}
 	}
 
 	// shows tabs in alphabetic order
 	public void showTabs() {
-		if(tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
+		if (tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
 			controller.addNamesToSMS();
 		}
 		tabs.removeAll();
@@ -311,25 +359,21 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	@Override
 	public void triggered() {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setADBThread(ADBThread adb) {
-		// TODO Auto-generated method stub
-
+		this.adb = adb;
 	}
 
 	@Override
 	public void setCaseFolder(File caseFolder) {
-		// TODO Auto-generated method stub
-
+		this.caseFolder = caseFolder;
 	}
 
 	@Override
 	public void reactToADBResult(String result, String executedCommand) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -342,17 +386,16 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				if (controller.iterateChosenFolder(folder)) {
 					fc.setCurrentDirectory(folder);
 				} else {
-					JOptionPane.showMessageDialog(tabs, "No db files found in this folder",
-							"Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(tabs, "No db files found in this folder", "Error", JOptionPane.ERROR_MESSAGE);
 				}
 				calendarScrollPane.validate();
 			}
-		}
-		if (e.getSource().equals(copyCell)) {
+		} else if (e.getSource().equals(copyCell)) {
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, true);
-		}
-		if (e.getSource().equals(copyRow)) {
+		} else if (e.getSource().equals(copyRow)) {
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
+		} else if (e.getSource().equals(whatsAppCombo)) {
+			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
 		}
 
 	}
@@ -369,11 +412,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		} else if (e.getSource().equals(mmsTable.getSelectionModel())) {
 			selectedRow = mmsTable.getSelectedRow();
 			if (selectedRow != -1) {
-				String id = mmsTable.getValueAt(selectedRow, 0).toString();
 				String text = mmsTable.getValueAt(selectedRow, 3).toString();
-				boolean hasAttachment = (Boolean) mmsTable.getValueAt(selectedRow, 5);
-				//TODO: hier casefolder
-				mmsInfo.setInfo(id, text, hasAttachment, fc.getCurrentDirectory());
+				String filename = mmsTable.getValueAt(selectedRow, 4).toString();
+				String mimetype = mmsTable.getValueAt(selectedRow, 5).toString();
+				mmsInfo.setInfo(text, mimetype, caseFolder, filename);
 			}
 		} else if (e.getSource().equals(contactTable.getSelectionModel())) {
 			selectedRow = contactTable.getSelectedRow();
@@ -388,15 +430,21 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String im = contactTable.getValueAt(selectedRow, 9).toString();
 				String skype = contactTable.getValueAt(selectedRow, 10).toString();
 				String notes = contactTable.getValueAt(selectedRow, 11).toString();
-				//TODO:hier casefolder rein:
-				File f = new File(fc.getCurrentDirectory() + "/data/contact_" + id + ".jpg");
+				// TODO:hier casefolder rein:
+				File f = new File(caseFolder + File.separator + "contact_photos" + File.separator + id + ".png");
 				if (f.isFile()) {
-					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
-							im, skype, notes, f);
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes, f);
 				} else {
-					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites,
-							im, skype, notes);
+					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes);
 				}
+			}
+		} else if (e.getSource().equals(whatsappTable.getSelectionModel())) {
+			selectedRow = whatsappTable.getSelectedRow();
+			if (selectedRow != -1) {
+				String text = (whatsappTable.getValueAt(selectedRow, 0).equals("")) ? whatsappTable.getValueAt(selectedRow, 1).toString()
+						: whatsappTable.getValueAt(selectedRow, 0).toString();
+				String filename = whatsappTable.getValueAt(selectedRow, 6).toString();
+				whatsappInfo.setInfo(text, caseFolder, filename);
 			}
 		}
 	}
@@ -404,23 +452,26 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
-			if (e.getSource().equals(browserHTable)) {
-				openContextMenu(e, browserHTable);
-			} else if (e.getSource().equals(browserBTable)) {
-				openContextMenu(e, browserBTable);
-			} else if (e.getSource().equals(browserSTable)) {
-				openContextMenu(e, browserSTable);
-			} else if (e.getSource().equals(calendarTable)) {
-				openContextMenu(e, calendarTable);
-			} else if (e.getSource().equals(callTable)) {
-				openContextMenu(e, callTable);
-			} else if (e.getSource().equals(contactTable)) {
-				openContextMenu(e, contactTable);
-			} else if (e.getSource().equals(mmsTable)) {
-				openContextMenu(e, mmsTable);
-			} else if (e.getSource().equals(smsTable)) {
-				openContextMenu(e, smsTable);
-			}
+			// if (e.getSource().equals(browserHTable)) {
+			// openContextMenu(e, browserHTable);
+			// } else if (e.getSource().equals(browserBTable)) {
+			// openContextMenu(e, browserBTable);
+			// } else if (e.getSource().equals(browserSTable)) {
+			// openContextMenu(e, browserSTable);
+			// } else if (e.getSource().equals(calendarTable)) {
+			// openContextMenu(e, calendarTable);
+			// } else if (e.getSource().equals(callTable)) {
+			// openContextMenu(e, callTable);
+			// } else if (e.getSource().equals(contactTable)) {
+			// openContextMenu(e, contactTable);
+			// } else if (e.getSource().equals(mmsTable)) {
+			// openContextMenu(e, mmsTable);
+			// } else if (e.getSource().equals(smsTable)) {
+			// openContextMenu(e, smsTable);
+			// } else if (e.getSource().equals(whatsappTable)) {
+			// openContextMenu(e, whatsappTable);
+			// }
+			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
 
@@ -497,6 +548,12 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		} else if (e.getSource().equals(mmsSearch)) {
 			search = mmsSearch.getText();
 			model = (LiveSearchTableModel) mmsTable.getModel();
+		} else if (e.getSource().equals(whatsappSearch)) {
+			search = whatsappSearch.getText();
+			model = (LiveSearchTableModel) whatsappTable.getModel();
+		} else if (e.getSource().equals(facebookSearch)) {
+			search = facebookSearch.getText();
+			model = (LiveSearchTableModel) facebookTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
@@ -511,7 +568,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		contactScrollPane.getVerticalScrollBar().setValue(0);
 		mmsScrollPane.getVerticalScrollBar().setValue(0);
 		smsScrollPane.getVerticalScrollBar().setValue(0);
-
+		whatsappScrollPane.getVerticalScrollBar().setValue(0);
+		facebookScrollPane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -522,30 +580,31 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void focusGained(FocusEvent e) {
-		if (e.getSource().equals(contactSearch)) {
-			contactSearch.setText("");
-		} else if (e.getSource().equals(browserHSearch)) {
-			browserHSearch.setText("");
-		} else if (e.getSource().equals(browserBSearch)) {
-			browserBSearch.setText("");
-		} else if (e.getSource().equals(browserSSearch)) {
-			browserSSearch.setText("");
-		} else if (e.getSource().equals(calendarSearch)) {
-			calendarSearch.setText("");
-		} else if (e.getSource().equals(callsSearch)) {
-			callsSearch.setText("");
-		} else if (e.getSource().equals(mmsSearch)) {
-			mmsSearch.setText("");
-		} else if (e.getSource().equals(smsSearch)) {
-			smsSearch.setText("");
-		}
-
+		// if (e.getSource().equals(contactSearch)) {
+		// contactSearch.setText("");
+		// } else if (e.getSource().equals(browserHSearch)) {
+		// browserHSearch.setText("");
+		// } else if (e.getSource().equals(browserBSearch)) {
+		// browserBSearch.setText("");
+		// } else if (e.getSource().equals(browserSSearch)) {
+		// browserSSearch.setText("");
+		// } else if (e.getSource().equals(calendarSearch)) {
+		// calendarSearch.setText("");
+		// } else if (e.getSource().equals(callsSearch)) {
+		// callsSearch.setText("");
+		// } else if (e.getSource().equals(mmsSearch)) {
+		// mmsSearch.setText("");
+		// } else if (e.getSource().equals(smsSearch)) {
+		// smsSearch.setText("");
+		// } else if (e.getSource().equals(whatsappSearch)) {
+		// whatsappSearch.setText("");
+		// }
+		((JTextField) e.getSource()).setText("");
 	}
 
 	@Override
 	public void focusLost(FocusEvent arg0) {
 		// TODO Auto-generated method stub
-
 	}
 
 	public JTable getCalendarTable() {
@@ -559,6 +618,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public JTable getBrowserHTable() {
 		return browserHTable;
 	}
+
 	public JTable getBrowserBTable() {
 		return browserBTable;
 	}
@@ -577,6 +637,22 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JTable getSmsTable() {
 		return smsTable;
+	}
+
+	public JTable getWhatsappTable() {
+		return whatsappTable;
+	}
+
+	public File getCaseFolder() {
+		return caseFolder;
+	}
+
+	public ADBThread getAdb() {
+		return adb;
+	}
+
+	public JComboBox getWhatsappCombo() {
+		return whatsAppCombo;
 	}
 
 }
