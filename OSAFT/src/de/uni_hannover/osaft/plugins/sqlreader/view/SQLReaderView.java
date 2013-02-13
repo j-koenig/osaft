@@ -47,18 +47,21 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuste
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
+//TODO: vllt auch noch browserkrams zusammenpacken (also das mit webview zusammenklatschen)
+
 @PluginImplementation
 public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener, MouseListener, FocusListener, KeyListener {
 
 	private JTabbedPane tabs;
 	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserBScrollPane, browserSScrollPane, contactScrollPane,
-			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane, webviewScrollPane;
+			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane, webviewScrollPane,
+			cachedGeopositionScrollPane, mapsScrollPane;
 	private JTable calendarTable, callTable, browserHTable, browserBTable, browserSTable, contactTable, mmsTable, smsTable, whatsappTable,
-			facebookTable, webviewTable;
+			facebookTable, webviewTable, cachedGeopositionTable, mapsTable;
 	private JPanel calendarPanel, smsPanel, browserHPanel, browserBPanel, browserSPanel, callPanel, contactPanel, mmsPanel,
-			preferencesPanel, whatsappPanel, facebookPanel, webviewPanel;
+			preferencesPanel, whatsappPanel, facebookPanel, webviewPanel, cachedGeopositionPanel, mapsPanel;
 	private JTextField contactSearch, calendarSearch, browserHSearch, browserBSearch, browserSSearch, smsSearch, mmsSearch, callsSearch,
-			whatsappSearch, facebookSearch, webviewSearch;
+			whatsappSearch, facebookSearch, webviewSearch, cachedGeopositionSearch, mapsSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -69,7 +72,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private SQLReaderController controller;
 	private File caseFolder;
 	private ADBThread adb;
-	private JComboBox whatsAppCombo, webviewCombo;
+	private JComboBox whatsAppCombo, webviewCombo, mapsCombo;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -129,9 +132,15 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		facebookPanel = new JPanel(new BorderLayout(0, 0));
 		facebookPanel.setName("Facebook");
-		
-		webviewPanel = new JPanel(new BorderLayout(0,0));
+
+		webviewPanel = new JPanel(new BorderLayout(0, 0));
 		webviewPanel.setName("Webview");
+
+		cachedGeopositionPanel = new JPanel(new BorderLayout(0, 0));
+		cachedGeopositionPanel.setName("Browser Cached Geopositions");
+
+		mapsPanel = new JPanel(new BorderLayout(0, 0));
+		mapsPanel.setName("Google Maps");
 
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
@@ -146,6 +155,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		browserSTable = new JTable();
 		contactTable = new JTable();
 		webviewTable = new JTable();
+		cachedGeopositionTable = new JTable();
+		mapsTable = new JTable();
 		// selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
@@ -167,6 +178,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(whatsappTable);
 		tables.add(facebookTable);
 		tables.add(webviewTable);
+		tables.add(cachedGeopositionTable);
+		tables.add(mapsTable);
 
 		// TODO scheint hier irgendwie nich zu funzen, zumindest bei browser
 		// history nich...
@@ -218,6 +231,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		browserSSearch.addKeyListener(this);
 		browserSPanel.add(browserSSearch, BorderLayout.NORTH);
 		browserSPanel.add(browserSScrollPane, BorderLayout.CENTER);
+
+		cachedGeopositionScrollPane = new JScrollPane(cachedGeopositionTable);
+		cachedGeopositionSearch = new JTextField("Search");
+		cachedGeopositionSearch.addFocusListener(this);
+		cachedGeopositionSearch.addKeyListener(this);
+		cachedGeopositionPanel.add(cachedGeopositionSearch, BorderLayout.NORTH);
+		cachedGeopositionPanel.add(cachedGeopositionScrollPane, BorderLayout.CENTER);
 
 		// contacts, mms and sms also provide an "info"-panel
 		contactScrollPane = new JScrollPane(contactTable);
@@ -287,7 +307,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookSearch.addKeyListener(this);
 		facebookPanel.add(facebookSearch, BorderLayout.NORTH);
 		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
-		
+
 		webviewScrollPane = new JScrollPane(webviewTable);
 		webviewSearch = new JTextField("Search");
 		webviewSearch.addFocusListener(this);
@@ -299,6 +319,18 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		webviewNorthPanel.add(webviewSearch);
 		webviewPanel.add(webviewNorthPanel, BorderLayout.NORTH);
 		webviewPanel.add(webviewScrollPane, BorderLayout.CENTER);
+
+		mapsScrollPane = new JScrollPane(mapsTable);
+		mapsSearch = new JTextField("Search");
+		mapsSearch.addFocusListener(this);
+		mapsSearch.addKeyListener(this);
+		mapsCombo = new JComboBox(new Object[] { "Search History", "Destination History" });
+		mapsCombo.addActionListener(this);
+		JPanel mapsNorthPanel = new JPanel(new GridLayout(1, 2));
+		mapsNorthPanel.add(mapsCombo);
+		mapsNorthPanel.add(mapsSearch);
+		mapsPanel.add(mapsNorthPanel, BorderLayout.NORTH);
+		mapsPanel.add(mapsScrollPane, BorderLayout.CENTER);
 
 		contextMenu = new JPopupMenu();
 		copyCell = new JMenuItem("Copy cell to clipboard");
@@ -339,6 +371,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			tabVector.add(facebookPanel);
 		} else if (sourceFile.equals(SQLReaderController.WEBVIEW_FILENAME)) {
 			tabVector.add(webviewPanel);
+		} else if (sourceFile.equals(SQLReaderController.BROWSER_CACHED_GEOPOSITION)) {
+			tabVector.add(cachedGeopositionPanel);
+		} else if (sourceFile.equals(SQLReaderController.MAPS_SEARCH_HISTORY_FILENAME)
+				|| sourceFile.equals(SQLReaderController.MAPS_DESTINATION_HISTORY_FILENAME)) {
+			if (!tabVector.contains(mapsPanel)) {
+				tabVector.add(mapsPanel);
+			}
 		}
 	}
 
@@ -412,8 +451,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
 		} else if (e.getSource().equals(whatsAppCombo)) {
 			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
-		} else if(e.getSource().equals(webviewCombo)) {
+		} else if (e.getSource().equals(webviewCombo)) {
 			controller.setWebviewTableModel(webviewCombo.getSelectedIndex());
+		} else if (e.getSource().equals(mapsCombo)) {
+			controller.setMapsTableModel(mapsCombo.getSelectedIndex());
 		}
 
 	}
@@ -470,25 +511,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
-			// if (e.getSource().equals(browserHTable)) {
-			// openContextMenu(e, browserHTable);
-			// } else if (e.getSource().equals(browserBTable)) {
-			// openContextMenu(e, browserBTable);
-			// } else if (e.getSource().equals(browserSTable)) {
-			// openContextMenu(e, browserSTable);
-			// } else if (e.getSource().equals(calendarTable)) {
-			// openContextMenu(e, calendarTable);
-			// } else if (e.getSource().equals(callTable)) {
-			// openContextMenu(e, callTable);
-			// } else if (e.getSource().equals(contactTable)) {
-			// openContextMenu(e, contactTable);
-			// } else if (e.getSource().equals(mmsTable)) {
-			// openContextMenu(e, mmsTable);
-			// } else if (e.getSource().equals(smsTable)) {
-			// openContextMenu(e, smsTable);
-			// } else if (e.getSource().equals(whatsappTable)) {
-			// openContextMenu(e, whatsappTable);
-			// }
 			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
@@ -575,6 +597,12 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		} else if (e.getSource().equals(webviewSearch)) {
 			search = webviewSearch.getText();
 			model = (LiveSearchTableModel) webviewTable.getModel();
+		} else if (e.getSource().equals(cachedGeopositionSearch)) {
+			search = cachedGeopositionSearch.getText();
+			model = (LiveSearchTableModel) cachedGeopositionTable.getModel();
+		} else if (e.getSource().equals(mapsSearch)) {
+			search = mapsSearch.getText();
+			model = (LiveSearchTableModel) mapsTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
@@ -592,6 +620,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		whatsappScrollPane.getVerticalScrollBar().setValue(0);
 		facebookScrollPane.getVerticalScrollBar().setValue(0);
 		webviewScrollPane.getVerticalScrollBar().setValue(0);
+		cachedGeopositionScrollPane.getVerticalScrollBar().setValue(0);
+		mapsScrollPane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -601,26 +631,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	@Override
-	public void focusGained(FocusEvent e) {
-		// if (e.getSource().equals(contactSearch)) {
-		// contactSearch.setText("");
-		// } else if (e.getSource().equals(browserHSearch)) {
-		// browserHSearch.setText("");
-		// } else if (e.getSource().equals(browserBSearch)) {
-		// browserBSearch.setText("");
-		// } else if (e.getSource().equals(browserSSearch)) {
-		// browserSSearch.setText("");
-		// } else if (e.getSource().equals(calendarSearch)) {
-		// calendarSearch.setText("");
-		// } else if (e.getSource().equals(callsSearch)) {
-		// callsSearch.setText("");
-		// } else if (e.getSource().equals(mmsSearch)) {
-		// mmsSearch.setText("");
-		// } else if (e.getSource().equals(smsSearch)) {
-		// smsSearch.setText("");
-		// } else if (e.getSource().equals(whatsappSearch)) {
-		// whatsappSearch.setText("");
-		// }
+	public void focusGained(FocusEvent e) {		
 		((JTextField) e.getSource()).setText("");
 	}
 
@@ -676,9 +687,16 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public JComboBox getWhatsappCombo() {
 		return whatsAppCombo;
 	}
-	
+
 	public JTable getWebviewTable() {
 		return webviewTable;
 	}
 
+	public JTable getCachedGeopositionTable() {
+		return cachedGeopositionTable;
+	}
+
+	public JTable getMapsTable() {
+		return mapsTable;
+	}
 }

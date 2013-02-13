@@ -30,21 +30,22 @@ public class SQLReaderController {
 	// tabellen
 
 	// Passwörter und cached formdata:
-	public final static String WEBVIEW_FILENAME = "webview.db";
+	public final static String WEBVIEW_FILENAME = "webview.db"; //Done
 	// könnte auch anders heißen (auf huawei heißt es browser.db und hat anderen
 	// inhalt):
-	public final static String BROWSER_FILENAME = "browser2.db";
+	public final static String BROWSER_FILENAME = "browser2.db"; //Done
+	// relevant?
 	public final static String COOKIES_FILENAME = "webviewCookiesChromium.db";
-	public final static String BROWSER_CACHED_GEOLOCATION = "CachedGeoposition.db";
-	public final static String MMSSMS_FILENAME = "mmssms.db";
-	public final static String CALENDAR_FILENAME = "calendar.db";
-	public final static String CONTACTS_FILENAME = "contacts2.db";
-	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db";
-	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history.db";
+	public final static String BROWSER_CACHED_GEOPOSITION = "CachedGeoposition.db"; //Done
+	public final static String MMSSMS_FILENAME = "mmssms.db"; //Done
+	public final static String CALENDAR_FILENAME = "calendar.db"; //Done
+	public final static String CONTACTS_FILENAME = "contacts2.db"; //Done
+	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; //Done
+	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; //Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String GMAIL_FILENAME = "mailstore...db";
 	public final static String FACEBOOK_FILENAME = "fb.db";
-	public final static String WHATSAPP_FILENAME = "msgstore.db";
+	public final static String WHATSAPP_FILENAME = "msgstore.db"; //Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String TWITTER_FILENAME = "<userid>.db";
 	public final static String GTALK_FILENAME = "talk.db";
@@ -63,9 +64,10 @@ public class SQLReaderController {
 
 	private SQLReaderView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserBookmarksTableModel,
-			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel, cachedGeopositionTableModel;
 	private HashMap<String, LiveSearchTableModel> whatsAppTableModels;
 	private ArrayList<LiveSearchTableModel> webviewTableModels;
+	private ArrayList<LiveSearchTableModel> mapsTableModels;
 	private File curFolder;
 	private HashMap<Integer, String> contactNames;
 
@@ -91,21 +93,30 @@ public class SQLReaderController {
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Attachment", "Mimetype" });
 		webviewTableModels = new ArrayList<LiveSearchTableModel>();
-		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Passord" }));
+		// passwords:
+		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Password" }));
+		// formdata:
 		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Name", "Value" }));
+		cachedGeopositionTableModel = new LiveSearchTableModel(new Object[] { "Latitude", "Longitude", "Altitude", "Accuracy",
+				"Altitude Accuracy", "Heading", "Speed", "Timestamp" });
+		mapsTableModels = new ArrayList<LiveSearchTableModel>();
+		// maps searches:
+		mapsTableModels.add(new LiveSearchTableModel(new Object[] { "Search", "Suggestion", "Latitude", "Longitude", "Date" }));
+		// destination history:
+		mapsTableModels.add(new LiveSearchTableModel(new Object[] { "Date", "Destination Lat", "Destination Lon", "Destination Title",
+				"Destination Address", "Source Lat", "Source Lon" }));
 	}
 
 	public boolean iterateChosenFolder(File folder) {
 		curFolder = folder;
 		boolean processedSomething = false;
-		// progressbar?
 		File[] files = folder.listFiles();
 		for (int i = 0; i < files.length; i++) {
 			File curFile = files[i];
 			String fName = curFile.getName();
-			// only given csv files should be processed
+			// only given db files should be processed
 			if (fName.equals(BROWSER_FILENAME) || fName.equals(WEBVIEW_FILENAME) || fName.equals(CALENDAR_FILENAME)
-					|| fName.equals(CONTACTS_FILENAME) || fName.equals(COOKIES_FILENAME) || fName.equals(BROWSER_CACHED_GEOLOCATION)
+					|| fName.equals(CONTACTS_FILENAME) || fName.equals(COOKIES_FILENAME) || fName.equals(BROWSER_CACHED_GEOPOSITION)
 					|| fName.equals(MMSSMS_FILENAME) || fName.equals(MAPS_SEARCH_HISTORY_FILENAME)
 					|| fName.equals(MAPS_DESTINATION_HISTORY_FILENAME) || fName.equals(GMAIL_FILENAME) || fName.equals(FACEBOOK_FILENAME)
 					|| fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME) || fName.equals(GTALK_FILENAME)) {
@@ -135,6 +146,12 @@ public class SQLReaderController {
 				processWhatsapp(statement);
 			} else if (file.getName().equals(WEBVIEW_FILENAME)) {
 				processWebview(statement);
+			} else if (file.getName().equals(BROWSER_CACHED_GEOPOSITION)) {
+				processCachedGeoposition(statement);
+			} else if (file.getName().equals(MAPS_SEARCH_HISTORY_FILENAME)) {
+				processMapsSearchHistory(statement);
+			} else if (file.getName().equals(MAPS_DESTINATION_HISTORY_FILENAME)) {
+				processMapsDestinationHistory(statement);
 			}
 
 		} catch (SQLException e) {
@@ -573,7 +590,57 @@ public class SQLReaderController {
 			webviewTableModels.get(1).addRow(new Object[] { name, value });
 		}
 		view.getWebviewTable().setModel(webviewTableModels.get(0));
-		view.addTab(WEBVIEW_FILENAME);		
+		view.addTab(WEBVIEW_FILENAME);
+	}
+
+	private void processCachedGeoposition(Statement statement) throws SQLException {
+		ResultSet rs = statement.executeQuery("SELECT * FROM CachedPosition");
+		while (rs.next()) {
+			String latitude = rs.getString(1);
+			String longitude = rs.getString(2);
+			String altitude = rs.getString(3);
+			double accuracy = rs.getDouble(4);
+			double altitudeAccuracy = rs.getDouble(5);
+			double heading = rs.getDouble(6);
+			double speed = rs.getDouble(7);
+			Date timestamp = new Date(rs.getLong(8));
+
+			cachedGeopositionTableModel.addRow(new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed,
+					timestamp });
+		}
+		view.getCachedGeopositionTable().setModel(cachedGeopositionTableModel);
+		view.addTab(BROWSER_CACHED_GEOPOSITION);
+	}
+
+	private void processMapsSearchHistory(Statement statement) throws SQLException {
+		ResultSet rs = statement.executeQuery("SELECT data1, displayQuery, latitude, longitude, timestamp FROM suggestions");
+		while (rs.next()) {
+			String search = rs.getString(1);
+			String suggestion = rs.getString(2);
+			String latitude = rs.getString(3);
+			String longitude = rs.getString(4);
+			Date timestamp = new Date(rs.getLong(5));
+			mapsTableModels.get(0).addRow(new Object[] { search, suggestion, latitude, longitude, timestamp });
+		}
+		view.getMapsTable().setModel(mapsTableModels.get(0));
+		view.addTab(MAPS_SEARCH_HISTORY_FILENAME);
+	}
+
+	private void processMapsDestinationHistory(Statement statement) throws SQLException {
+		ResultSet rs = statement
+				.executeQuery("SELECT time, dest_lat, dest_lng, dest_title, dest_address, source_lat, source_lng FROM destination_history");
+		while (rs.next()) {
+			Date time = new Date(rs.getLong(1));
+			String dest_lat = rs.getString(2);
+			String dest_lng = rs.getString(3);
+			String dest_title = rs.getString(4);
+			String dest_addr = rs.getString(5);
+			String source_lat = rs.getString(6);
+			String source_lng = rs.getString(7);
+			mapsTableModels.get(1).addRow(new Object[] { time, dest_lat, dest_lng, dest_title, dest_addr, source_lat, source_lng });
+		}
+		view.getMapsTable().setModel(mapsTableModels.get(0));
+		view.addTab(MAPS_DESTINATION_HISTORY_FILENAME);
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
@@ -609,9 +676,13 @@ public class SQLReaderController {
 			view.getWhatsappTable().setModel(whatsAppTableModels.get(contactId));
 		}
 	}
-	
+
 	public void setWebviewTableModel(int index) {
 		view.getWebviewTable().setModel(webviewTableModels.get(index));
+	}
+
+	public void setMapsTableModel(int index) {
+		view.getMapsTable().setModel(mapsTableModels.get(index));
 	}
 
 }
