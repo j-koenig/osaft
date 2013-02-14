@@ -53,15 +53,13 @@ import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener, MouseListener, FocusListener, KeyListener {
 
 	private JTabbedPane tabs;
-	private JScrollPane calendarScrollPane, callScrollPane, browserHScrollPane, browserBScrollPane, browserSScrollPane, contactScrollPane,
-			mmsScrollPane, smsScrollPane, contactInfoScroll, whatsappScrollPane, facebookScrollPane, webviewScrollPane,
-			cachedGeopositionScrollPane, mapsScrollPane;
-	private JTable calendarTable, callTable, browserHTable, browserBTable, browserSTable, contactTable, mmsTable, smsTable, whatsappTable,
-			facebookTable, webviewTable, cachedGeopositionTable, mapsTable;
-	private JPanel calendarPanel, smsPanel, browserHPanel, browserBPanel, browserSPanel, callPanel, contactPanel, mmsPanel,
-			preferencesPanel, whatsappPanel, facebookPanel, webviewPanel, cachedGeopositionPanel, mapsPanel;
-	private JTextField contactSearch, calendarSearch, browserHSearch, browserBSearch, browserSSearch, smsSearch, mmsSearch, callsSearch,
-			whatsappSearch, facebookSearch, webviewSearch, cachedGeopositionSearch, mapsSearch;
+	private JScrollPane calendarScrollPane, callScrollPane, contactScrollPane, mmsScrollPane, smsScrollPane, contactInfoScroll,
+			whatsappScrollPane, facebookScrollPane, mapsScrollPane, browserScrollPane;
+	private JTable calendarTable, callTable, contactTable, mmsTable, smsTable, whatsappTable, facebookTable, mapsTable, browserTable;
+	private JPanel calendarPanel, smsPanel, callPanel, contactPanel, mmsPanel, preferencesPanel, whatsappPanel, facebookPanel, mapsPanel,
+			browserPanel;
+	private JTextField contactSearch, calendarSearch, smsSearch, mmsSearch, callsSearch, whatsappSearch, facebookSearch, mapsSearch,
+			browserSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -72,7 +70,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private SQLReaderController controller;
 	private File caseFolder;
 	private ADBThread adb;
-	private JComboBox whatsAppCombo, webviewCombo, mapsCombo;
+	private JComboBox whatsAppCombo, mapsCombo, browserCombo;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -109,15 +107,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		callPanel = new JPanel(new BorderLayout(0, 0));
 		callPanel.setName("CallLogs");
 
-		browserHPanel = new JPanel(new BorderLayout(0, 0));
-		browserHPanel.setName("Browser History");
-
-		browserBPanel = new JPanel(new BorderLayout(0, 0));
-		browserBPanel.setName("Browser Bookmarks");
-
-		browserSPanel = new JPanel(new BorderLayout(0, 0));
-		browserSPanel.setName("Browser Search History");
-
 		contactPanel = new JPanel(new BorderLayout(0, 0));
 		contactPanel.setName("Contacts");
 
@@ -133,14 +122,11 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookPanel = new JPanel(new BorderLayout(0, 0));
 		facebookPanel.setName("Facebook");
 
-		webviewPanel = new JPanel(new BorderLayout(0, 0));
-		webviewPanel.setName("Webview");
-
-		cachedGeopositionPanel = new JPanel(new BorderLayout(0, 0));
-		cachedGeopositionPanel.setName("Browser Cached Geopositions");
-
 		mapsPanel = new JPanel(new BorderLayout(0, 0));
 		mapsPanel.setName("Google Maps");
+
+		browserPanel = new JPanel(new BorderLayout(0, 0));
+		browserPanel.setName("Browser");
 
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
@@ -150,13 +136,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		calendarTable = new JTable();
 		callTable = new JTable();
-		browserHTable = new JTable();
-		browserBTable = new JTable();
-		browserSTable = new JTable();
 		contactTable = new JTable();
-		webviewTable = new JTable();
-		cachedGeopositionTable = new JTable();
 		mapsTable = new JTable();
+		browserTable = new JTable();
 		// selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
@@ -169,20 +151,15 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookTable.getSelectionModel().addListSelectionListener(this);
 		tables.add(calendarTable);
 		tables.add(callTable);
-		tables.add(browserHTable);
-		tables.add(browserBTable);
-		tables.add(browserSTable);
 		tables.add(contactTable);
 		tables.add(smsTable);
 		tables.add(mmsTable);
 		tables.add(whatsappTable);
 		tables.add(facebookTable);
-		tables.add(webviewTable);
-		tables.add(cachedGeopositionTable);
 		tables.add(mapsTable);
+		tables.add(browserTable);
 
-		// TODO scheint hier irgendwie nich zu funzen, zumindest bei browser
-		// history nich...
+		// TODO scheint hier irgendwie nich zu funzen
 		// Date objects will be rendered differently
 		CustomDateCellRenderer cdcr = new CustomDateCellRenderer();
 
@@ -210,34 +187,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		callsSearch.addFocusListener(this);
 		callPanel.add(callsSearch, BorderLayout.NORTH);
 		callPanel.add(callScrollPane, BorderLayout.CENTER);
-
-		browserHScrollPane = new JScrollPane(browserHTable);
-		browserHSearch = new JTextField("Search");
-		browserHSearch.addFocusListener(this);
-		browserHSearch.addKeyListener(this);
-		browserHPanel.add(browserHSearch, BorderLayout.NORTH);
-		browserHPanel.add(browserHScrollPane, BorderLayout.CENTER);
-
-		browserBScrollPane = new JScrollPane(browserBTable);
-		browserBSearch = new JTextField("Search");
-		browserBSearch.addFocusListener(this);
-		browserBSearch.addKeyListener(this);
-		browserBPanel.add(browserBSearch, BorderLayout.NORTH);
-		browserBPanel.add(browserBScrollPane, BorderLayout.CENTER);
-
-		browserSScrollPane = new JScrollPane(browserSTable);
-		browserSSearch = new JTextField("Search");
-		browserSSearch.addFocusListener(this);
-		browserSSearch.addKeyListener(this);
-		browserSPanel.add(browserSSearch, BorderLayout.NORTH);
-		browserSPanel.add(browserSScrollPane, BorderLayout.CENTER);
-
-		cachedGeopositionScrollPane = new JScrollPane(cachedGeopositionTable);
-		cachedGeopositionSearch = new JTextField("Search");
-		cachedGeopositionSearch.addFocusListener(this);
-		cachedGeopositionSearch.addKeyListener(this);
-		cachedGeopositionPanel.add(cachedGeopositionSearch, BorderLayout.NORTH);
-		cachedGeopositionPanel.add(cachedGeopositionScrollPane, BorderLayout.CENTER);
 
 		// contacts, mms and sms also provide an "info"-panel
 		contactScrollPane = new JScrollPane(contactTable);
@@ -308,17 +257,18 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookPanel.add(facebookSearch, BorderLayout.NORTH);
 		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
 
-		webviewScrollPane = new JScrollPane(webviewTable);
-		webviewSearch = new JTextField("Search");
-		webviewSearch.addFocusListener(this);
-		webviewSearch.addKeyListener(this);
-		webviewCombo = new JComboBox(new Object[] { "Passwords", "Formdata" });
-		webviewCombo.addActionListener(this);
-		JPanel webviewNorthPanel = new JPanel(new GridLayout(1, 2));
-		webviewNorthPanel.add(webviewCombo);
-		webviewNorthPanel.add(webviewSearch);
-		webviewPanel.add(webviewNorthPanel, BorderLayout.NORTH);
-		webviewPanel.add(webviewScrollPane, BorderLayout.CENTER);
+		browserScrollPane = new JScrollPane(browserTable);
+		browserSearch = new JTextField("Search");
+		browserSearch.addFocusListener(this);
+		browserSearch.addKeyListener(this);
+		browserCombo = new JComboBox(new Object[] { "Browser Bookmarks", "Browser Cached Geopositions", "Browser History",
+				"Browser Search History", "Cached Formdata", "Saved Passwords" });
+		browserCombo.addActionListener(this);
+		JPanel browserNorthPanel = new JPanel((new GridLayout(1, 2)));
+		browserNorthPanel.add(browserCombo);
+		browserNorthPanel.add(browserSearch);
+		browserPanel.add(browserNorthPanel, BorderLayout.NORTH);
+		browserPanel.add(browserScrollPane, BorderLayout.CENTER);
 
 		mapsScrollPane = new JScrollPane(mapsTable);
 		mapsSearch = new JTextField("Search");
@@ -348,9 +298,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public void addTab(String sourceFile) {
 		if (sourceFile.equals(SQLReaderController.BROWSER_FILENAME)) {
-			tabVector.add(browserHPanel);
-			tabVector.add(browserBPanel);
-			tabVector.add(browserSPanel);
+			if (!tabVector.contains(browserPanel)) {
+				tabVector.add(browserPanel);
+			}
 		} else if (sourceFile.equals(SQLReaderController.CALENDAR_FILENAME)) {
 			tabVector.add(calendarPanel);
 		} else if (sourceFile.equals(SQLReaderController.CONTACTS_FILENAME)) {
@@ -370,9 +320,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_FILENAME)) {
 			tabVector.add(facebookPanel);
 		} else if (sourceFile.equals(SQLReaderController.WEBVIEW_FILENAME)) {
-			tabVector.add(webviewPanel);
+			if (!tabVector.contains(browserPanel)) {
+				tabVector.add(browserPanel);
+			}
 		} else if (sourceFile.equals(SQLReaderController.BROWSER_CACHED_GEOPOSITION)) {
-			tabVector.add(cachedGeopositionPanel);
+			if (!tabVector.contains(browserPanel)) {
+				tabVector.add(browserPanel);
+			}
 		} else if (sourceFile.equals(SQLReaderController.MAPS_SEARCH_HISTORY_FILENAME)
 				|| sourceFile.equals(SQLReaderController.MAPS_DESTINATION_HISTORY_FILENAME)) {
 			if (!tabVector.contains(mapsPanel)) {
@@ -451,10 +405,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
 		} else if (e.getSource().equals(whatsAppCombo)) {
 			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
-		} else if (e.getSource().equals(webviewCombo)) {
-			controller.setWebviewTableModel(webviewCombo.getSelectedIndex());
 		} else if (e.getSource().equals(mapsCombo)) {
 			controller.setMapsTableModel(mapsCombo.getSelectedIndex());
+		} else if (e.getSource().equals(browserCombo)) {
+			controller.setBrowserTableModel(browserCombo.getSelectedIndex());
 		}
 
 	}
@@ -562,56 +516,32 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		String search = "";
+		String search = ((JTextField)e.getSource()).getText();
 		LiveSearchTableModel model = null;
 		if (e.getSource().equals(contactSearch)) {
-			search = contactSearch.getText();
 			model = (LiveSearchTableModel) contactTable.getModel();
-		} else if (e.getSource().equals(browserBSearch)) {
-			search = browserBSearch.getText();
-			model = (LiveSearchTableModel) browserBTable.getModel();
-		} else if (e.getSource().equals(browserHSearch)) {
-			search = browserHSearch.getText();
-			model = (LiveSearchTableModel) browserHTable.getModel();
-		} else if (e.getSource().equals(browserSSearch)) {
-			search = browserSSearch.getText();
-			model = (LiveSearchTableModel) browserSTable.getModel();
 		} else if (e.getSource().equals(callsSearch)) {
-			search = callsSearch.getText();
 			model = (LiveSearchTableModel) callTable.getModel();
 		} else if (e.getSource().equals(calendarSearch)) {
-			search = calendarSearch.getText();
 			model = (LiveSearchTableModel) calendarTable.getModel();
 		} else if (e.getSource().equals(smsSearch)) {
-			search = smsSearch.getText();
 			model = (LiveSearchTableModel) smsTable.getModel();
 		} else if (e.getSource().equals(mmsSearch)) {
-			search = mmsSearch.getText();
 			model = (LiveSearchTableModel) mmsTable.getModel();
 		} else if (e.getSource().equals(whatsappSearch)) {
-			search = whatsappSearch.getText();
 			model = (LiveSearchTableModel) whatsappTable.getModel();
 		} else if (e.getSource().equals(facebookSearch)) {
-			search = facebookSearch.getText();
 			model = (LiveSearchTableModel) facebookTable.getModel();
-		} else if (e.getSource().equals(webviewSearch)) {
-			search = webviewSearch.getText();
-			model = (LiveSearchTableModel) webviewTable.getModel();
-		} else if (e.getSource().equals(cachedGeopositionSearch)) {
-			search = cachedGeopositionSearch.getText();
-			model = (LiveSearchTableModel) cachedGeopositionTable.getModel();
 		} else if (e.getSource().equals(mapsSearch)) {
-			search = mapsSearch.getText();
 			model = (LiveSearchTableModel) mapsTable.getModel();
+		} else if (e.getSource().equals(browserSearch)) {
+			model = (LiveSearchTableModel) browserTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
 		} else {
 			model.resetData();
 		}
-		browserHScrollPane.getVerticalScrollBar().setValue(0);
-		browserBScrollPane.getVerticalScrollBar().setValue(0);
-		browserSScrollPane.getVerticalScrollBar().setValue(0);
 		callScrollPane.getVerticalScrollBar().setValue(0);
 		calendarScrollPane.getVerticalScrollBar().setValue(0);
 		contactScrollPane.getVerticalScrollBar().setValue(0);
@@ -619,9 +549,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		smsScrollPane.getVerticalScrollBar().setValue(0);
 		whatsappScrollPane.getVerticalScrollBar().setValue(0);
 		facebookScrollPane.getVerticalScrollBar().setValue(0);
-		webviewScrollPane.getVerticalScrollBar().setValue(0);
-		cachedGeopositionScrollPane.getVerticalScrollBar().setValue(0);
 		mapsScrollPane.getVerticalScrollBar().setValue(0);
+		browserScrollPane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -631,7 +560,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	@Override
-	public void focusGained(FocusEvent e) {		
+	public void focusGained(FocusEvent e) {
 		((JTextField) e.getSource()).setText("");
 	}
 
@@ -646,18 +575,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JTable getCallTable() {
 		return callTable;
-	}
-
-	public JTable getBrowserHTable() {
-		return browserHTable;
-	}
-
-	public JTable getBrowserBTable() {
-		return browserBTable;
-	}
-
-	public JTable getBrowserSTable() {
-		return browserSTable;
 	}
 
 	public JTable getContactTable() {
@@ -688,15 +605,11 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		return whatsAppCombo;
 	}
 
-	public JTable getWebviewTable() {
-		return webviewTable;
-	}
-
-	public JTable getCachedGeopositionTable() {
-		return cachedGeopositionTable;
-	}
-
 	public JTable getMapsTable() {
 		return mapsTable;
+	}
+
+	public JTable getBrowserTable() {
+		return browserTable;
 	}
 }

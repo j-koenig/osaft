@@ -30,22 +30,22 @@ public class SQLReaderController {
 	// tabellen
 
 	// Passwörter und cached formdata:
-	public final static String WEBVIEW_FILENAME = "webview.db"; //Done
+	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
 	// könnte auch anders heißen (auf huawei heißt es browser.db und hat anderen
 	// inhalt):
-	public final static String BROWSER_FILENAME = "browser2.db"; //Done
+	public final static String BROWSER_FILENAME = "browser2.db"; // Done
 	// relevant?
 	public final static String COOKIES_FILENAME = "webviewCookiesChromium.db";
-	public final static String BROWSER_CACHED_GEOPOSITION = "CachedGeoposition.db"; //Done
-	public final static String MMSSMS_FILENAME = "mmssms.db"; //Done
-	public final static String CALENDAR_FILENAME = "calendar.db"; //Done
-	public final static String CONTACTS_FILENAME = "contacts2.db"; //Done
-	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; //Done
-	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; //Done
+	public final static String BROWSER_CACHED_GEOPOSITION = "CachedGeoposition.db"; // Done
+	public final static String MMSSMS_FILENAME = "mmssms.db"; // Done
+	public final static String CALENDAR_FILENAME = "calendar.db"; // Done
+	public final static String CONTACTS_FILENAME = "contacts2.db"; // Done
+	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; // Done
+	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String GMAIL_FILENAME = "mailstore...db";
 	public final static String FACEBOOK_FILENAME = "fb.db";
-	public final static String WHATSAPP_FILENAME = "msgstore.db"; //Done
+	public final static String WHATSAPP_FILENAME = "msgstore.db"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String TWITTER_FILENAME = "<userid>.db";
 	public final static String GTALK_FILENAME = "talk.db";
@@ -63,11 +63,9 @@ public class SQLReaderController {
 	public final static int MIMETYPE_PHOTO = 10;
 
 	private SQLReaderView view;
-	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserBookmarksTableModel,
-			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel, cachedGeopositionTableModel;
+	private LiveSearchTableModel calendarTableModel, callsTableModel, contactsTableModel, mmsTableModel, smsTableModel;
 	private HashMap<String, LiveSearchTableModel> whatsAppTableModels;
-	private ArrayList<LiveSearchTableModel> webviewTableModels;
-	private ArrayList<LiveSearchTableModel> mapsTableModels;
+	private ArrayList<LiveSearchTableModel> browserTableModels, mapsTableModels;
 	private File curFolder;
 	private HashMap<Integer, String> contactNames;
 
@@ -85,26 +83,30 @@ public class SQLReaderController {
 				"Location", "Repeat", "Allday", "Deleted?" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date", "Duration (in s)", "New Call", "Type",
 				"Number Type", "Location" });
-		browserHistoryTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL", "Visits", "Last Visit" });
-		browserBookmarksTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL", "Created", "Deleted?" });
-		browserSearchTableModel = new LiveSearchTableModel(new Object[] { "Date", "Search" });
 		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers", "Times Contacted", "Last Time Contacted",
 				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes", "Starred?", "Deleted?" });
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Attachment", "Mimetype" });
-		webviewTableModels = new ArrayList<LiveSearchTableModel>();
-		// passwords:
-		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Password" }));
-		// formdata:
-		webviewTableModels.add(new LiveSearchTableModel(new Object[] { "Name", "Value" }));
-		cachedGeopositionTableModel = new LiveSearchTableModel(new Object[] { "Latitude", "Longitude", "Altitude", "Accuracy",
-				"Altitude Accuracy", "Heading", "Speed", "Timestamp" });
 		mapsTableModels = new ArrayList<LiveSearchTableModel>();
 		// maps searches:
 		mapsTableModels.add(new LiveSearchTableModel(new Object[] { "Search", "Suggestion", "Latitude", "Longitude", "Date" }));
 		// destination history:
 		mapsTableModels.add(new LiveSearchTableModel(new Object[] { "Date", "Destination Lat", "Destination Lon", "Destination Title",
 				"Destination Address", "Source Lat", "Source Lon" }));
+		browserTableModels = new ArrayList<LiveSearchTableModel>();
+		// browser bookmarks
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Title", "URL", "Created", "Deleted?" }));
+		// browser cached geopositions:
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Latitude", "Longitude", "Altitude", "Accuracy",
+				"Altitude Accuracy", "Heading", "Speed", "Timestamp" }));
+		// browser history:
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Title", "URL", "Visits", "Last Visit" }));
+		// browser search history
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Date", "Search" }));
+		// browser cached formdata
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Name", "Value" }));
+		// browser saved passwords
+		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Password" }));
 	}
 
 	public boolean iterateChosenFolder(File folder) {
@@ -169,8 +171,7 @@ public class SQLReaderController {
 				String url = rs.getString(2);
 				Date created = new Date(rs.getLong(5));
 				boolean deleted = Boolean.parseBoolean(rs.getString(4));
-
-				browserBookmarksTableModel.addRow(new Object[] { title, url, created, deleted });
+				browserTableModels.get(0).addRow(new Object[] { title, url, created, deleted });
 			}
 		}
 		rs = statement.executeQuery("SELECT title, url, date, visits FROM history");
@@ -179,18 +180,15 @@ public class SQLReaderController {
 			String url = rs.getString(2);
 			Date lastVisit = new Date(rs.getLong(3));
 			int visits = rs.getInt(4);
-
-			browserHistoryTableModel.addRow(new Object[] { title, url, visits, lastVisit });
+			browserTableModels.get(2).addRow(new Object[] { title, url, visits, lastVisit });
 		}
 		rs = statement.executeQuery("SELECT search, date FROM searches");
 		while (rs.next()) {
 			String search = rs.getString(1);
 			Date date = new Date(rs.getLong(2));
-			browserSearchTableModel.addRow(new Object[] { date, search });
+			browserTableModels.get(3).addRow(new Object[] { date, search });
 		}
-		view.getBrowserHTable().setModel(browserHistoryTableModel);
-		view.getBrowserBTable().setModel(browserBookmarksTableModel);
-		view.getBrowserSTable().setModel(browserSearchTableModel);
+		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(BROWSER_FILENAME);
 	}
 
@@ -574,22 +572,22 @@ public class SQLReaderController {
 			String host = (rs.getString(1) == null) ? "" : rs.getString(1);
 			String username = (rs.getString(2) == null) ? "" : rs.getString(2);
 			String password = (rs.getString(3) == null) ? "" : rs.getString(3);
-			webviewTableModels.get(0).addRow(new Object[] { host, username, password });
+			browserTableModels.get(5).addRow(new Object[] { host, username, password });
 		}
 		rs = statement.executeQuery("SELECT host, username, password FROM httpauth");
 		while (rs.next()) {
 			String host = (rs.getString(1) == null) ? "" : rs.getString(1);
 			String username = (rs.getString(2) == null) ? "" : rs.getString(2);
 			String password = (rs.getString(3) == null) ? "" : rs.getString(3);
-			webviewTableModels.get(0).addRow(new Object[] { host, username, password });
+			browserTableModels.get(5).addRow(new Object[] { host, username, password });
 		}
 		rs = statement.executeQuery("SELECT name, value FROM formdata");
 		while (rs.next()) {
 			String name = (rs.getString(1) == null) ? "" : rs.getString(1);
 			String value = (rs.getString(2) == null) ? "" : rs.getString(2);
-			webviewTableModels.get(1).addRow(new Object[] { name, value });
+			browserTableModels.get(4).addRow(new Object[] { name, value });
 		}
-		view.getWebviewTable().setModel(webviewTableModels.get(0));
+		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(WEBVIEW_FILENAME);
 	}
 
@@ -605,10 +603,10 @@ public class SQLReaderController {
 			double speed = rs.getDouble(7);
 			Date timestamp = new Date(rs.getLong(8));
 
-			cachedGeopositionTableModel.addRow(new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed,
-					timestamp });
+			browserTableModels.get(1).addRow(
+					new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed, timestamp });
 		}
-		view.getCachedGeopositionTable().setModel(cachedGeopositionTableModel);
+		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(BROWSER_CACHED_GEOPOSITION);
 	}
 
@@ -626,6 +624,7 @@ public class SQLReaderController {
 		view.addTab(MAPS_SEARCH_HISTORY_FILENAME);
 	}
 
+	// TODO: bei lat und lon noch sicherstellen, dass komma da steht wo es soll
 	private void processMapsDestinationHistory(Statement statement) throws SQLException {
 		ResultSet rs = statement
 				.executeQuery("SELECT time, dest_lat, dest_lng, dest_title, dest_address, source_lat, source_lng FROM destination_history");
@@ -677,12 +676,12 @@ public class SQLReaderController {
 		}
 	}
 
-	public void setWebviewTableModel(int index) {
-		view.getWebviewTable().setModel(webviewTableModels.get(index));
-	}
-
 	public void setMapsTableModel(int index) {
 		view.getMapsTable().setModel(mapsTableModels.get(index));
+	}
+
+	public void setBrowserTableModel(int index) {
+		view.getBrowserTable().setModel(browserTableModels.get(index));
 	}
 
 }
