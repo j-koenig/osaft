@@ -1,4 +1,4 @@
-package de.uni_hannover.osaft.plugins.connnectorappdata.view;
+package de.uni_hannover.osaft.plugins.sqlreader.view;
 
 import java.awt.BorderLayout;
 import java.awt.Desktop;
@@ -13,30 +13,31 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
-//GENERATED WITH WINDOWBUILDER
-public class MMSInfoPanel extends JPanel implements ActionListener {
+public class DBGmailInfoPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
-	protected JButton btnOpenFile, btnOpenFolder;
-	protected GridBagLayout gbl_mmsInfo;
-	protected JTextArea txtrText;
-	protected JLabel  lblActualFilename;
-	protected JLabel lblPreview;
-	protected JPanel panel;
-	protected File currentFile;
+	private JButton btnOpenFile, btnOpenFolder;
+	private GridBagLayout gbl_mmsInfo;
+	private JTextArea txtrText;
+	private JLabel lblPreview;
+	private JPanel panel;
+	private File currentFile, caseFolder;
+	private JComboBox filenameComboBox;
 
-	public MMSInfoPanel() {
+	public DBGmailInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		gbl_mmsInfo = new GridBagLayout();
 		gbl_mmsInfo.columnWidths = new int[] { 64, 67, 0 };
@@ -46,8 +47,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		setLayout(gbl_mmsInfo);
 
 		JLabel attachmentLabel = new JLabel("Attachment preview:");
-		attachmentLabel.setFont(new Font(attachmentLabel.getFont().getName(), Font.BOLD,
-				attachmentLabel.getFont().getSize()));
+		attachmentLabel.setFont(new Font(attachmentLabel.getFont().getName(), Font.BOLD, attachmentLabel.getFont().getSize()));
 		attachmentLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		attachmentLabel.setVerticalAlignment(SwingConstants.TOP);
 		GridBagConstraints gbc_attachmentLabel = new GridBagConstraints();
@@ -72,10 +72,9 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		panel.add(lblPreview, BorderLayout.CENTER);
 
 		JLabel lblFilename = new JLabel("Filename: ");
-		lblFilename.setFont(new Font(lblFilename.getFont().getName(), Font.BOLD, lblFilename
-				.getFont().getSize()));
+		lblFilename.setFont(new Font(lblFilename.getFont().getName(), Font.BOLD, lblFilename.getFont().getSize()));
 		GridBagConstraints gbc_lblFilename = new GridBagConstraints();
-		gbc_lblFilename.anchor = GridBagConstraints.WEST;
+		gbc_lblFilename.anchor = GridBagConstraints.EAST;
 		gbc_lblFilename.fill = GridBagConstraints.VERTICAL;
 		gbc_lblFilename.insets = new Insets(0, 0, 5, 5);
 		gbc_lblFilename.gridx = 0;
@@ -84,16 +83,17 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 
 		btnOpenFile = new JButton("Open File");
 		btnOpenFile.addActionListener(this);
-		btnOpenFile.setEnabled(false);
 
-		lblActualFilename = new JLabel("");
-		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
-		gbc_lblNewLabel.fill = GridBagConstraints.HORIZONTAL;
-		gbc_lblNewLabel.anchor = GridBagConstraints.NORTH;
-		gbc_lblNewLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_lblNewLabel.gridx = 1;
-		gbc_lblNewLabel.gridy = 2;
-		add(lblActualFilename, gbc_lblNewLabel);
+		filenameComboBox = new JComboBox();
+		filenameComboBox.setEnabled(false);
+		filenameComboBox.addActionListener(this);
+		GridBagConstraints gbc_comboBox = new GridBagConstraints();
+		gbc_comboBox.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_comboBox.gridx = 1;
+		gbc_comboBox.gridy = 2;
+		add(filenameComboBox, gbc_comboBox);
+		btnOpenFile.setEnabled(false);
 		GridBagConstraints gbc_btnOpenFile = new GridBagConstraints();
 		gbc_btnOpenFile.gridwidth = 2;
 		gbc_btnOpenFile.fill = GridBagConstraints.BOTH;
@@ -116,12 +116,10 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		JScrollPane scrollPane = new JScrollPane();
 		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
 		gbc_scrollPane.gridwidth = 2;
-		gbc_scrollPane.insets = new Insets(0, 0, 0, 5);
 		gbc_scrollPane.fill = GridBagConstraints.BOTH;
 		gbc_scrollPane.gridx = 0;
 		gbc_scrollPane.gridy = 5;
 		add(scrollPane, gbc_scrollPane);
-		
 
 		txtrText = new JTextArea();
 		txtrText.setEditable(false);
@@ -142,8 +140,8 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
-		
-		//TODO: funzt unter windows, aber nicht ubuntu. ka...
+
+		// TODO: funzt unter windows, aber nicht ubuntu. ka...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
 			System.out.println(currentFile.getParent());
@@ -153,61 +151,59 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+		} else if (e.getSource().equals(filenameComboBox)) {
+			if (filenameComboBox.getItemCount() != 0) {
+				reactToComboBox(filenameComboBox.getSelectedIndex());
+			}
 		}
 
 	}
 
-	public void setInfo(String id, String text, boolean hasAttachment, File directory) {
-		txtrText.setText("Text: \n " + text);
+	private void reactToComboBox(int chosenItem) {
 
-		File dataDir = new File(directory + "/data/");
-
-		if (hasAttachment) {
-			btnOpenFile.setEnabled(true);
-			btnOpenFolder.setEnabled(true);
-			
-			String filenameWithoutExtension = "mms_" + id;
-
-			File[] files = dataDir.listFiles();
-			for (int i = 0; i < files.length; i++) {
-				String[] splittedFilename = files[i].getName().split("\\.");
-				if (splittedFilename.length > 0
-						&& splittedFilename[0].equals(filenameWithoutExtension)) {
-					currentFile = files[i];
-				}
-			}
-
-			lblActualFilename.setText(currentFile.getName());
-
-			// TODO: vielleicht besseren weg finden mimetype rauszufinden
-			String mimeType = URLConnection.guessContentTypeFromName(currentFile.getName());
-			// wenn bilddatei
-			if (mimeType != null && mimeType.startsWith("image")) {
-				try {
-					BufferedImage picture = ImageIO.read(new File(directory + "/data/"
-							+ currentFile.getName()));
-					lblPreview.setIcon(new ImageIcon(picture.getScaledInstance(-1,
-							gbl_mmsInfo.rowHeights[1], Image.SCALE_FAST)));
-					lblPreview.setText("");
-					lblPreview.revalidate();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			else {
-				lblPreview.setIcon(null);
-				lblPreview.setText("Preview not possible");
+		currentFile = new File(caseFolder + File.separator + "gmail" + File.separator + filenameComboBox.getItemAt(chosenItem).toString());
+		// mimetype:
+		String mimeType = URLConnection.guessContentTypeFromName(currentFile.getName());
+		if (mimeType != null && mimeType.startsWith("image")) {
+			try {
+				BufferedImage picture = ImageIO.read(currentFile);
+				lblPreview.setIcon(new ImageIcon(picture.getScaledInstance(-1, gbl_mmsInfo.rowHeights[1], Image.SCALE_FAST)));
+				lblPreview.setText("");
 				lblPreview.revalidate();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("CANT FIND FILE!");
 			}
 		} else {
-			lblActualFilename.setText("");
 			lblPreview.setIcon(null);
 			lblPreview.setText("Preview not possible");
 			lblPreview.revalidate();
-			btnOpenFile.setEnabled(false);
-			btnOpenFolder.setEnabled(false);
 		}
 	}
 
+	public void setInfo(String text, File caseFolder, ArrayList<String> filenames) {
+
+		this.caseFolder = caseFolder;
+		txtrText.setText("Text:\n" + text);
+
+		if (filenames != null) {
+			filenameComboBox.removeAllItems();
+			filenameComboBox.setEnabled(true);
+			btnOpenFile.setEnabled(true);
+			btnOpenFolder.setEnabled(true);
+			for (int i = 0; i < filenames.size(); i++) {
+				filenameComboBox.addItem(filenames.get(i));
+			}
+			reactToComboBox(0);
+		} else {
+			filenameComboBox.removeAllItems();
+			filenameComboBox.setEnabled(false);
+			btnOpenFile.setEnabled(false);
+			btnOpenFolder.setEnabled(false);
+			lblPreview.setIcon(null);
+			lblPreview.setText("Preview not possible");
+			lblPreview.revalidate();
+		}
+	}
 }

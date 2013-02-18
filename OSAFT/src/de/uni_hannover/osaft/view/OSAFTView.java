@@ -208,7 +208,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		} else if (e.getSource().equals(refreshDevicesButton)) {
 			fillDevicesComboBox();
 		} else if (e.getSource().equals(devicesCombo)) {
-			if (!(devicesCombo.getItemCount() == 0)) {
+			if (devicesCombo.getItemCount() != 0) {
 				controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
 			}
 		} else if (e.getSource().equals(btnChange)) {

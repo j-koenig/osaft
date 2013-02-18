@@ -12,6 +12,8 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 
 public class DBMMSInfoPanel extends MMSInfoPanel {
 	
+	private static final long serialVersionUID = 1L;
+
 	public void setInfo(String text, String mimetype, File directory, String filename) {
 		txtrText.setText("Text: \n" + text);
 		lblActualFilename.setText(filename);

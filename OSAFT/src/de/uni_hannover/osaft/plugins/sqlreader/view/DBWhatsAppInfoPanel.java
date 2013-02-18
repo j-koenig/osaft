@@ -12,9 +12,11 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 
 public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 
-	public void setInfo(String text, File directory, String filename) {		
+	private static final long serialVersionUID = 1L;
+
+	public void setInfo(String text, File directory, String filename) {
+		txtrText.setText("Text: \n");		
 		if (!filename.equals("")) {
-			txtrText.setText("Text: \n");
 			lblActualFilename.setText(filename);
 			btnOpenFile.setEnabled(true);
 			btnOpenFolder.setEnabled(true);
@@ -41,7 +43,6 @@ public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 			
 		}
 		else {
-			txtrText.setText("Text: \n" + text);
 			btnOpenFile.setEnabled(false);
 			btnOpenFolder.setEnabled(false);
 			lblPreview.setIcon(null);

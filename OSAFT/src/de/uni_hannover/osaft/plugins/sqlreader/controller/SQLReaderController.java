@@ -5,10 +5,13 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -17,9 +20,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.Inflater;
 
 import javax.imageio.ImageIO;
 import javax.swing.JTable;
+
+import org.jsoup.Jsoup;
 
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
@@ -28,6 +35,8 @@ public class SQLReaderController {
 
 	// TODO: ich raffe nicht, warum das date render ding nicht funzt in den
 	// tabellen
+
+	// TODO: normale email app
 
 	// Passwörter und cached formdata:
 	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
@@ -43,7 +52,7 @@ public class SQLReaderController {
 	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; // Done
 	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
-	public final static String GMAIL_FILENAME = "mailstore...db";
+	public final static String GMAIL_FILENAME = "mailstore";
 	public final static String FACEBOOK_FILENAME = "fb.db";
 	public final static String WHATSAPP_FILENAME = "msgstore.db"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
@@ -63,7 +72,7 @@ public class SQLReaderController {
 	public final static int MIMETYPE_PHOTO = 10;
 
 	private SQLReaderView view;
-	private LiveSearchTableModel calendarTableModel, callsTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+	private LiveSearchTableModel calendarTableModel, callsTableModel, contactsTableModel, mmsTableModel, smsTableModel, gmailTableModel;
 	private HashMap<String, LiveSearchTableModel> whatsAppTableModels;
 	private ArrayList<LiveSearchTableModel> browserTableModels, mapsTableModels;
 	private File curFolder;
@@ -107,6 +116,8 @@ public class SQLReaderController {
 		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Name", "Value" }));
 		// browser saved passwords
 		browserTableModels.add(new LiveSearchTableModel(new Object[] { "Host", "Username", "Password" }));
+		gmailTableModel = new LiveSearchTableModel(new Object[] { "ID", "From", "To", "CC", "BCC", "Reply To", "Subject", "Body",
+				"Date Sent", "Date Received", "Attachments" });
 	}
 
 	public boolean iterateChosenFolder(File folder) {
@@ -120,8 +131,9 @@ public class SQLReaderController {
 			if (fName.equals(BROWSER_FILENAME) || fName.equals(WEBVIEW_FILENAME) || fName.equals(CALENDAR_FILENAME)
 					|| fName.equals(CONTACTS_FILENAME) || fName.equals(COOKIES_FILENAME) || fName.equals(BROWSER_CACHED_GEOPOSITION)
 					|| fName.equals(MMSSMS_FILENAME) || fName.equals(MAPS_SEARCH_HISTORY_FILENAME)
-					|| fName.equals(MAPS_DESTINATION_HISTORY_FILENAME) || fName.equals(GMAIL_FILENAME) || fName.equals(FACEBOOK_FILENAME)
-					|| fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME) || fName.equals(GTALK_FILENAME)) {
+					|| fName.equals(MAPS_DESTINATION_HISTORY_FILENAME) || (fName.startsWith(GMAIL_FILENAME) && fName.endsWith(".db"))
+					|| fName.equals(FACEBOOK_FILENAME) || fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME)
+					|| fName.equals(GTALK_FILENAME)) {
 				processDB(curFile);
 				processedSomething = true;
 			}
@@ -154,6 +166,8 @@ public class SQLReaderController {
 				processMapsSearchHistory(statement);
 			} else if (file.getName().equals(MAPS_DESTINATION_HISTORY_FILENAME)) {
 				processMapsDestinationHistory(statement);
+			} else if ((file.getName().startsWith(GMAIL_FILENAME) && file.getName().endsWith(".db"))) {
+				processGmail(statement);
 			}
 
 		} catch (SQLException e) {
@@ -169,7 +183,7 @@ public class SQLReaderController {
 			if (rs.getInt(3) != 1) {
 				String title = rs.getString(1);
 				String url = rs.getString(2);
-				Date created = new Date(rs.getLong(5));
+				Date created = rs.getDate(5);
 				boolean deleted = Boolean.parseBoolean(rs.getString(4));
 				browserTableModels.get(0).addRow(new Object[] { title, url, created, deleted });
 			}
@@ -178,14 +192,14 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String title = rs.getString(1);
 			String url = rs.getString(2);
-			Date lastVisit = new Date(rs.getLong(3));
+			Date lastVisit = rs.getDate(3);
 			int visits = rs.getInt(4);
 			browserTableModels.get(2).addRow(new Object[] { title, url, visits, lastVisit });
 		}
 		rs = statement.executeQuery("SELECT search, date FROM searches");
 		while (rs.next()) {
 			String search = rs.getString(1);
-			Date date = new Date(rs.getLong(2));
+			Date date = rs.getDate(2);
 			browserTableModels.get(3).addRow(new Object[] { date, search });
 		}
 		view.getBrowserTable().setModel(browserTableModels.get(0));
@@ -199,13 +213,13 @@ public class SQLReaderController {
 			String calName = rs.getString(1);
 			String title = rs.getString(2);
 			String desc = (rs.getString(3) == null) ? "" : rs.getString(3);
-			Date start = new Date(rs.getLong(4));
+			Date start = rs.getDate(4);
 			String location = rs.getString(6);
 			String repRule = (rs.getString(7) == null) ? "" : rs.getString(7);
 			boolean allDay = rs.getInt(8) == 1;
 			boolean deleted = rs.getInt(9) == 1;
 			String duration = (rs.getString(10) == null) ? "" : rs.getString(10).substring(1);
-			Date end = (rs.getString(5) == null) ? null : new Date(rs.getLong(5));
+			Date end = (rs.getString(5) == null) ? null : rs.getDate(5);
 			calendarTableModel.addRow(new Object[] { calName, title, desc, start, end, duration, location, repRule, allDay, deleted });
 		}
 		view.getCalendarTable().setModel(calendarTableModel);
@@ -243,9 +257,9 @@ public class SQLReaderController {
 			String skype = "";
 			String notes = "";
 			Date lastTimeContacted = (rs.getString(9) == null) ? null : new Date(rs.getLong(9));
+			int timesContacted = rs.getInt(10);
 			boolean starred = rs.getInt(11) == 1;
 			boolean deleted = rs.getInt(12) == 1;
-			int timesContacted = 0;
 
 			while (rs.next()) {
 				switch (rs.getInt(3)) {
@@ -318,7 +332,7 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String name = (rs.getString(1) == null) ? "unknown" : rs.getString(1);
 			String number = (rs.getString(2).equals("-2")) ? "private number" : rs.getString(2);
-			Date date = new Date(rs.getLong(3));
+			Date date = rs.getDate(3);
 			int duration = rs.getInt(4);
 			boolean newCall = rs.getInt(5) == 1;
 			String type = "";
@@ -425,7 +439,7 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String number = rs.getString(1);
 			String person = (rs.getString(2) == null) ? "" : rs.getString(2);
-			Date date = new Date(rs.getLong(3));
+			Date date = rs.getDate(3);
 			String text = rs.getString(4);
 			boolean read = rs.getInt(5) == 1;
 			boolean seen = rs.getInt(6) == 1;
@@ -601,7 +615,7 @@ public class SQLReaderController {
 			double altitudeAccuracy = rs.getDouble(5);
 			double heading = rs.getDouble(6);
 			double speed = rs.getDouble(7);
-			Date timestamp = new Date(rs.getLong(8));
+			Date timestamp = rs.getDate(8);
 
 			browserTableModels.get(1).addRow(
 					new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed, timestamp });
@@ -640,6 +654,61 @@ public class SQLReaderController {
 		}
 		view.getMapsTable().setModel(mapsTableModels.get(0));
 		view.addTab(MAPS_DESTINATION_HISTORY_FILENAME);
+	}
+
+	private void processGmail(Statement statement) throws SQLException {
+
+		ArrayList<String> messageIds = new ArrayList<String>();
+		ResultSet rs = statement
+				.executeQuery("SELECT fromAddress, toAddresses, ccAddresses, bccAddresses, replyToAddresses, dateSentMs, dateReceivedMs, subject, bodyCompressed, messageId FROM messages");
+		while (rs.next()) {
+			String from = rs.getString(1);
+			String to = rs.getString(2);
+			String cc = rs.getString(3);
+			String bcc = rs.getString(4);
+			String reply = rs.getString(5);
+			Date sent = new Date(rs.getLong(6));
+			Date received = new Date(rs.getLong(7));
+			String subject = rs.getString(8);
+			byte[] body = rs.getBytes(9);
+			String outputString = "";
+			String messageId = rs.getString(10);
+			messageIds.add(messageId);
+
+			try {
+				Inflater decompresser = new Inflater();
+				decompresser.setInput(body);
+				// TODO: dunno wie groß man das dimensionieren muss:
+				byte[] buffer = new byte[body.length * 4];
+				int resultlength = decompresser.inflate(buffer);
+				decompresser.end();
+				outputString = new String(buffer, 0, resultlength, "UTF-8");
+				outputString = Jsoup.parse(outputString.replaceAll("(?i)<br[^>]*>", "br2nl").replaceAll("\n", "br2nl")).text();
+				outputString = outputString.replaceAll("br2nl ", "\n").replaceAll("br2nl", "\n").trim();
+			} catch (Exception e) {
+
+			}
+			gmailTableModel.addRow(new Object[] { messageId, from, to, cc, bcc, reply, subject, outputString, sent, received, null });
+		}
+
+		for (int i = 0; i < messageIds.size(); i++) {
+			rs = statement.executeQuery("SELECT filename FROM attachments WHERE messages_messageId = " + messageIds.get(i));
+			ArrayList<String> filenames = new ArrayList<String>();
+			while (rs.next()) {
+				filenames.add(rs.getString(1).substring(rs.getString(1).lastIndexOf("/") + 1));
+			}
+			if (filenames.size() > 0) {
+				//filenames = filenames.substring(0, filenames.length() - 2);
+				for (int j = 0; j < gmailTableModel.getRowCount(); j++) {
+					if (gmailTableModel.getValueAt(j, 0).equals(messageIds.get(i))) {
+						gmailTableModel.setValueAt(filenames, j, 10);
+					}
+				}
+			}
+		}
+
+		view.getGmailTable().setModel(gmailTableModel);
+		view.addTab(GMAIL_FILENAME);
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {

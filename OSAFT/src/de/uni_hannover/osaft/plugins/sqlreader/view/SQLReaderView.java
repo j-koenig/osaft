@@ -45,6 +45,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRend
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
+import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
 //TODO: vllt auch noch browserkrams zusammenpacken (also das mit webview zusammenklatschen)
@@ -54,12 +55,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	private JTabbedPane tabs;
 	private JScrollPane calendarScrollPane, callScrollPane, contactScrollPane, mmsScrollPane, smsScrollPane, contactInfoScroll,
-			whatsappScrollPane, facebookScrollPane, mapsScrollPane, browserScrollPane;
-	private JTable calendarTable, callTable, contactTable, mmsTable, smsTable, whatsappTable, facebookTable, mapsTable, browserTable;
+			whatsappScrollPane, facebookScrollPane, mapsScrollPane, browserScrollPane, gmailScrollPane;
+	private JTable calendarTable, callTable, contactTable, mmsTable, smsTable, whatsappTable, facebookTable, mapsTable, browserTable,
+			gmailTable;
 	private JPanel calendarPanel, smsPanel, callPanel, contactPanel, mmsPanel, preferencesPanel, whatsappPanel, facebookPanel, mapsPanel,
-			browserPanel;
+			browserPanel, gmailPanel;
 	private JTextField contactSearch, calendarSearch, smsSearch, mmsSearch, callsSearch, whatsappSearch, facebookSearch, mapsSearch,
-			browserSearch;
+			browserSearch, gmailSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -79,6 +81,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private DBMMSInfoPanel mmsInfo;
 	private ContactInfoPanel contactInfo;
 	private DBWhatsAppInfoPanel whatsappInfo;
+	private DBGmailInfoPanel gmailInfo;
 
 	@Override
 	@Init
@@ -128,6 +131,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		browserPanel = new JPanel(new BorderLayout(0, 0));
 		browserPanel.setName("Browser");
 
+		gmailPanel = new JPanel(new BorderLayout(0, 0));
+		gmailPanel.setName("GMail");
+
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
 		tabs.add(preferencesPanel);
@@ -149,6 +155,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		whatsappTable.getSelectionModel().addListSelectionListener(this);
 		facebookTable = new JTable();
 		facebookTable.getSelectionModel().addListSelectionListener(this);
+		gmailTable = new JTable();
+		gmailTable.getSelectionModel().addListSelectionListener(this);
 		tables.add(calendarTable);
 		tables.add(callTable);
 		tables.add(contactTable);
@@ -158,6 +166,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(facebookTable);
 		tables.add(mapsTable);
 		tables.add(browserTable);
+		tables.add(gmailTable);
 
 		// TODO scheint hier irgendwie nich zu funzen
 		// Date objects will be rendered differently
@@ -250,6 +259,16 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		whatsappPanel.add(whatsappWrapper, BorderLayout.CENTER);
 		whatsappPanel.add(whatsappInfo, BorderLayout.EAST);
 
+		gmailScrollPane = new JScrollPane(gmailTable);
+		gmailSearch = new JTextField("Search");
+		gmailSearch.addFocusListener(this);
+		gmailSearch.addKeyListener(this);
+		gmailInfo = new DBGmailInfoPanel();
+		gmailInfo.setPreferredSize(new Dimension(300, 0));
+		gmailPanel.add(gmailSearch, BorderLayout.NORTH);
+		gmailPanel.add(gmailScrollPane, BorderLayout.CENTER);
+		gmailPanel.add(gmailInfo, BorderLayout.EAST);
+
 		facebookScrollPane = new JScrollPane(facebookTable);
 		facebookSearch = new JTextField("Search");
 		facebookSearch.addFocusListener(this);
@@ -332,6 +351,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			if (!tabVector.contains(mapsPanel)) {
 				tabVector.add(mapsPanel);
 			}
+		} else if (sourceFile.equals(SQLReaderController.GMAIL_FILENAME)) {
+			tabVector.add(gmailPanel);
+			//TODO resizing der spalten! mit dem adjuster geht das aber ma gar nich... 
 		}
 	}
 
@@ -443,7 +465,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String im = contactTable.getValueAt(selectedRow, 9).toString();
 				String skype = contactTable.getValueAt(selectedRow, 10).toString();
 				String notes = contactTable.getValueAt(selectedRow, 11).toString();
-				// TODO:hier casefolder rein:
 				File f = new File(caseFolder + File.separator + "contact_photos" + File.separator + id + ".png");
 				if (f.isFile()) {
 					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes, f);
@@ -458,6 +479,17 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 						: whatsappTable.getValueAt(selectedRow, 0).toString();
 				String filename = whatsappTable.getValueAt(selectedRow, 6).toString();
 				whatsappInfo.setInfo(text, caseFolder, filename);
+			}
+		} else if (e.getSource().equals(gmailTable.getSelectionModel())) {
+			selectedRow = gmailTable.getSelectedRow();
+			if (selectedRow != -1) {
+				String text = gmailTable.getValueAt(selectedRow, 7).toString();
+				if (gmailTable.getValueAt(selectedRow, 10) != null) {
+					ArrayList<String> filenames = (ArrayList<String>) gmailTable.getValueAt(selectedRow, 10);
+					gmailInfo.setInfo(text, caseFolder, filenames);
+				} else {
+					gmailInfo.setInfo(text, caseFolder, null);
+				}
 			}
 		}
 	}
@@ -516,7 +548,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		String search = ((JTextField)e.getSource()).getText();
+		String search = ((JTextField) e.getSource()).getText();
 		LiveSearchTableModel model = null;
 		if (e.getSource().equals(contactSearch)) {
 			model = (LiveSearchTableModel) contactTable.getModel();
@@ -536,6 +568,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			model = (LiveSearchTableModel) mapsTable.getModel();
 		} else if (e.getSource().equals(browserSearch)) {
 			model = (LiveSearchTableModel) browserTable.getModel();
+		} else if (e.getSource().equals(gmailSearch)) {
+			model = (LiveSearchTableModel) gmailTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
@@ -551,6 +585,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookScrollPane.getVerticalScrollBar().setValue(0);
 		mapsScrollPane.getVerticalScrollBar().setValue(0);
 		browserScrollPane.getVerticalScrollBar().setValue(0);
+		gmailScrollPane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -611,5 +646,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JTable getBrowserTable() {
 		return browserTable;
+	}
+
+	public JTable getGmailTable() {
+		return gmailTable;
 	}
 }

@@ -12,14 +12,12 @@ public class CustomDateCellRenderer extends DefaultTableCellRenderer {
 
 	private static final long serialVersionUID = 1L;
 
-	public Component getTableCellRendererComponent(JTable table, Object obj, boolean isSelected,
-			boolean hasFocus, int row, int column) {
+	public Component getTableCellRendererComponent(JTable table, Object obj, boolean isSelected, boolean hasFocus, int row, int column) {
 
 		Date date = (Date) obj;
 		DateFormat df = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
-		return super.getTableCellRendererComponent(table, df.format(date), isSelected, hasFocus,
-				row, column);
+		return super.getTableCellRendererComponent(table, df.format(date), isSelected, hasFocus, row, column);
 	}
 
 }
