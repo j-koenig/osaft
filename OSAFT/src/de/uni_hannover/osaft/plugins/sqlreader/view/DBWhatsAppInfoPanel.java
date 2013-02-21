@@ -50,6 +50,8 @@ public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 			lblPreview.revalidate();
 			lblActualFilename.setText("");
 		}
+		txtrText.setSelectionEnd(0);
+		txtrText.setSelectionStart(0);
 
 	}
 

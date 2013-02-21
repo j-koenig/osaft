@@ -49,7 +49,6 @@ public class ADBThread implements Runnable {
 	}
 
 	// TODO: unterscheidung zwischen win und unix (nötig?)
-	// TODO: eine methode, die es erlaubt auf der shell zu arbeiten
 	// TODO: checken ob pfad zu adb richtig is (also adb funktioniert)
 
 	public ADBSwingWorker executeAndReturn(String cmd, ViewPlugin plugin) {
@@ -60,16 +59,18 @@ public class ADBThread implements Runnable {
 		// doInBackground() an das übergebene plugin weiter (über die methode
 		// reactToADBResult())
 
-		ADBSwingWorker asw = new ADBSwingWorker(cmd, adbExecutable, currentDevice, view, plugin);
+		String[] command = new String[1];
+		command[0] = cmd;
+		ADBSwingWorker asw = new ADBSwingWorker(command, adbExecutable, currentDevice, view, plugin);
 		commands.add(asw);
 		return asw;
-
 	}
-
-	// public void execute(String cmd) {
-	// commands.add(cmd);
-	// System.out.println("added command!");
-	// }
+	
+	public ADBSwingWorker interactWithShell(String[] cmds, ViewPlugin plugin) {
+		ADBSwingWorker asw = new ADBSwingWorker(cmds, adbExecutable, currentDevice, view, plugin);
+		commands.add(asw);
+		return asw;		
+	}
 
 	public ArrayList<String> getDevices() {
 		Process p;

@@ -521,7 +521,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	}
 
 	@Override
-	public void reactToADBResult(String result, String executedCommand) {
+	public void reactToADBResult(String result, String[] executedCommand) {
 		// TODO Auto-generated method stub
 
 	}

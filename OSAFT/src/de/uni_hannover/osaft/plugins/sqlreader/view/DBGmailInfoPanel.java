@@ -205,5 +205,8 @@ public class DBGmailInfoPanel extends JPanel implements ActionListener {
 			lblPreview.setText("Preview not possible");
 			lblPreview.revalidate();
 		}
+
+		txtrText.setSelectionStart(0);
+		txtrText.setSelectionEnd(0);
 	}
 }

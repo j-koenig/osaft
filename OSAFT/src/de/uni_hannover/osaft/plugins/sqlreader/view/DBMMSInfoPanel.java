@@ -37,7 +37,9 @@ public class DBMMSInfoPanel extends MMSInfoPanel {
 			lblPreview.setIcon(null);
 			lblPreview.setText("Preview not possible");
 			lblPreview.revalidate();
-		}			
+		}
+		txtrText.setSelectionEnd(0);
+		txtrText.setSelectionStart(0);
 		
 	}
 

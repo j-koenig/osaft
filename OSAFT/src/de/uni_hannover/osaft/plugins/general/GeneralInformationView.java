@@ -231,9 +231,9 @@ public class GeneralInformationView implements ViewPlugin {
 	}
 
 	@Override
-	public void reactToADBResult(String result, String executedCommand) {
+	public void reactToADBResult(String result, String[] executedCommand) {
 		String[] resultLineByLine = result.split("\\r?\\n");
-		if (executedCommand.equals(batteryStatsCommand)) {
+		if (executedCommand[0].equals(batteryStatsCommand)) {
 			for (int i = 0; i < resultLineByLine.length; i++) {
 				if (resultLineByLine[i].contains("level")) {
 					lblActualBatteryLevel.setText(extractProp(resultLineByLine[i]));
@@ -242,7 +242,7 @@ public class GeneralInformationView implements ViewPlugin {
 				}
 
 			}
-		} else if (executedCommand.equals(getPropCommand)) {
+		} else if (executedCommand[0].equals(getPropCommand)) {
 			for (int i = 0; i < resultLineByLine.length; i++) {
 				if (resultLineByLine[i].contains("ro.product.manufacturer")) {
 					lblActualManufacturer.setText(extractProp(resultLineByLine[i]));
@@ -256,7 +256,7 @@ public class GeneralInformationView implements ViewPlugin {
 					lblActualSerialNo.setText(extractProp(resultLineByLine[i]));
 				}
 			}
-		} else if (executedCommand.equals(imeiCommand)) {
+		} else if (executedCommand[0].equals(imeiCommand)) {
 			for (int i = 0; i < resultLineByLine.length; i++) {
 				if (resultLineByLine[i].contains("Phone Type")) {
 					lblActualPhoneType.setText(resultLineByLine[i].substring(resultLineByLine[i].indexOf("=") + 2));

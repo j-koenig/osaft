@@ -5,13 +5,10 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -20,7 +17,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
 import javax.imageio.ImageIO;
@@ -28,6 +24,7 @@ import javax.swing.JTable;
 
 import org.jsoup.Jsoup;
 
+import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
 
@@ -37,11 +34,10 @@ public class SQLReaderController {
 	// tabellen
 
 	// TODO: normale email app
+	// TODO: verschiedene versionen berücksichtigen (browser.db auf huawei)
 
 	// Passwörter und cached formdata:
 	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
-	// könnte auch anders heißen (auf huawei heißt es browser.db und hat anderen
-	// inhalt):
 	public final static String BROWSER_FILENAME = "browser2.db"; // Done
 	// relevant?
 	public final static String COOKIES_FILENAME = "webviewCookiesChromium.db";
@@ -52,12 +48,11 @@ public class SQLReaderController {
 	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; // Done
 	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
-	public final static String GMAIL_FILENAME = "mailstore";
+	public final static String GMAIL_FILENAME = "mailstore"; //done?
 	public final static String FACEBOOK_FILENAME = "fb.db";
 	public final static String WHATSAPP_FILENAME = "msgstore.db"; // Done
 	// TODO: wie macht man das, dass da der useraccount drinsteht
 	public final static String TWITTER_FILENAME = "<userid>.db";
-	public final static String GTALK_FILENAME = "talk.db";
 
 	// found these by examining the database with a db-browser:
 	public final static int MIMETYPE_NAME = 7;
@@ -77,9 +72,11 @@ public class SQLReaderController {
 	private ArrayList<LiveSearchTableModel> browserTableModels, mapsTableModels;
 	private File curFolder;
 	private HashMap<Integer, String> contactNames;
+	private ADBThread adb;
 
-	public SQLReaderController(SQLReaderView view) {
+	public SQLReaderController(SQLReaderView view, ADBThread adb) {
 		this.view = view;
+		this.adb = adb;
 		contactNames = new HashMap<Integer, String>();
 		whatsAppTableModels = new HashMap<String, LiveSearchTableModel>();
 		try {
@@ -123,6 +120,7 @@ public class SQLReaderController {
 	public boolean iterateChosenFolder(File folder) {
 		curFolder = folder;
 		boolean processedSomething = false;
+		System.out.println("da");
 		File[] files = folder.listFiles();
 		for (int i = 0; i < files.length; i++) {
 			File curFile = files[i];
@@ -132,8 +130,7 @@ public class SQLReaderController {
 					|| fName.equals(CONTACTS_FILENAME) || fName.equals(COOKIES_FILENAME) || fName.equals(BROWSER_CACHED_GEOPOSITION)
 					|| fName.equals(MMSSMS_FILENAME) || fName.equals(MAPS_SEARCH_HISTORY_FILENAME)
 					|| fName.equals(MAPS_DESTINATION_HISTORY_FILENAME) || (fName.startsWith(GMAIL_FILENAME) && fName.endsWith(".db"))
-					|| fName.equals(FACEBOOK_FILENAME) || fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME)
-					|| fName.equals(GTALK_FILENAME)) {
+					|| fName.equals(FACEBOOK_FILENAME) || fName.equals(WHATSAPP_FILENAME) || fName.equals(TWITTER_FILENAME)) {
 				processDB(curFile);
 				processedSomething = true;
 			}
@@ -183,7 +180,7 @@ public class SQLReaderController {
 			if (rs.getInt(3) != 1) {
 				String title = rs.getString(1);
 				String url = rs.getString(2);
-				Date created = rs.getDate(5);
+				Date created = new Date(rs.getLong(5));
 				boolean deleted = Boolean.parseBoolean(rs.getString(4));
 				browserTableModels.get(0).addRow(new Object[] { title, url, created, deleted });
 			}
@@ -192,14 +189,14 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String title = rs.getString(1);
 			String url = rs.getString(2);
-			Date lastVisit = rs.getDate(3);
+			Date lastVisit = new Date(rs.getLong(3));
 			int visits = rs.getInt(4);
 			browserTableModels.get(2).addRow(new Object[] { title, url, visits, lastVisit });
 		}
 		rs = statement.executeQuery("SELECT search, date FROM searches");
 		while (rs.next()) {
 			String search = rs.getString(1);
-			Date date = rs.getDate(2);
+			Date date = new Date(rs.getLong(2));
 			browserTableModels.get(3).addRow(new Object[] { date, search });
 		}
 		view.getBrowserTable().setModel(browserTableModels.get(0));
@@ -213,14 +210,18 @@ public class SQLReaderController {
 			String calName = rs.getString(1);
 			String title = rs.getString(2);
 			String desc = (rs.getString(3) == null) ? "" : rs.getString(3);
-			Date start = rs.getDate(4);
+			Date start = new Date(rs.getLong(4));
 			String location = rs.getString(6);
 			String repRule = (rs.getString(7) == null) ? "" : rs.getString(7);
 			boolean allDay = rs.getInt(8) == 1;
 			boolean deleted = rs.getInt(9) == 1;
 			String duration = (rs.getString(10) == null) ? "" : rs.getString(10).substring(1);
-			Date end = (rs.getString(5) == null) ? null : rs.getDate(5);
-			calendarTableModel.addRow(new Object[] { calName, title, desc, start, end, duration, location, repRule, allDay, deleted });
+			Date end = new Date(rs.getLong(5));
+			if (rs.getString(5) == null) {
+				calendarTableModel.addRow(new Object[] { calName, title, desc, start, null, duration, location, repRule, allDay, deleted });
+			} else {
+				calendarTableModel.addRow(new Object[] { calName, title, desc, start, end, duration, location, repRule, allDay, deleted });
+			}
 		}
 		view.getCalendarTable().setModel(calendarTableModel);
 		view.addTab(CALENDAR_FILENAME);
@@ -332,7 +333,7 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String name = (rs.getString(1) == null) ? "unknown" : rs.getString(1);
 			String number = (rs.getString(2).equals("-2")) ? "private number" : rs.getString(2);
-			Date date = rs.getDate(3);
+			Date date = new Date(rs.getLong(3));
 			int duration = rs.getInt(4);
 			boolean newCall = rs.getInt(5) == 1;
 			String type = "";
@@ -439,7 +440,7 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String number = rs.getString(1);
 			String person = (rs.getString(2) == null) ? "" : rs.getString(2);
-			Date date = rs.getDate(3);
+			Date date = new Date(rs.getLong(3));
 			String text = rs.getString(4);
 			boolean read = rs.getInt(5) == 1;
 			boolean seen = rs.getInt(6) == 1;
@@ -615,7 +616,7 @@ public class SQLReaderController {
 			double altitudeAccuracy = rs.getDouble(5);
 			double heading = rs.getDouble(6);
 			double speed = rs.getDouble(7);
-			Date timestamp = rs.getDate(8);
+			Date timestamp = new Date(rs.getLong(8));
 
 			browserTableModels.get(1).addRow(
 					new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed, timestamp });
@@ -698,7 +699,7 @@ public class SQLReaderController {
 				filenames.add(rs.getString(1).substring(rs.getString(1).lastIndexOf("/") + 1));
 			}
 			if (filenames.size() > 0) {
-				//filenames = filenames.substring(0, filenames.length() - 2);
+				// filenames = filenames.substring(0, filenames.length() - 2);
 				for (int j = 0; j < gmailTableModel.getRowCount(); j++) {
 					if (gmailTableModel.getValueAt(j, 0).equals(messageIds.get(i))) {
 						gmailTableModel.setValueAt(filenames, j, 10);
@@ -709,6 +710,43 @@ public class SQLReaderController {
 
 		view.getGmailTable().setModel(gmailTableModel);
 		view.addTab(GMAIL_FILENAME);
+	}
+
+	public void getDBFilesFromPhone() {
+		String[] commands = new String[17];
+		commands[0] = "su";
+		// Database files:
+		commands[1] = "cat /data/data/com.whatsapp/databases/msgstore.db > /sdcard/msgstore.db";
+		commands[2] = "cat /data/data/com.android.providers.telephony/databases/mmssms.db > /sdcard/mmssms.db";
+		commands[3] = "cat /data/data/com.google.android.browser/databases/webview.db > /sdcard/webview.db";
+		commands[4] = "cat /data/data/com.google.android.browser/databases/browser2.db > /sdcard/browser2.db";
+		commands[5] = "cat /data/data/com.google.android.browser/databases/webviewCookiesChromium.db > /sdcard/webviewCookiesChromium.db";
+		commands[6] = "cat /data/data/com.google.android.browser/app_geolocation/CachedGeoposition.db > /sdcard/CachedGeoposition.db";
+		commands[7] = "cat /data/data/com.android.providers.calendar/databases/calendar.db > /sdcard/calendar.db";
+		commands[8] = "cat /data/data/com.android.providers.contacts/databases/contacts2.db > /sdcard/contacts2.db";
+		commands[9] = "cat /data/data/com.google.android.apps.maps/databases/search_history.db > /sdcard/search_history.db";
+		commands[10] = "cat /data/data/com.google.android.apps.maps/databases/da_destination_history > /sdcard/da_destination_history";
+		commands[11] = "cat /data/data/com.facebook.katana/databases/fb.db > /sdcard/fb.db";
+		commands[12] = "cat /data/data/com.google.android.gm/databases/mailstore*.db > /sdcard/mailstore.db";
+		// google mail cached attachments:
+		commands[13] = "mkdir /sdcard/gmailCache";
+		commands[14] = "for f in /data/data/com.google.android.gm/cache/*/*; do cat $f > /sdcard/gmailCache/${f##*/}; done";
+		// commands[13] = "twitter";
+		commands[15] = "exit";
+		commands[16] = "exit";
+		adb.interactWithShell(commands, view);
+	}
+
+	public void pullDBFilesToCaseFolder() {
+		String dbFiles[] = { WHATSAPP_FILENAME, MMSSMS_FILENAME, WEBVIEW_FILENAME, BROWSER_CACHED_GEOPOSITION, BROWSER_FILENAME,
+				WEBVIEW_FILENAME, COOKIES_FILENAME, CALENDAR_FILENAME, CONTACTS_FILENAME, MAPS_DESTINATION_HISTORY_FILENAME,
+				MAPS_SEARCH_HISTORY_FILENAME, FACEBOOK_FILENAME };
+		for (int i = 0; i < dbFiles.length; i++) {
+			adb.executeAndReturn("pull /sdcard/" + dbFiles[i] + " " + view.getCaseFolder() + File.separator + "databases/", view);
+		}
+		// gmail seperate concerning special filename:
+		adb.executeAndReturn("pull /sdcard/mailstore.db " + view.getCaseFolder() + File.separator + "databases/", view);
+		adb.executeAndReturn("pull /sdcard/gmailCache/ " + view.getCaseFolder() + File.separator + "gmail/", view);
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
@@ -751,6 +789,10 @@ public class SQLReaderController {
 
 	public void setBrowserTableModel(int index) {
 		view.getBrowserTable().setModel(browserTableModels.get(index));
+	}
+
+	public void setADBThread(ADBThread adb) {
+		this.adb = adb;
 	}
 
 }

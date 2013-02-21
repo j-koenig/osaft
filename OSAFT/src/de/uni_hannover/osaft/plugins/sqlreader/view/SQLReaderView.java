@@ -45,7 +45,6 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRend
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
-import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
 //TODO: vllt auch noch browserkrams zusammenpacken (also das mit webview zusammenklatschen)
@@ -65,7 +64,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
-	private JButton openSQLButton;
+	private JButton openSQLButton, getDBFilesButton;
 	private JFileChooser fc;
 	private Vector<JPanel> tabVector;
 
@@ -87,7 +86,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	@Init
 	public void init() {
 
-		controller = new SQLReaderController(this);
+		controller = new SQLReaderController(this, adb);
 		tabVector = new Vector<JPanel>();
 		initGUI();
 
@@ -312,7 +311,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		openSQLButton = new JButton("Open SQL DBs");
 		openSQLButton.addActionListener(this);
+		getDBFilesButton = new JButton("Get DB Files (requires root)");
+		getDBFilesButton.addActionListener(this);
 		preferencesPanel.add(openSQLButton);
+		preferencesPanel.add(getDBFilesButton);
 	}
 
 	public void addTab(String sourceFile) {
@@ -353,7 +355,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			}
 		} else if (sourceFile.equals(SQLReaderController.GMAIL_FILENAME)) {
 			tabVector.add(gmailPanel);
-			//TODO resizing der spalten! mit dem adjuster geht das aber ma gar nich... 
+			// TODO resizing der spalten! mit dem adjuster geht das aber ma gar
+			// nich...
 		}
 	}
 
@@ -395,6 +398,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	@Override
 	public void setADBThread(ADBThread adb) {
 		this.adb = adb;
+		controller.setADBThread(adb);
 	}
 
 	@Override
@@ -403,8 +407,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	@Override
-	public void reactToADBResult(String result, String executedCommand) {
-		// TODO Auto-generated method stub
+	public void reactToADBResult(String result, String[] executedCommand) {
+		if (executedCommand[0].equals("su")) {
+			controller.pullDBFilesToCaseFolder();
+			//dirty (last file pull in controller.pullDBFilesToCaseFolder()): 
+		} else if (executedCommand[0].startsWith("pull /sdcard/mailstore.db")) {
+			controller.iterateChosenFolder(new File(caseFolder + File.separator + "databases/"));
+		}
 	}
 
 	@Override
@@ -421,6 +430,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				}
 				calendarScrollPane.validate();
 			}
+		} else if (e.getSource().equals(getDBFilesButton)) {
+			controller.getDBFilesFromPhone();
 		} else if (e.getSource().equals(copyCell)) {
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, true);
 		} else if (e.getSource().equals(copyRow)) {

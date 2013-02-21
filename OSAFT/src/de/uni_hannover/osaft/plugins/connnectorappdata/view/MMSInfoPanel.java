@@ -159,6 +159,8 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 
 	public void setInfo(String id, String text, boolean hasAttachment, File directory) {
 		txtrText.setText("Text: \n " + text);
+		txtrText.setSelectionEnd(0);
+		txtrText.setSelectionStart(0);
 
 		File dataDir = new File(directory + "/data/");
 
