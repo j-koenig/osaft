@@ -15,7 +15,7 @@ public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 	private static final long serialVersionUID = 1L;
 
 	public void setInfo(String text, File directory, String filename) {
-		txtrText.setText("Text: \n");		
+		txtrText.setText("Text: \n" + text);		
 		if (!filename.equals("")) {
 			lblActualFilename.setText(filename);
 			btnOpenFile.setEnabled(true);

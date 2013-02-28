@@ -47,20 +47,19 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuste
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
-//TODO: vllt auch noch browserkrams zusammenpacken (also das mit webview zusammenklatschen)
-
 @PluginImplementation
 public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener, MouseListener, FocusListener, KeyListener {
 
 	private JTabbedPane tabs;
 	private JScrollPane calendarScrollPane, callScrollPane, contactScrollPane, mmsScrollPane, smsScrollPane, contactInfoScroll,
-			whatsappScrollPane, facebookScrollPane, mapsScrollPane, browserScrollPane, gmailScrollPane;
+			whatsappScrollPane, facebookScrollPane, mapsScrollPane, browserScrollPane, gmailScrollPane, facebookMessageScrollPane,
+			twitterScrollpane;
 	private JTable calendarTable, callTable, contactTable, mmsTable, smsTable, whatsappTable, facebookTable, mapsTable, browserTable,
-			gmailTable;
+			gmailTable, facebookMessageTable, twitterTable;
 	private JPanel calendarPanel, smsPanel, callPanel, contactPanel, mmsPanel, preferencesPanel, whatsappPanel, facebookPanel, mapsPanel,
-			browserPanel, gmailPanel;
+			browserPanel, gmailPanel, facebookMessagePanel, twitterPanel;
 	private JTextField contactSearch, calendarSearch, smsSearch, mmsSearch, callsSearch, whatsappSearch, facebookSearch, mapsSearch,
-			browserSearch, gmailSearch;
+			browserSearch, gmailSearch, facebookMessageSearch, twitterSearch;
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextArea smsTextArea;
@@ -71,7 +70,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private SQLReaderController controller;
 	private File caseFolder;
 	private ADBThread adb;
-	private JComboBox whatsAppCombo, mapsCombo, browserCombo;
+	private JComboBox whatsAppCombo, mapsCombo, browserCombo, facebookMessageCombo, facebookCombo, twitterAccountCombo, twitterThreadCombo;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -81,6 +80,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private ContactInfoPanel contactInfo;
 	private DBWhatsAppInfoPanel whatsappInfo;
 	private DBGmailInfoPanel gmailInfo;
+	private DBFacebookMessageInfoPanel facebookMessageInfo;
 
 	@Override
 	@Init
@@ -124,6 +124,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		facebookPanel = new JPanel(new BorderLayout(0, 0));
 		facebookPanel.setName("Facebook");
 
+		facebookMessagePanel = new JPanel(new BorderLayout(0, 0));
+		facebookMessagePanel.setName("Facebook Messages");
+
 		mapsPanel = new JPanel(new BorderLayout(0, 0));
 		mapsPanel.setName("Google Maps");
 
@@ -132,6 +135,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		gmailPanel = new JPanel(new BorderLayout(0, 0));
 		gmailPanel.setName("GMail");
+
+		twitterPanel = new JPanel(new BorderLayout(0, 0));
+		twitterPanel.setName("Twitter");
 
 		preferencesPanel = new JPanel();
 		preferencesPanel.setName("Preferences");
@@ -144,6 +150,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		contactTable = new JTable();
 		mapsTable = new JTable();
 		browserTable = new JTable();
+		twitterTable = new JTable();
 		// selectionlistener listens for selection changes in the table
 		contactTable.getSelectionModel().addListSelectionListener(this);
 		mmsTable = new JTable();
@@ -154,6 +161,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		whatsappTable.getSelectionModel().addListSelectionListener(this);
 		facebookTable = new JTable();
 		facebookTable.getSelectionModel().addListSelectionListener(this);
+		facebookMessageTable = new JTable();
+		facebookMessageTable.getSelectionModel().addListSelectionListener(this);
 		gmailTable = new JTable();
 		gmailTable.getSelectionModel().addListSelectionListener(this);
 		tables.add(calendarTable);
@@ -166,6 +175,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(mapsTable);
 		tables.add(browserTable);
 		tables.add(gmailTable);
+		tables.add(facebookMessageTable);
+		tables.add(twitterTable);
 
 		// TODO scheint hier irgendwie nich zu funzen
 		// Date objects will be rendered differently
@@ -258,6 +269,50 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		whatsappPanel.add(whatsappWrapper, BorderLayout.CENTER);
 		whatsappPanel.add(whatsappInfo, BorderLayout.EAST);
 
+		facebookMessageScrollPane = new JScrollPane(facebookMessageTable);
+		facebookMessageSearch = new JTextField("Search");
+		facebookMessageSearch.addFocusListener(this);
+		facebookMessageSearch.addKeyListener(this);
+		facebookMessageCombo = new JComboBox();
+		facebookMessageCombo.addActionListener(this);
+		facebookMessageInfo = new DBFacebookMessageInfoPanel();
+		facebookMessageInfo.setPreferredSize(new Dimension(300, 0));
+		JPanel facebookMessageNorthPanel = new JPanel(new GridLayout(1, 2));
+		facebookMessageNorthPanel.add(facebookMessageCombo);
+		facebookMessageNorthPanel.add(facebookMessageSearch);
+		JPanel facebookMessageWrapper = new JPanel(new BorderLayout());
+		facebookMessageWrapper.add(facebookMessageNorthPanel, BorderLayout.NORTH);
+		facebookMessageWrapper.add(facebookMessageScrollPane, BorderLayout.CENTER);
+		facebookMessagePanel.add(facebookMessageWrapper, BorderLayout.CENTER);
+		facebookMessagePanel.add(facebookMessageInfo, BorderLayout.EAST);
+
+		facebookScrollPane = new JScrollPane(facebookTable);
+		facebookSearch = new JTextField("Search");
+		facebookSearch.addFocusListener(this);
+		facebookSearch.addKeyListener(this);
+		facebookCombo = new JComboBox(new Object[] { "Friends Data", "Notifications" });
+		facebookCombo.addActionListener(this);
+		JPanel facebookNorthPanel = new JPanel(new GridLayout(1, 2));
+		facebookNorthPanel.add(facebookCombo);
+		facebookNorthPanel.add(facebookSearch);
+		facebookPanel.add(facebookNorthPanel, BorderLayout.NORTH);
+		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
+
+		twitterScrollpane = new JScrollPane(twitterTable);
+		twitterSearch = new JTextField("Search");
+		twitterSearch.addFocusListener(this);
+		twitterSearch.addKeyListener(this);
+		twitterAccountCombo = new JComboBox();
+		twitterAccountCombo.addActionListener(this);
+		twitterThreadCombo = new JComboBox();
+		twitterThreadCombo.addActionListener(this);
+		JPanel twitterNorthPanel = new JPanel(new GridLayout(1, 3));
+		twitterNorthPanel.add(twitterAccountCombo);
+		twitterNorthPanel.add(twitterThreadCombo);
+		twitterNorthPanel.add(twitterSearch);
+		twitterPanel.add(twitterNorthPanel, BorderLayout.NORTH);
+		twitterPanel.add(twitterScrollpane, BorderLayout.CENTER);
+
 		gmailScrollPane = new JScrollPane(gmailTable);
 		gmailSearch = new JTextField("Search");
 		gmailSearch.addFocusListener(this);
@@ -268,19 +323,12 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		gmailPanel.add(gmailScrollPane, BorderLayout.CENTER);
 		gmailPanel.add(gmailInfo, BorderLayout.EAST);
 
-		facebookScrollPane = new JScrollPane(facebookTable);
-		facebookSearch = new JTextField("Search");
-		facebookSearch.addFocusListener(this);
-		facebookSearch.addKeyListener(this);
-		facebookPanel.add(facebookSearch, BorderLayout.NORTH);
-		facebookPanel.add(facebookScrollPane, BorderLayout.CENTER);
-
 		browserScrollPane = new JScrollPane(browserTable);
 		browserSearch = new JTextField("Search");
 		browserSearch.addFocusListener(this);
 		browserSearch.addKeyListener(this);
 		browserCombo = new JComboBox(new Object[] { "Browser Bookmarks", "Browser Cached Geopositions", "Browser History",
-				"Browser Search History", "Cached Formdata", "Saved Passwords" });
+				"Browser Search History", "Cached Formdata", "Saved Passwords", "Cookies" });
 		browserCombo.addActionListener(this);
 		JPanel browserNorthPanel = new JPanel((new GridLayout(1, 2)));
 		browserNorthPanel.add(browserCombo);
@@ -311,6 +359,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		openSQLButton = new JButton("Open SQL DBs");
 		openSQLButton.addActionListener(this);
+		openSQLButton.setToolTipText("Twitter DB files should be located in subfolder 'twitterDBs'");
 		getDBFilesButton = new JButton("Get DB Files (requires root)");
 		getDBFilesButton.addActionListener(this);
 		preferencesPanel.add(openSQLButton);
@@ -318,7 +367,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	public void addTab(String sourceFile) {
-		if (sourceFile.equals(SQLReaderController.BROWSER_FILENAME)) {
+		if (sourceFile.equals(SQLReaderController.BROWSER2_FILENAME) || sourceFile.equals(SQLReaderController.COOKIES_FILENAME)
+				|| sourceFile.equals(SQLReaderController.BROWSER_CACHED_GEOPOSITION)
+				|| sourceFile.equals(SQLReaderController.WEBVIEW_FILENAME)) {
 			if (!tabVector.contains(browserPanel)) {
 				tabVector.add(browserPanel);
 			}
@@ -340,14 +391,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			tabVector.add(whatsappPanel);
 		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_FILENAME)) {
 			tabVector.add(facebookPanel);
-		} else if (sourceFile.equals(SQLReaderController.WEBVIEW_FILENAME)) {
-			if (!tabVector.contains(browserPanel)) {
-				tabVector.add(browserPanel);
-			}
-		} else if (sourceFile.equals(SQLReaderController.BROWSER_CACHED_GEOPOSITION)) {
-			if (!tabVector.contains(browserPanel)) {
-				tabVector.add(browserPanel);
-			}
 		} else if (sourceFile.equals(SQLReaderController.MAPS_SEARCH_HISTORY_FILENAME)
 				|| sourceFile.equals(SQLReaderController.MAPS_DESTINATION_HISTORY_FILENAME)) {
 			if (!tabVector.contains(mapsPanel)) {
@@ -357,6 +400,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			tabVector.add(gmailPanel);
 			// TODO resizing der spalten! mit dem adjuster geht das aber ma gar
 			// nich...
+		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_THREADS_FILENAME)) {
+			tabVector.add(facebookMessagePanel);
+		} else if (sourceFile.equals(SQLReaderController.TWITTER_FILENAME)) {
+			tabVector.add(twitterPanel);
 		}
 	}
 
@@ -410,8 +457,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void reactToADBResult(String result, String[] executedCommand) {
 		if (executedCommand[0].equals("su")) {
 			controller.pullDBFilesToCaseFolder();
-			//dirty (last file pull in controller.pullDBFilesToCaseFolder()): 
-		} else if (executedCommand[0].startsWith("pull /sdcard/mailstore.db")) {
+			// dirty (last file pull in controller.pullDBFilesToCaseFolder()):
+		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
 			controller.iterateChosenFolder(new File(caseFolder + File.separator + "databases/"));
 		}
 	}
@@ -438,10 +485,19 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
 		} else if (e.getSource().equals(whatsAppCombo)) {
 			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
+		} else if (e.getSource().equals(facebookMessageCombo)) {
+			controller.setFacebookMessagesTableModel(facebookMessageCombo.getSelectedItem().toString());
 		} else if (e.getSource().equals(mapsCombo)) {
 			controller.setMapsTableModel(mapsCombo.getSelectedIndex());
 		} else if (e.getSource().equals(browserCombo)) {
 			controller.setBrowserTableModel(browserCombo.getSelectedIndex());
+		} else if (e.getSource().equals(facebookCombo)) {
+			controller.setFacebookTableModel(facebookCombo.getSelectedIndex());
+		} else if (e.getSource().equals(twitterAccountCombo) || e.getSource().equals(twitterThreadCombo)) {
+			if (twitterThreadCombo.getSelectedItem() != null && twitterAccountCombo.getSelectedItem() != null) {
+				controller.setTwitterTableModel(twitterAccountCombo.getSelectedItem().toString(), twitterThreadCombo.getSelectedItem()
+						.toString());
+			}
 		}
 
 	}
@@ -491,6 +547,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String filename = whatsappTable.getValueAt(selectedRow, 6).toString();
 				whatsappInfo.setInfo(text, caseFolder, filename);
 			}
+		} else if (e.getSource().equals(facebookMessageTable.getSelectionModel())) {
+			selectedRow = facebookMessageTable.getSelectedRow();
+			if (selectedRow != -1) {
+				String text = facebookMessageTable.getValueAt(selectedRow, 1).toString();
+				facebookMessageInfo.setInfo(text, caseFolder, "");
+			}
+
 		} else if (e.getSource().equals(gmailTable.getSelectionModel())) {
 			selectedRow = gmailTable.getSelectedRow();
 			if (selectedRow != -1) {
@@ -581,6 +644,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			model = (LiveSearchTableModel) browserTable.getModel();
 		} else if (e.getSource().equals(gmailSearch)) {
 			model = (LiveSearchTableModel) gmailTable.getModel();
+		} else if (e.getSource().equals(facebookMessageSearch)) {
+			model = (LiveSearchTableModel) facebookMessageTable.getModel();
+		} else if (e.getSource().equals(twitterSearch)) {
+			model = (LiveSearchTableModel) twitterTable.getModel();
 		}
 		if (!search.equals("")) {
 			model.filterData(search);
@@ -597,6 +664,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		mapsScrollPane.getVerticalScrollBar().setValue(0);
 		browserScrollPane.getVerticalScrollBar().setValue(0);
 		gmailScrollPane.getVerticalScrollBar().setValue(0);
+		facebookMessageScrollPane.getVerticalScrollBar().setValue(0);
+		twitterScrollpane.getVerticalScrollBar().setValue(0);
 	}
 
 	@Override
@@ -651,6 +720,18 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		return whatsAppCombo;
 	}
 
+	public JComboBox getFacebookMessageCombo() {
+		return facebookMessageCombo;
+	}
+
+	public JComboBox getTwitterAccountCombo() {
+		return twitterAccountCombo;
+	}
+
+	public JComboBox getTwitterThreadCombo() {
+		return twitterThreadCombo;
+	}
+
 	public JTable getMapsTable() {
 		return mapsTable;
 	}
@@ -661,5 +742,17 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JTable getGmailTable() {
 		return gmailTable;
+	}
+
+	public JTable getFacebookTable() {
+		return facebookTable;
+	}
+
+	public JTable getFacebookMessageTable() {
+		return facebookMessageTable;
+	}
+
+	public JTable getTwitterTable() {
+		return twitterTable;
 	}
 }

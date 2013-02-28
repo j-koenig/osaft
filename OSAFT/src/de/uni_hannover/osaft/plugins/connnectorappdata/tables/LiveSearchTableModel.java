@@ -57,7 +57,7 @@ public class LiveSearchTableModel extends DefaultTableModel {
 		filteredData.clear();
 		for (int i = 0; i < originalData.size(); i++) {
 			for (int j = 0; j < originalData.get(i).size(); j++) {
-				if (originalData.get(i).get(j) != null && originalData.get(i).get(j).toString().toLowerCase().contains(filterString)) {
+				if (originalData.get(i).get(j) != null && originalData.get(i).get(j).toString().toLowerCase().contains(filterString.toLowerCase())) {
 					filteredData.add(originalData.get(i));
 					break;
 				}

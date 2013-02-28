@@ -104,7 +104,7 @@ public class OSAFTController {
 
 			File f = new File(caseFolder.getAbsolutePath() + File.separator + "contact_photos");
 			f.mkdirs();
-			f = new File(caseFolder.getAbsolutePath() + File.separator + "databases");
+			f = new File(caseFolder.getAbsolutePath() + File.separator + "databases" + File.separator + "twitter");
 			f.mkdirs();
 			f = new File(caseFolder.getAbsolutePath() + File.separator + "gmail");
 			f.mkdirs();
