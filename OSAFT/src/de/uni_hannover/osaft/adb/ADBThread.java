@@ -31,12 +31,10 @@ public class ADBThread implements Runnable {
 			try {
 				// Blocking queue blocks thread until something is added
 				ADBSwingWorker asw = commands.take();
-				// TODO: möglichkeit prozess zu unterbrechen?
 				asw.execute();
 				// wait for current swingworker (get() blocks the thread until
 				// swingworker is done):
 				asw.get();
-				System.out.println("jaaa!");
 			} catch (InterruptedException e) {
 				// TODO: handle exception
 			} catch (Exception e) {
@@ -51,7 +49,7 @@ public class ADBThread implements Runnable {
 	// TODO: unterscheidung zwischen win und unix (nötig?)
 	// TODO: checken ob pfad zu adb richtig is (also adb funktioniert)
 
-	public ADBSwingWorker executeAndReturn(String cmd, ViewPlugin plugin) {
+	public ADBSwingWorker executeAndReturn(String cmd, ViewPlugin plugin, boolean showProgressBar) {
 
 		// idee hier: swingworker wird in adbthread queue eingereiht und dort
 		// ausgeführt. wenn die aufgabe erfüllt ist, wird die methode done() im
@@ -61,13 +59,13 @@ public class ADBThread implements Runnable {
 
 		String[] command = new String[1];
 		command[0] = cmd;
-		ADBSwingWorker asw = new ADBSwingWorker(command, adbExecutable, currentDevice, view, plugin);
+		ADBSwingWorker asw = new ADBSwingWorker(command, adbExecutable, currentDevice, view, plugin, showProgressBar);
 		commands.add(asw);
 		return asw;
 	}
 	
-	public ADBSwingWorker interactWithShell(String[] cmds, ViewPlugin plugin) {
-		ADBSwingWorker asw = new ADBSwingWorker(cmds, adbExecutable, currentDevice, view, plugin);
+	public ADBSwingWorker interactWithShell(String[] cmds, ViewPlugin plugin, boolean showProgressBar) {
+		ADBSwingWorker asw = new ADBSwingWorker(cmds, adbExecutable, currentDevice, view, plugin, showProgressBar);
 		commands.add(asw);
 		return asw;		
 	}

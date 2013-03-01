@@ -304,8 +304,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		twitterSearch.addKeyListener(this);
 		twitterAccountCombo = new JComboBox();
 		twitterAccountCombo.addActionListener(this);
+		twitterAccountCombo.setToolTipText("Account ID");
 		twitterThreadCombo = new JComboBox();
 		twitterThreadCombo.addActionListener(this);
+		twitterThreadCombo.setToolTipText("Thread ID");
 		JPanel twitterNorthPanel = new JPanel(new GridLayout(1, 3));
 		twitterNorthPanel.add(twitterAccountCombo);
 		twitterNorthPanel.add(twitterThreadCombo);
@@ -439,7 +441,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void triggered() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -493,11 +494,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			controller.setBrowserTableModel(browserCombo.getSelectedIndex());
 		} else if (e.getSource().equals(facebookCombo)) {
 			controller.setFacebookTableModel(facebookCombo.getSelectedIndex());
-		} else if (e.getSource().equals(twitterAccountCombo) || e.getSource().equals(twitterThreadCombo)) {
+		} else if (e.getSource().equals(twitterThreadCombo)) {
 			if (twitterThreadCombo.getSelectedItem() != null && twitterAccountCombo.getSelectedItem() != null) {
 				controller.setTwitterTableModel(twitterAccountCombo.getSelectedItem().toString(), twitterThreadCombo.getSelectedItem()
 						.toString());
 			}
+		} else if (e.getSource().equals(twitterAccountCombo) && twitterAccountCombo.getSelectedItem() != null) {
+			controller.setTwitterTableModel(twitterAccountCombo.getSelectedItem().toString(), null);
 		}
 
 	}
@@ -559,6 +562,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			if (selectedRow != -1) {
 				String text = gmailTable.getValueAt(selectedRow, 7).toString();
 				if (gmailTable.getValueAt(selectedRow, 10) != null) {
+					@SuppressWarnings("unchecked")
 					ArrayList<String> filenames = (ArrayList<String>) gmailTable.getValueAt(selectedRow, 10);
 					gmailInfo.setInfo(text, caseFolder, filenames);
 				} else {
@@ -592,32 +596,31 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+		// not used
 
 	}
 
 	@Override
 	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+		// not used
 
 	}
 
 	@Override
 	public void mousePressed(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+		// not used
 
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+		// not used
 
 	}
 
 	@Override
 	public void keyPressed(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-
+		// not used
 	}
 
 	@Override
@@ -670,8 +673,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-
+		//not used
 	}
 
 	@Override
@@ -681,7 +683,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void focusLost(FocusEvent arg0) {
-		// TODO Auto-generated method stub
+		// not used
 	}
 
 	public JTable getCalendarTable() {

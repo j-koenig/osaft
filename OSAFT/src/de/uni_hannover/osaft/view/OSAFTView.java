@@ -34,8 +34,6 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 
 //TODO: config file für pfad zu adb; adb auf pc, mac linux ausführbar machen
 //TODO: einstellungsmenü für pfad zu adb ändern
-//TODO: aktuellen casefolder irgendwo anzeigen (vllt im gleichen panel wie aktuell ausgewähltes phone)
-//TODO: refreshbutton für devices combobox 
 
 public class OSAFTView extends JFrame implements ActionListener {
 
@@ -60,8 +58,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 	public OSAFTView(String title, PluginManagerUtil pmu) {
 		super(title);
 		this.pmu = pmu;
-		// TODO: progressdialog is irgendwie hässlich, wenn der befehl nur kurz
-		// ausgeführt wird
 		progressDialog = new JDialog(this, "Executing ADB command", false);
 		viewPluginList = new ArrayList<ViewPlugin>();
 		pluginButtonList = new ArrayList<JButton>();
@@ -195,7 +191,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 			buttonPanel.add(b);
 			// adds all plugins to the cardlayout of viewPanel
 			// TODO: falls plugin nicht richtig funktioniert: nicht hinzufügen!
-			// TODO: reihenfolge sollte immer die gleiche sein
 			viewPanel.add(vp.getView(), String.valueOf(viewPluginList.indexOf(vp)));
 
 		}
@@ -218,8 +213,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 			int index = pluginButtonList.indexOf(b);
 			viewPanelLayout.show(viewPanel, String.valueOf(index));
 			viewPluginList.get(index).triggered();
-			// c.dumpsys();
-			// c.logcat();
 		}
 	}
 

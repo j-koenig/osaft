@@ -51,7 +51,6 @@ public class ConnectorAppDataController {
 
 	public boolean iterateChosenFolder(File folder) {
 		boolean processedSomething = false;
-		// progressbar?
 		File[] files = folder.listFiles();
 		for (int i = 0; i < files.length; i++) {
 			File curFile = files[i];
@@ -94,8 +93,6 @@ public class ConnectorAppDataController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IndexOutOfBoundsException e) {
-			// TODO: könnte auch ne indexoutofbounds werfen (wenn datei kaputt
-			// is und array nicht 8 einträge hat)!
 			JOptionPane.showMessageDialog(view.getView(), "One or more csv files are corrupted", "Warning", JOptionPane.WARNING_MESSAGE);
 		} finally {
 			if (br != null) {

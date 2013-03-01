@@ -214,9 +214,9 @@ public class GeneralInformationView implements ViewPlugin {
 
 	@Override
 	public void triggered() {
-		adb.executeAndReturn(batteryStatsCommand, this);
-		adb.executeAndReturn(getPropCommand, this);
-		adb.executeAndReturn(imeiCommand, this);
+		adb.executeAndReturn(batteryStatsCommand, this, false);
+		adb.executeAndReturn(getPropCommand, this, false);
+		adb.executeAndReturn(imeiCommand, this, false);
 	}
 
 	@Override
@@ -226,8 +226,6 @@ public class GeneralInformationView implements ViewPlugin {
 
 	@Override
 	public void setCaseFolder(File caseFolder) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override

@@ -31,7 +31,7 @@ public class Main {
 			String path = classpath.substring(jarPathPos, jarPos);
 			//if pluginfolder does not exist: create it
 			File pluginFolder = new File(path + "plugins/");
-			pluginFolder.mkdir();
+			pluginFolder.mkdir();			
 			pm.addPluginsFrom(pluginFolder.toURI());
 		}		
 		

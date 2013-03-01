@@ -180,8 +180,6 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 			}
 
 			lblActualFilename.setText(currentFile.getName());
-
-			// TODO: vielleicht besseren weg finden mimetype rauszufinden
 			String mimeType = URLConnection.guessContentTypeFromName(currentFile.getName());
 			// wenn bilddatei
 			if (mimeType != null && mimeType.startsWith("image")) {

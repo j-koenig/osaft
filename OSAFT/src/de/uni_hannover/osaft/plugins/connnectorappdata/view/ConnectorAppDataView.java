@@ -45,8 +45,6 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableMod
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
 
 //TODO: columns automatisch adjusten?
-//TODO: um exceptions kümmern
-//TODO: fokusproblem, wenn man einmal in die searchbar geklickt hat
 
 @PluginImplementation
 public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, ActionListener,
@@ -263,7 +261,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void triggered() {
-		// TODO: soll was passieren?
 	}
 
 	@Override
@@ -288,7 +285,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 			JOptionPane.showMessageDialog(tabs, "Connector App will be pushed to phone now.",
 					"Information", JOptionPane.INFORMATION_MESSAGE);
 			//TODO: fehlermeldung wenn datei nich gefunden:
-			adb.executeAndReturn("install ArtifactExtract.apk", this);
+			adb.executeAndReturn("install ArtifactExtract.apk", this, false);
 		}
 
 		if (e.getSource().equals(copyCell)) {
@@ -398,21 +395,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
-//			if (e.getSource().equals(browserHTable)) {
-//				openContextMenu(e, browserHTable);
-//			} else if (e.getSource().equals(browserSTable)) {
-//				openContextMenu(e, browserSTable);
-//			} else if (e.getSource().equals(calendarTable)) {
-//				openContextMenu(e, calendarTable);
-//			} else if (e.getSource().equals(callTable)) {
-//				openContextMenu(e, callTable);
-//			} else if (e.getSource().equals(contactTable)) {
-//				openContextMenu(e, contactTable);
-//			} else if (e.getSource().equals(mmsTable)) {
-//				openContextMenu(e, mmsTable);
-//			} else if (e.getSource().equals(smsTable)) {
-//				openContextMenu(e, smsTable);
-//			}
 			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
@@ -485,21 +467,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void focusGained(FocusEvent e) {
-//		if (e.getSource().equals(contactSearch)) {
-//			contactSearch.setText("");
-//		} else if (e.getSource().equals(browserHSearch)) {
-//			browserHSearch.setText("");
-//		} else if (e.getSource().equals(browserSSearch)) {
-//			browserSSearch.setText("");
-//		} else if (e.getSource().equals(calendarSearch)) {
-//			calendarSearch.setText("");
-//		} else if (e.getSource().equals(callsSearch)) {
-//			callsSearch.setText("");
-//		} else if (e.getSource().equals(mmsSearch)) {
-//			mmsSearch.setText("");
-//		} else if (e.getSource().equals(smsSearch)) {
-//			smsSearch.setText("");
-//		}
 		((JTextField) e.getSource()).setText("");
 	}
 
@@ -522,8 +489,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void reactToADBResult(String result, String[] executedCommand) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

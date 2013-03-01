@@ -17,6 +17,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.zip.Inflater;
 
 import javax.imageio.ImageIO;
@@ -34,7 +35,6 @@ public class SQLReaderController {
 	// tabellen
 
 	// TODO: normale email app
-	// TODO: verschiedene versionen berücksichtigen (browser.db auf huawei)
 
 	// Passwörter und cached formdata:
 	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
@@ -70,7 +70,7 @@ public class SQLReaderController {
 	private HashMap<String, LiveSearchTableModel> whatsAppTableModels, facebookMessageTableModels;
 	private HashMap<String, HashMap<String, LiveSearchTableModel>> twitterTableModels;
 	private ArrayList<LiveSearchTableModel> browserTableModels, mapsTableModels, facebookTableModels;
-	private File curFolder;
+	// private File curFolder;
 	private HashMap<Integer, String> contactNames;
 	private ADBThread adb;
 
@@ -127,7 +127,7 @@ public class SQLReaderController {
 	}
 
 	public boolean iterateChosenFolder(File folder) {
-		curFolder = folder;
+		// curFolder = folder;
 		boolean processedSomething = false;
 		File[] files = folder.listFiles();
 		for (int i = 0; i < files.length; i++) {
@@ -145,7 +145,7 @@ public class SQLReaderController {
 			}
 		}
 
-		// treat twitter dbs:
+		// special treatment for twitter dbs:
 		File twitterFolder = new File(folder.getAbsolutePath() + File.separator + "twitter");
 		if (twitterFolder.exists()) {
 			File[] twitterFiles = twitterFolder.listFiles();
@@ -355,7 +355,6 @@ public class SQLReaderController {
 					byte[] photoByteArray = rs.getBytes(8);
 					if (photoByteArray != null) {
 						try {
-							// TODO: ordner erstellen, wenn nich da
 							InputStream in = new ByteArrayInputStream(photoByteArray);
 							BufferedImage photo = ImageIO.read(in);
 							ImageIO.write(photo, "png", new File(view.getCaseFolder() + File.separator + "contact_photos" + File.separator
@@ -505,8 +504,6 @@ public class SQLReaderController {
 		view.getSmsTable().setModel(smsTableModel);
 
 		// MMS:
-		// TODO: gucken wo der text für sms gespeichert wird
-
 		rs = statement.executeQuery("SELECT mid FROM part");
 		ArrayList<Integer> mids = new ArrayList<Integer>();
 
@@ -522,7 +519,7 @@ public class SQLReaderController {
 					.executeQuery("SELECT mid, name, _data, date, address, text, ct FROM (part JOIN pdu ON part.mid=pdu._id) JOIN addr ON part.mid=addr.msg_id WHERE addr.type=137 AND part.mid = "
 							+ mids.get(i));
 			int id = 0;
-			String name = "";
+			// String name = "";
 			String data = "";
 			Date date = null;
 			String number = "";
@@ -531,7 +528,7 @@ public class SQLReaderController {
 			while (rs.next()) {
 				if (rs.getString(3) != null) {
 					id = rs.getInt(1);
-					name = rs.getString(2);
+					// name = rs.getString(2);
 					data = rs.getString(3).substring(rs.getString(3).lastIndexOf('/') + 1);
 					date = new Date(rs.getLong(4) * 1000);
 					number = rs.getString(5);
@@ -542,11 +539,6 @@ public class SQLReaderController {
 			}
 			mmsTableModel.addRow(new Object[] { id, number, date, text, data, mimetype });
 		}
-
-		// for schleife über alle mms anhänge und die dann pullen (blödsinn,
-		// einfach während pull der ganzen dbs auch die app parts pullen
-		// [com.android.providers.telephony/app_parts])
-
 		view.getMmsTable().setModel(mmsTableModel);
 		view.addTab(MMSSMS_FILENAME);
 	}
@@ -597,7 +589,7 @@ public class SQLReaderController {
 		view.addTab(FACEBOOK_FILENAME);
 	}
 
-	// TODO: finden wo bilder gespeichert werden
+	// TODO: rausfinden wo bilder gespeichert werden
 	private void processFacebookMessages(Statement statement) throws SQLException {
 
 		ArrayList<String> threadIds = new ArrayList<String>();
@@ -636,8 +628,6 @@ public class SQLReaderController {
 		view.addTab(FACEBOOK_THREADS_FILENAME);
 	}
 
-	// TODO: media ordner von sdcard pullen
-	// TODO: gruppen anders behandeln? (zumindest received timestamp)
 	private void processWhatsapp(Statement statement) throws SQLException {
 		ResultSet rs = statement.executeQuery("SELECT key_remote_jid FROM chat_list");
 		ArrayList<String> ids = new ArrayList<String>();
@@ -749,8 +739,8 @@ public class SQLReaderController {
 		while (rs.next()) {
 			String search = rs.getString(1);
 			String suggestion = rs.getString(2);
-			String latitude = rs.getString(3);
-			String longitude = rs.getString(4);
+			String latitude = (rs.getString(3).equals("200000000")) ? "" : formatLatLon(rs.getString(3));
+			String longitude = (rs.getString(4).equals("200000000")) ? "" : formatLatLon(rs.getString(4));
 			Date timestamp = new Date(rs.getLong(5));
 			mapsTableModels.get(0).addRow(new Object[] { search, suggestion, latitude, longitude, timestamp });
 		}
@@ -758,22 +748,26 @@ public class SQLReaderController {
 		view.addTab(MAPS_SEARCH_HISTORY_FILENAME);
 	}
 
-	// TODO: bei lat und lon noch sicherstellen, dass komma da steht wo es soll
 	private void processMapsDestinationHistory(Statement statement) throws SQLException {
 		ResultSet rs = statement
 				.executeQuery("SELECT time, dest_lat, dest_lng, dest_title, dest_address, source_lat, source_lng FROM destination_history");
 		while (rs.next()) {
 			Date time = new Date(rs.getLong(1));
-			String dest_lat = rs.getString(2);
-			String dest_lng = rs.getString(3);
+			String dest_lat = formatLatLon(rs.getString(2));
+			String dest_lng = formatLatLon(rs.getString(3));
 			String dest_title = rs.getString(4);
 			String dest_addr = rs.getString(5);
-			String source_lat = rs.getString(6);
-			String source_lng = rs.getString(7);
+			String source_lat = formatLatLon(rs.getString(6));
+			String source_lng = formatLatLon(rs.getString(7));
 			mapsTableModels.get(1).addRow(new Object[] { time, dest_lat, dest_lng, dest_title, dest_addr, source_lat, source_lng });
 		}
 		view.getMapsTable().setModel(mapsTableModels.get(0));
 		view.addTab(MAPS_DESTINATION_HISTORY_FILENAME);
+	}
+
+	private String formatLatLon(String unformatted) {
+		String formatted = unformatted.substring(0, unformatted.length() - 6) + "." + unformatted.substring(unformatted.length() - 6);
+		return formatted;
 	}
 
 	private void processGmail(Statement statement) throws SQLException {
@@ -798,7 +792,7 @@ public class SQLReaderController {
 			try {
 				Inflater decompresser = new Inflater();
 				decompresser.setInput(body);
-				// TODO: dunno wie groß man das dimensionieren muss:
+				// TODO: buffersize seems to be big enough
 				byte[] buffer = new byte[body.length * 4];
 				int resultlength = decompresser.inflate(buffer);
 				decompresser.end();
@@ -850,12 +844,11 @@ public class SQLReaderController {
 		view.addTab(COOKIES_FILENAME);
 	}
 
-	//TODO: testen ob es mit mehreren DB files noch geht
 	private void processTwitter(File dbFile) {
 		String userId = dbFile.getName().substring(0, dbFile.getName().lastIndexOf("."));
 		twitterTableModels.put(userId, new HashMap<String, LiveSearchTableModel>());
 		ArrayList<String> threads = new ArrayList<String>();
-		view.getTwitterAccountCombo().addItem(userId);		
+		view.getTwitterAccountCombo().addItem(userId);
 		try {
 			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
 			Statement statement = connection.createStatement();
@@ -864,12 +857,10 @@ public class SQLReaderController {
 			while (rs.next()) {
 				if (!threads.contains(rs.getString(1))) {
 					threads.add(rs.getString(1));
-					view.getTwitterThreadCombo().addItem(rs.getString(1));
 					twitterTableModels.get(userId).put(rs.getString(1),
 							new LiveSearchTableModel(new Object[] { "Type", "Content", "Date", "Recipient Username", "Recipient Name" }));
 				}
 			}
-
 			for (int i = 0; i < threads.size(); i++) {
 				rs = statement
 						.executeQuery("SELECT type, content, created, username, name FROM messages JOIN users ON users.user_id=messages.recipient_id WHERE thread='"
@@ -883,15 +874,17 @@ public class SQLReaderController {
 					twitterTableModels.get(userId).get(threads.get(i)).addRow(new Object[] { type, text, created, username, name });
 				}
 			}
-
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 		}
-		view.getTwitterTable().setModel(twitterTableModels.get(userId).get(threads.get(0)));
+		// trigger combobox to refresh both comboboxes:
+		view.getTwitterAccountCombo().setSelectedIndex(0);
 		view.addTab(TWITTER_FILENAME);
 	}
 
 	// TODO: hier vllt noch fehlermeldung, falls kein root
+	// TODO: [com.android.providers.telephony/app_parts] (mms attachments caten
+	// und pullen)
 	public void getDBFilesFromPhone() {
 		String[] commands = new String[21];
 		commands[0] = "su";
@@ -920,22 +913,23 @@ public class SQLReaderController {
 		commands[18] = "for f in /data/data/com.twitter.android/databases/*.db; do if [[ \"$f\" != *global.db && \"$f\" != *0.db ]]; then cat $f > /sdcard/twitterDBs/${f##*/}; fi; done ";
 		commands[19] = "exit";
 		commands[20] = "exit";
-		adb.interactWithShell(commands, view);
+		adb.interactWithShell(commands, view, true);
 	}
 
+	// TODO: whatsapp media ordner von sdcard pullen
 	public void pullDBFilesToCaseFolder() {
 		String dbFiles[] = { WHATSAPP_FILENAME, MMSSMS_FILENAME, WEBVIEW_FILENAME, BROWSER_CACHED_GEOPOSITION, BROWSER2_FILENAME,
 				WEBVIEW_FILENAME, COOKIES_FILENAME, CALENDAR_FILENAME, CONTACTS_FILENAME, MAPS_DESTINATION_HISTORY_FILENAME,
 				MAPS_SEARCH_HISTORY_FILENAME, FACEBOOK_FILENAME, FACEBOOK_THREADS_FILENAME };
 		for (int i = 0; i < dbFiles.length; i++) {
-			adb.executeAndReturn("pull /sdcard/" + dbFiles[i] + " " + view.getCaseFolder() + File.separator + "databases/", view);
+			adb.executeAndReturn("pull /sdcard/" + dbFiles[i] + " " + view.getCaseFolder() + File.separator + "databases/", view, false);
 		}
 		// pull twitter dbs
-		adb.executeAndReturn("pull /sdcard/twitterDBs/ " + view.getCaseFolder() + File.separator + "databases/twitter/", view);
+		adb.executeAndReturn("pull /sdcard/twitterDBs/ " + view.getCaseFolder() + File.separator + "databases/twitter/", view, true);
 
 		// pull gmail files seperate concerning special filename:
-		adb.executeAndReturn("pull /sdcard/mailstore.db " + view.getCaseFolder() + File.separator + "databases/", view);
-		adb.executeAndReturn("pull /sdcard/gmailCache/ " + view.getCaseFolder() + File.separator + "gmail/", view);
+		adb.executeAndReturn("pull /sdcard/mailstore.db " + view.getCaseFolder() + File.separator + "databases/", view, false);
+		adb.executeAndReturn("pull /sdcard/gmailCache/ " + view.getCaseFolder() + File.separator + "gmail/", view, false);
 	}
 
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
@@ -973,7 +967,21 @@ public class SQLReaderController {
 	}
 
 	public void setTwitterTableModel(String fileName, String threadId) {
-		if (twitterTableModels.get(fileName) != null && twitterTableModels.get(fileName).get(threadId) != null) {
+		// account combo changed
+		if (threadId == null && twitterTableModels.get(fileName) != null) {
+			view.getTwitterThreadCombo().removeAllItems();
+			Iterator<String> iter = twitterTableModels.get(fileName).keySet().iterator();
+			if (iter.hasNext()) {
+				String next = iter.next();
+				view.getTwitterThreadCombo().addItem(next);
+				view.getTwitterTable().setModel(twitterTableModels.get(fileName).get(next));
+			}
+			while (iter.hasNext()) {
+				view.getTwitterThreadCombo().addItem(iter.next());
+			}
+		}
+		// thread combo changed
+		else if (twitterTableModels.get(fileName) != null && twitterTableModels.get(fileName).get(threadId) != null) {
 			view.getTwitterTable().setModel(twitterTableModels.get(fileName).get(threadId));
 		}
 	}

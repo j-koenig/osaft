@@ -35,17 +35,14 @@ public class OSAFTController {
 		initProperties();
 
 		for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
+			// TODO: exception fangen, wenn cast nich funzt
 			ViewPlugin plugin = (ViewPlugin) iterator.next();
-			// TODO: exception fangen, wenn plugin nicht alle methoden vom
-			// interface implementiert?
 			plugin.setADBThread(adb);
 		}
 		adb.setView(view);
 		Thread adbThread = new Thread(adb);
+		// adbthread waits for adb commands
 		adbThread.start();
-
-		// System.out.println(adb.getDevices());
-
 	}
 
 	private void initProperties() {
@@ -112,7 +109,6 @@ public class OSAFTController {
 			f.mkdirs();
 			f = new File(caseFolder.getAbsolutePath() + File.separator + "whatsapp");
 			f.mkdirs();
-			// TODO: unterordner struktur bauen
 			// refresh path to casefolder for each plugin
 			for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
 				ViewPlugin plugin = (ViewPlugin) iterator.next();
@@ -122,106 +118,6 @@ public class OSAFTController {
 			properties.setProperty("casefolder", caseFolder.toString());
 			storeProperties();
 		}
-	}
-
-	// public boolean testForSu() {
-	// try {
-	// String line;
-	// Process p = runtime.exec("adb shell");
-	//
-	// BufferedOutputStream bufferout = new
-	// BufferedOutputStream(p.getOutputStream());
-	// PrintWriter commandInput = new PrintWriter((new
-	// OutputStreamWriter(bufferout)), true);
-	// commandInput.println("su");
-	// commandInput.println("logcat -d");
-	// commandInput.println("exit");
-	// commandInput.println("exit");
-	// commandInput.close();
-	// bufferout.close();
-	//
-	// Reader r = new InputStreamReader(p.getInputStream());
-	// BufferedReader in = new BufferedReader(r);
-	//
-	// while ((line = in.readLine()) != null)
-	// System.out.println(line);
-	// in.close();
-	//
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// return false;
-	// }
-	//
-	// public void copySDCard() {
-	// String mountPoint = null;
-	// try {
-	// String line;
-	// Process p = runtime.exec("adb shell mount");
-	// Reader r = new InputStreamReader(p.getInputStream());
-	// BufferedReader in = new BufferedReader(r);
-	//
-	// while ((line = in.readLine()) != null) {
-	// if (line.contains("sdcard")) {
-	// String[] lineSplit = line.split(" ");
-	// for (int i = 0; i < lineSplit.length; i++) {
-	// if (lineSplit[i].contains("sdcard")) {
-	// mountPoint = lineSplit[i];
-	// break;
-	// }
-	// }
-	// break;
-	// }
-	// }
-	// System.out.println(mountPoint);
-	// in.close();
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// if (mountPoint == null) {
-	// System.out.println("ERROR! No mountpoint found");
-	// return;
-	// }
-	//
-	// System.out.println("copying sdcard content...");
-	// try {
-	// Process p = runtime.exec("adb pull " + mountPoint + " " + caseFolder +
-	// "/sdcard/");
-	// Reader r = new InputStreamReader(p.getInputStream());
-	// BufferedReader in = new BufferedReader(r);
-	// String line;
-	//
-	// while ((line = in.readLine()) != null) {
-	// System.out.println(line);
-	// }
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// System.out.println("done!");
-	// }
-	//
-	// public void logcat() {
-	// try {
-	// String line;
-	// Process p = runtime.exec(adbExecutable + " logcat -d");
-	// Reader r = new InputStreamReader(p.getInputStream());
-	// BufferedReader in = new BufferedReader(r);
-	//
-	// while ((line = in.readLine()) != null)
-	// System.out.println(line);
-	// in.close();
-	//
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// }
-	//
-	public void dumpsys() {
-
 	}
 
 	private void storeProperties() {
