@@ -11,46 +11,65 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.util.Log;
 import de.uni_hannover.android.artifactextract.artifacts.Artifact;
-import de.uni_hannover.android.artifactextract.artifacts.BrowserHistory;
-import de.uni_hannover.android.artifactextract.artifacts.BrowserSearch;
-import de.uni_hannover.android.artifactextract.artifacts.CalendarEvent;
-import de.uni_hannover.android.artifactextract.artifacts.Call;
-import de.uni_hannover.android.artifactextract.artifacts.Contact;
-import de.uni_hannover.android.artifactextract.artifacts.MMS;
-import de.uni_hannover.android.artifactextract.artifacts.SMS;
 
+/**
+ * Provides static methods to access the SD card
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class SDCardHandler {
 
+	/**
+	 * 
+	 * @return true if SD card is already mounted
+	 */
 	public static boolean isMounted() {
 		return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
 	}
 
+	/**
+	 * 
+	 * @return true if SD card is in status "shared"
+	 */
 	public static boolean isShared() {
 		return Environment.getExternalStorageState().equals(Environment.MEDIA_SHARED);
 	}
 
+	/**
+	 * 
+	 * @return true if no SD card is inserted
+	 */
 	public static boolean isRemoved() {
 		return Environment.getExternalStorageState().equals(Environment.MEDIA_REMOVED);
 	}
 
-	// creates a directory on the sd card
-	public static boolean mkDir(String directory) {
+	/**
+	 * creates a directory on the sd card
+	 * 
+	 * @param directory
+	 *            name for new directory
+	 * 
+	 */
+	public static void mkDir(String directory) throws IOException {
 		File dir = new File(directory);
 		if (!dir.exists()) {
 			Log.d("SDCardHandler", "creating directory " + directory);
-			return dir.mkdirs();
+			if (!dir.mkdirs()) {
+				throw new IOException();
+			}
 		}
-		return true;
 	}
 
-	// iterates through the given ArrayList and calls the getCSV() method for
-	// each element in the list. The results will be written to the file
-	// <type>.csv
-	public static void writeCSV(String directory, String type, ArrayList<Artifact> artifactList)
-			throws IOException {
+	/**
+	 * iterates through the given ArrayList and calls the getCSV() method for
+	 * each element in the list. The results will be written to the file
+	 * <type>.csv
+	 * 
+	 */
+	public static void writeCSV(String directory, String type, ArrayList<Artifact> artifactList) throws IOException {
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(
-				new File(directory, type + ".csv")));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(directory, type + ".csv")));
 
 		for (Artifact artifact : artifactList) {
 			writer.write(artifact.getCSV());
@@ -59,7 +78,10 @@ public class SDCardHandler {
 		writer.close();
 	}
 
-	// saves the given bitmap as a jpeg into the given directory
+	/**
+	 * saves the given bitmap as a jpeg into the given directory
+	 * 
+	 */
 	public static void savePicture(String directory, Bitmap bitmap) throws IOException {
 		FileOutputStream picFile = new FileOutputStream(directory);
 		bitmap.compress(Bitmap.CompressFormat.JPEG, 100, picFile);

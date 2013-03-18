@@ -1,5 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+/**
+ * Represents one call entry
+ * @author Jannis Koenig
+ *
+ */
 public class Call implements Artifact {
 
 	private String name, number, numberLabel, numberType;

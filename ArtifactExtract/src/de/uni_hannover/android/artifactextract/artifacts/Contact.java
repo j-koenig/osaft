@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import android.provider.ContactsContract;
 import android.util.Log;
 
+/**
+ * Represents one contact
+ * @author Jannis Koenig
+ *
+ */
 public class Contact implements Artifact {
 
 	private String name, organisation, notes, id, skypename;

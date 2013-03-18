@@ -1,7 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
-import android.util.Log;
-
+/**
+ * Represents one sms entry
+ * @author Jannis Koenig
+ *
+ */
 public class SMS implements Artifact {
 
 	private String body, address, personName;

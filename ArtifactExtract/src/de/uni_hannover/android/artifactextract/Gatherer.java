@@ -8,8 +8,8 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.database.Cursor;
@@ -23,7 +23,6 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
-import android.util.Log;
 import android.util.SparseArray;
 import de.uni_hannover.android.artifactextract.artifacts.Artifact;
 import de.uni_hannover.android.artifactextract.artifacts.BrowserHistory;
@@ -35,13 +34,18 @@ import de.uni_hannover.android.artifactextract.artifacts.MMS;
 import de.uni_hannover.android.artifactextract.artifacts.SMS;
 import de.uni_hannover.android.artifactextract.util.SDCardHandler;
 
+/**
+ * Provides methods to extract the different artifacts
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class Gatherer {
 	// TODO: mms video and ohter data?
 
 	private String savePath, dataPath;
 	// storages for all different artifacts:
-	private ArrayList<Artifact> contacts, events, smss, calls, mmss, browserHistory,
-			browserSearches;
+	private ArrayList<Artifact> contacts, events, smss, calls, mmss, browserHistory, browserSearches;
 	private ContentResolver cr;
 	private ArtifactExtract view;
 
@@ -58,24 +62,37 @@ public class Gatherer {
 		this.view = view;
 	}
 
-	// creates for each extraction a new directory in folder "artifacts" with
-	// current time and date
+	/**
+	 * creates a new directory for each extraction in folder "artifacts" with
+	 * current time and date
+	 * 
+	 * @param path
+	 *            "artifacts" folder on SD card
+	 */
+	@SuppressLint("SimpleDateFormat")
 	public void createCurrentDir(String path) {
 		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_kk-mm-ss");
 		savePath = path + sdf.format(new Date()) + "/";
-		SDCardHandler.mkDir(savePath);
-		// contactphotos and mms attachments will be saved here:
-		dataPath = savePath + "data/";
-		SDCardHandler.mkDir(dataPath);
+		try {
+			SDCardHandler.mkDir(savePath);
+			// contactphotos and mms attachments will be saved here:
+			dataPath = savePath + "data/";
+			SDCardHandler.mkDir(dataPath);
+		} catch (IOException e) {
+			view.showIOError("folder creation");
+		}
 	}
 
 	// basically the next get... methods work very similar: they query databases
 	// with projections and selections and iterate through the returned cursor.
 	// The results are written to arraylists which will be iterated by the
 	// SDCardHandler to save the gathered information to the sdcard
+
+	/**
+	 * Queries browser content provider and saves all history entries to SD card
+	 */
 	public void getBrowserHistory() {
-		String[] projection = new String[] { Browser.BookmarkColumns.BOOKMARK,
-				Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.URL,
+		String[] projection = new String[] { Browser.BookmarkColumns.BOOKMARK, Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.URL,
 				Browser.BookmarkColumns.VISITS, Browser.BookmarkColumns.CREATED };
 		Cursor browserCursor = cr.query(Browser.BOOKMARKS_URI, projection, null, null, null);
 		try {
@@ -98,9 +115,12 @@ public class Gatherer {
 		}
 	}
 
+	/**
+	 * Queries browser content provider and saves all search history entries to
+	 * SD card
+	 */
 	public void getBrowserSearch() {
-		String[] projection = new String[] { Browser.SearchColumns.SEARCH,
-				Browser.SearchColumns.DATE };
+		String[] projection = new String[] { Browser.SearchColumns.SEARCH, Browser.SearchColumns.DATE };
 		Cursor browserCursor = cr.query(Browser.SEARCHES_URI, projection, null, null, null);
 		try {
 			while (browserCursor.moveToNext()) {
@@ -119,6 +139,10 @@ public class Gatherer {
 		}
 	}
 
+	/**
+	 * Queries calendar content provider and saves all calendar entries to SD
+	 * card
+	 */
 	public void getCalendar() {
 		SparseArray<String> calendars = new SparseArray<String>();
 		String authority;
@@ -146,16 +170,15 @@ public class Gatherer {
 
 		Uri.Builder builder = Uri.parse("content://" + authority + "/instances/when").buildUpon();
 
-		// not pretty to use 0 as start date and Long.MAX_VALUE as end date, but
-		// table "events" (content://com.android.calendar/events) does not
-		// return
-		// all events and table "instances" needs a start and an end date
+		// not the best way to use 0 as start date and Long.MAX_VALUE as end
+		// date, but if found out that table "events"
+		// (content://com.android.calendar/events) does not
+		// return all events and table "instances" needs a start and an end date
 		ContentUris.appendId(builder, 0);
 		ContentUris.appendId(builder, Long.MAX_VALUE);
 
 		// query all events from the "instances" table
-		projection = new String[] { "calendar_id", "title", "description", "begin", "end",
-				"allDay", "eventLocation" };
+		projection = new String[] { "calendar_id", "title", "description", "begin", "end", "allDay", "eventLocation" };
 		String sort = "startDay ASC, startMinute ASC";
 		Cursor eventCursor = cr.query(builder.build(), projection, null, null, sort);
 		try {
@@ -168,8 +191,7 @@ public class Gatherer {
 				boolean allday = !eventCursor.getString(5).equals("0");
 				String location = eventCursor.getString(6).replace("\n", " ").replace("\r", " ");
 
-				CalendarEvent event = new CalendarEvent(begin, end, title, description, allday,
-						calendar, location);
+				CalendarEvent event = new CalendarEvent(begin, end, title, description, allday, calendar, location);
 				events.add(event);
 			}
 			if (events.size() > 0) {
@@ -182,18 +204,18 @@ public class Gatherer {
 		}
 	}
 
+	/**
+	 * Queries calllog content provider and saves all call entries to SD card
+	 */
 	public void getCalls() {
-		String[] projection = new String[] { CallLog.Calls.CACHED_NAME, CallLog.Calls.NUMBER,
-				CallLog.Calls.DATE, CallLog.Calls.DURATION, CallLog.Calls.TYPE, CallLog.Calls.NEW,
-				CallLog.Calls.CACHED_NUMBER_LABEL, CallLog.Calls.CACHED_NUMBER_TYPE };
+		String[] projection = new String[] { CallLog.Calls.CACHED_NAME, CallLog.Calls.NUMBER, CallLog.Calls.DATE, CallLog.Calls.DURATION,
+				CallLog.Calls.TYPE, CallLog.Calls.NEW, CallLog.Calls.CACHED_NUMBER_LABEL, CallLog.Calls.CACHED_NUMBER_TYPE };
 		Cursor callCursor = cr.query(CallLog.Calls.CONTENT_URI, projection, null, null, null);
 
 		try {
 			while (callCursor.moveToNext()) {
-				Call call = new Call(callCursor.getString(0), callCursor.getString(1),
-						callCursor.getLong(2), callCursor.getLong(3), callCursor.getInt(4),
-						(callCursor.getInt(5) == 1), callCursor.getString(6),
-						callCursor.getString(7));
+				Call call = new Call(callCursor.getString(0), callCursor.getString(1), callCursor.getLong(2), callCursor.getLong(3),
+						callCursor.getInt(4), (callCursor.getInt(5) == 1), callCursor.getString(6), callCursor.getString(7));
 				calls.add(call);
 			}
 			if (calls.size() > 0) {
@@ -206,6 +228,10 @@ public class Gatherer {
 		}
 	}
 
+	/**
+	 * Queries contacts content provider and saves all contact entries to SD
+	 * card
+	 */
 	public void getContacts() {
 
 		// get all contact ids
@@ -230,8 +256,8 @@ public class Gatherer {
 		// raw_contacts table with the data table (contains all data for every
 		// raw contact)
 		Uri entityUri = ContactsContract.RawContactsEntity.CONTENT_URI;
-		projection = new String[] { RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1,
-				RawContactsEntity.DATA5, RawContactsEntity.DATA6, RawContactsEntity.CONTACT_ID };
+		projection = new String[] { RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1, RawContactsEntity.DATA5, RawContactsEntity.DATA6,
+				RawContactsEntity.CONTACT_ID };
 
 		// iterate through all contact ids and get information for current id
 		for (int i = 0; i < contactIds.size(); i++) {
@@ -268,7 +294,10 @@ public class Gatherer {
 		}
 	}
 
-	// gets the contact photo for the given contact id, if available
+	/**
+	 * gets the contact photo for the given contact id, if available
+	 * 
+	 */
 	private void getContactsPhoto(String contact_id) {
 		Uri photoUri = Data.CONTENT_URI;
 		String[] projection = new String[] { Photo.PHOTO, Data._ID, Data.CONTACT_ID };
@@ -289,7 +318,9 @@ public class Gatherer {
 			cursor.close();
 		}
 	}
-
+	/**
+	 * Queries sms/mms content provider and saves all mms entries to SD card
+	 */
 	public void getMMS() {
 		String[] projection = new String[] { "_id", "date", "read" };
 		Uri mmsUri = Uri.parse("content://mms");
@@ -404,8 +435,7 @@ public class Gatherer {
 	// method to save the attachment
 	private boolean getMMSData(String id) {
 
-		Cursor mmsCursor = cr.query(Uri.parse("content://mms/" + id + "/part"), null, null, null,
-				null);
+		Cursor mmsCursor = cr.query(Uri.parse("content://mms/" + id + "/part"), null, null, null, null);
 		boolean hasAttachment = false;
 		try {
 			while (mmsCursor.moveToNext()) {
@@ -427,6 +457,7 @@ public class Gatherer {
 
 	}
 
+	//saves audio data from mms to data path on SD card
 	private void saveMMSAudio(String id, String format) {
 		Uri partURI = Uri.parse("content://mms/part/" + id);
 		String filePath = dataPath + "mms_" + id + "." + format;
@@ -444,7 +475,7 @@ public class Gatherer {
 		}
 
 	}
-
+	//saves picture data from mms to data path on SD card
 	private void saveMMSPicture(String id, String format) {
 		Uri partURI = Uri.parse("content://mms/part/" + id);
 		String filePath = dataPath + "mms_" + id + "." + format;
@@ -457,20 +488,19 @@ public class Gatherer {
 		}
 
 	}
-
+	/**
+	 * Queries sms/mms content provider and saves all sms entries to SD card
+	 */
 	public void getSMS() {
 
-		// hier alle kontakte holen und mit contact_id und name in hashmap
-		// speichern
+		// get all user ids and associated usernames from rawcontacts table
 		SparseArray<String> contactNames = new SparseArray<String>();
 
 		Uri contactUri = ContactsContract.RawContactsEntity.CONTENT_URI;
-		String[] contactProjection = new String[] { RawContactsEntity._ID,
-				RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 };
+		String[] contactProjection = new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 };
 		String contactSelection = ContactsContract.RawContactsEntity.MIMETYPE + " = '"
 				+ ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE + "'";
-		Cursor contactCursor = cr
-				.query(contactUri, contactProjection, contactSelection, null, null);
+		Cursor contactCursor = cr.query(contactUri, contactProjection, contactSelection, null, null);
 		try {
 			while (contactCursor.moveToNext()) {
 				int id = contactCursor.getInt(0);
@@ -483,8 +513,7 @@ public class Gatherer {
 
 		String[] projection = new String[] { "address", "body", "date", "read", "seen", "person" };
 		String sort = "date ASC";
-		String[] smsStatus = new String[] { "inbox", "sent", "draft", "failed", "queued", "outbox",
-				"undelivered" };
+		String[] smsStatus = new String[] { "inbox", "sent", "draft", "failed", "queued", "outbox", "undelivered" };
 
 		// query all sms folders:
 		for (int i = 0; i < smsStatus.length; i++) {
@@ -499,7 +528,7 @@ public class Gatherer {
 					boolean seen = smsCursor.getString(4).equals("1");
 					int personID = smsCursor.getInt(5);
 					String personName = "";
-					
+
 					if (personID != 0) {
 						personName = contactNames.get(personID);
 					}

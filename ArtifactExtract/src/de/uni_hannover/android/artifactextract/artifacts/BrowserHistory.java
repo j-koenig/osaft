@@ -1,5 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+/**
+ * Represents one browser history entry
+ * @author Jannis Koenig
+ *
+ */
 public class BrowserHistory implements Artifact {
 
 	public String url, title;

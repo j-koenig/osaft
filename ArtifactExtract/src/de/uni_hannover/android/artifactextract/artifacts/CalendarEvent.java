@@ -1,5 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+/**
+ * Represents one calendar event
+ * @author Jannis Koenig
+ *
+ */
 public class CalendarEvent implements Artifact {
 
 	private long start;

@@ -1,5 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+/**
+ * Represents one browser search entry
+ * @author Jannis Koenig
+ *
+ */
 public class BrowserSearch implements Artifact{
 	
 	private String search;

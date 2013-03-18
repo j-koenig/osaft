@@ -1,5 +1,10 @@
 package de.uni_hannover.android.artifactextract.artifacts;
 
+/**
+ * Represents one mms entry
+ * @author Jannis Koenig
+ *
+ */
 public class MMS implements Artifact {
 
 	private String sender, text, id;
