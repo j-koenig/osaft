@@ -6,6 +6,7 @@ import java.awt.Insets;
 import java.io.File;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -14,11 +15,19 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
+import de.uni_hannover.osaft.view.OSAFTView;
 
 //TODO: muss noch shcön klickibunti sein
 //TODO: liste mit allen apps? "pm list packages"
 //TODO: alle jemals verbundenen wifis? is das hier an der richtigen stelle?
 
+/**
+ * This class implements the {@link ViewPlugin} and presents information about
+ * the attached phone. Partially edited with Googles WindowBuilder
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 @PluginImplementation
 public class GeneralInformationView implements ViewPlugin {
 
@@ -54,8 +63,7 @@ public class GeneralInformationView implements ViewPlugin {
 		gbl_panel.columnWidths = new int[] { 0, 39, 0, 0 };
 		gbl_panel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 1.0, Double.MIN_VALUE };
-		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-				Double.MIN_VALUE };
+		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		panel.setLayout(gbl_panel);
 
 		JLabel lblPhone = new JLabel("Phone Details:");
@@ -212,6 +220,10 @@ public class GeneralInformationView implements ViewPlugin {
 		return panel;
 	}
 
+	/**
+	 * When the {@link JButton} in the {@link OSAFTView} for this plugin is
+	 * pressed it collects the information with three adb commands
+	 */
 	@Override
 	public void triggered() {
 		adb.executeAndReturn(batteryStatsCommand, this, false);
@@ -228,6 +240,9 @@ public class GeneralInformationView implements ViewPlugin {
 	public void setCaseFolder(File caseFolder) {
 	}
 
+	/**
+	 * Depending on the executed command this method sets the information about the phone
+	 */
 	@Override
 	public void reactToADBResult(String result, String[] executedCommand) {
 		String[] resultLineByLine = result.split("\\r?\\n");

@@ -26,6 +26,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
+/**
+ * {@link JPanel} that shows detailed informations about selected email. Provides
+ * a picture preview if there is a picture in the attachment GENERATED WITH
+ * WINDOWBUILDER
+ * @author Jannis Koenig
+ *
+ */
 public class DBGmailInfoPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
@@ -159,6 +166,10 @@ public class DBGmailInfoPanel extends JPanel implements ActionListener {
 
 	}
 
+	/**
+	 * Differentiates between different attachments and reacts to the chosen attachment
+	 *
+	 */
 	private void reactToComboBox(int chosenItem) {
 
 		currentFile = new File(caseFolder + File.separator + "gmail" + File.separator + filenameComboBox.getItemAt(chosenItem).toString());
@@ -182,6 +193,10 @@ public class DBGmailInfoPanel extends JPanel implements ActionListener {
 		}
 	}
 
+	/**
+	 * Called if a row in the gmail table is selected. Refreshes the info for the
+	 * current row.
+	 */
 	public void setInfo(String text, File caseFolder, ArrayList<String> filenames) {
 
 		this.caseFolder = caseFolder;

@@ -34,7 +34,12 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 
 //TODO: config file für pfad zu adb; adb auf pc, mac linux ausführbar machen
 //TODO: einstellungsmenü für pfad zu adb ändern
-
+/**
+ * Main view element. Partially edited with Googles WindowBuilder
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class OSAFTView extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
@@ -65,7 +70,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		actualCurrentCaseLabel = new JLabel("No folder chosen");
 		controller = new OSAFTController(this, pmu);
 		initGUI();
-		
+
 		controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
 	}
 
@@ -86,7 +91,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
 		scrollButtonPane = new JScrollPane(buttonPanel);
 
-		// <created with WindowBuilder>
+		// created with WindowBuilder START
 		JPanel devicesPanel = new JPanel();
 		devicesPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		devicesPanel.setPreferredSize(new Dimension(0, 120));
@@ -149,7 +154,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		gbc_actualCurrentCaseLabel.gridy = 3;
 		devicesPanel.add(actualCurrentCaseLabel, gbc_actualCurrentCaseLabel);
 
-		// </created with WindowBuilder>
+		// created with WindowBuilder END
 		JPanel buttonAndDevicesPanel = new JPanel(new BorderLayout());
 		buttonAndDevicesPanel.setPreferredSize(new Dimension(300, 0));
 		buttonAndDevicesPanel.add(devicesPanel, BorderLayout.NORTH);
@@ -181,6 +186,8 @@ public class OSAFTView extends JFrame implements ActionListener {
 			}
 		});
 
+		// iterate over different viewplugins and add a JButton and the
+		// corresponding view to the cardlayouted viewPanel
 		for (Iterator<ViewPlugin> iterator = plugins.iterator(); iterator.hasNext();) {
 			ViewPlugin vp = (ViewPlugin) iterator.next();
 			viewPluginList.add(vp);
@@ -231,7 +238,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 			devicesCombo.addItem(devices.get(i));
 		}
 	}
-	
+
 	public void setCurrentCaseText(String folder) {
 		actualCurrentCaseLabel.setText(folder.substring(folder.lastIndexOf(File.separatorChar) + 1));
 		actualCurrentCaseLabel.setToolTipText(folder);

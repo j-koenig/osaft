@@ -11,6 +11,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
+/**
+ * This class regulates the access to the adb binary. It contains a
+ * {@link BlockingQueue} which stores all commands that should be executed. The
+ * thread waits until a command is added and runs this command. Newer commands
+ * will be queued and executed after the current job is finished. Implements the
+ * singleton-pattern (no public constructor; just one instance of this class)
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class ADBThread implements Runnable {
 
 	private BlockingQueue<ADBSwingWorker> commands;
@@ -25,6 +35,11 @@ public class ADBThread implements Runnable {
 		rt = Runtime.getRuntime();
 	}
 
+	/**
+	 * When started, the thread waits for an adb command and starts an
+	 * {@link ADBSwingWorker}. The get()-method of the {@link ADBSwingWorker}
+	 * blocks this thread until the job is finished.
+	 */
 	@Override
 	public void run() {
 		while (true) {
@@ -49,44 +64,73 @@ public class ADBThread implements Runnable {
 	// TODO: unterscheidung zwischen win und unix (nötig?)
 	// TODO: checken ob pfad zu adb richtig is (also adb funktioniert)
 
+	/**
+	 * This methods provides the possibility to execute a single adb command. It
+	 * queues the command in the {@link BlockingQueue} and returns the result to
+	 * the given {@link ViewPlugin}. Shows a progressbar if showProgressBar is
+	 * set to true
+	 * 
+	 * @param cmd
+	 *            the adb command
+	 * @param plugin
+	 *            the {@link ViewPlugin} to return the result
+	 * @param showProgressBar
+	 *            if true a progressbar will be visible for the time the command
+	 *            is executed
+	 * @return the result of the command
+	 */
 	public ADBSwingWorker executeAndReturn(String cmd, ViewPlugin plugin, boolean showProgressBar) {
-
-		// idee hier: swingworker wird in adbthread queue eingereiht und dort
-		// ausgeführt. wenn die aufgabe erfüllt ist, wird die methode done() im
-		// swingworker aufgerufen. diese gibt dann den rückgabewert des
-		// doInBackground() an das übergebene plugin weiter (über die methode
-		// reactToADBResult())
-
 		String[] command = new String[1];
 		command[0] = cmd;
 		ADBSwingWorker asw = new ADBSwingWorker(command, adbExecutable, currentDevice, view, plugin, showProgressBar);
 		commands.add(asw);
 		return asw;
 	}
-	
+
+	/**
+	 * This method provides the possibility to interact with the adb shell. The
+	 * commands from the [@link String}-Array cmds will be processed one after
+	 * another and the last command has to be the {@link String} "exit" to exit
+	 * the adb shell.
+	 * 
+	 * @param cmds
+	 *            the commands to execute
+	 * @param plugin
+	 *            the {@link ViewPlugin} to return the result
+	 * @param showProgressBar
+	 *            if true a progressbar will be visible for the time the command
+	 *            is executed
+	 * @return the result of the command
+	 */
 	public ADBSwingWorker interactWithShell(String[] cmds, ViewPlugin plugin, boolean showProgressBar) {
 		ADBSwingWorker asw = new ADBSwingWorker(cmds, adbExecutable, currentDevice, view, plugin, showProgressBar);
 		commands.add(asw);
-		return asw;		
+		return asw;
 	}
 
+	/**
+	 * This method returns the IDs of the attached devices.
+	 * 
+	 */
 	public ArrayList<String> getDevices() {
 		Process p;
 		ArrayList<String> output = new ArrayList<String>();
 		try {
+			// use the runtime to execute the adb command:
 			p = rt.exec(adbExecutable + " devices");
 			Reader r = new InputStreamReader(p.getInputStream());
 			BufferedReader in = new BufferedReader(r);
 			String line;
-			
-			//skip daemon-status messages:
-			while(!(line = in.readLine()).contains("List of devices attached"))	{}
+
+			// skip daemon-status messages:
+			while (!(line = in.readLine()).contains("List of devices attached")) {
+			}
 			while ((line = in.readLine()) != null) {
 				if (!line.trim().equals("")) {
 					String[] split = line.split("\\s+");
 					output.add(split[0]);
 				}
-			}			
+			}
 			p.waitFor();
 
 			return output;
@@ -114,7 +158,7 @@ public class ADBThread implements Runnable {
 	public void setADBExecutable(String path) {
 		adbExecutable = path;
 	}
-	
+
 	public void setCurrentDevice(String curDev) {
 		currentDevice = curDev;
 	}

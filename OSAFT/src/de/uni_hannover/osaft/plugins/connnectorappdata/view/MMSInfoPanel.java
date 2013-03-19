@@ -24,14 +24,21 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
-//GENERATED WITH WINDOWBUILDER
+/**
+ * {@link JPanel} that shows detailed informations about selected mms. Provides
+ * a picture preview if there is a picture in the attachment GENERATED WITH
+ * WINDOWBUILDER
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class MMSInfoPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 	protected JButton btnOpenFile, btnOpenFolder;
 	protected GridBagLayout gbl_mmsInfo;
 	protected JTextArea txtrText;
-	protected JLabel  lblActualFilename;
+	protected JLabel lblActualFilename;
 	protected JLabel lblPreview;
 	protected JPanel panel;
 	protected File currentFile;
@@ -46,8 +53,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		setLayout(gbl_mmsInfo);
 
 		JLabel attachmentLabel = new JLabel("Attachment preview:");
-		attachmentLabel.setFont(new Font(attachmentLabel.getFont().getName(), Font.BOLD,
-				attachmentLabel.getFont().getSize()));
+		attachmentLabel.setFont(new Font(attachmentLabel.getFont().getName(), Font.BOLD, attachmentLabel.getFont().getSize()));
 		attachmentLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		attachmentLabel.setVerticalAlignment(SwingConstants.TOP);
 		GridBagConstraints gbc_attachmentLabel = new GridBagConstraints();
@@ -72,8 +78,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		panel.add(lblPreview, BorderLayout.CENTER);
 
 		JLabel lblFilename = new JLabel("Filename: ");
-		lblFilename.setFont(new Font(lblFilename.getFont().getName(), Font.BOLD, lblFilename
-				.getFont().getSize()));
+		lblFilename.setFont(new Font(lblFilename.getFont().getName(), Font.BOLD, lblFilename.getFont().getSize()));
 		GridBagConstraints gbc_lblFilename = new GridBagConstraints();
 		gbc_lblFilename.anchor = GridBagConstraints.WEST;
 		gbc_lblFilename.fill = GridBagConstraints.VERTICAL;
@@ -121,7 +126,6 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		gbc_scrollPane.gridx = 0;
 		gbc_scrollPane.gridy = 5;
 		add(scrollPane, gbc_scrollPane);
-		
 
 		txtrText = new JTextArea();
 		txtrText.setEditable(false);
@@ -142,8 +146,8 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
-		
-		//TODO: funzt unter windows, aber nicht ubuntu. ka...
+
+		// TODO: funzt unter windows, aber nicht ubuntu. ka...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
 			System.out.println(currentFile.getParent());
@@ -157,6 +161,10 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 
 	}
 
+	/**
+	 * Called if a row in the mms table is selected. Refreshes the info for the
+	 * current row.
+	 */
 	public void setInfo(String id, String text, boolean hasAttachment, File directory) {
 		txtrText.setText("Text: \n " + text);
 		txtrText.setSelectionEnd(0);
@@ -167,35 +175,37 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		if (hasAttachment) {
 			btnOpenFile.setEnabled(true);
 			btnOpenFolder.setEnabled(true);
-			
+
+			// ArtifactExtract app saves the attachment with this pattern: "mms"
+			// + "id" + "fileextension"
 			String filenameWithoutExtension = "mms_" + id;
 
 			File[] files = dataDir.listFiles();
+			// iterate over dataDir to find attachments. Filenames are split
+			// with the character "." to compare the filenames without the
+			// fileextension
 			for (int i = 0; i < files.length; i++) {
 				String[] splittedFilename = files[i].getName().split("\\.");
-				if (splittedFilename.length > 0
-						&& splittedFilename[0].equals(filenameWithoutExtension)) {
+				if (splittedFilename.length > 0 && splittedFilename[0].equals(filenameWithoutExtension)) {
 					currentFile = files[i];
 				}
 			}
 
 			lblActualFilename.setText(currentFile.getName());
+			//get mimetype of found file
 			String mimeType = URLConnection.guessContentTypeFromName(currentFile.getName());
-			// wenn bilddatei
+			// picture file
 			if (mimeType != null && mimeType.startsWith("image")) {
 				try {
-					BufferedImage picture = ImageIO.read(new File(directory + "/data/"
-							+ currentFile.getName()));
-					lblPreview.setIcon(new ImageIcon(picture.getScaledInstance(-1,
-							gbl_mmsInfo.rowHeights[1], Image.SCALE_FAST)));
+					BufferedImage picture = ImageIO.read(new File(directory + "/data/" + currentFile.getName()));
+					lblPreview.setIcon(new ImageIcon(picture.getScaledInstance(-1, gbl_mmsInfo.rowHeights[1], Image.SCALE_FAST)));
 					lblPreview.setText("");
 					lblPreview.revalidate();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
-			else {
+			} else {
 				lblPreview.setIcon(null);
 				lblPreview.setText("Preview not possible");
 				lblPreview.revalidate();

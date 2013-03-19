@@ -27,16 +27,26 @@ import org.jsoup.Jsoup;
 
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
+import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
 
+/**
+ * To {@link SQLReaderView} associated controller. Provides a method to scan a
+ * folder for db files and scans them for artifacts (uses the lib sqlite-jdbc to
+ * query databases). Also provides methods to copy all possible db files from
+ * the /data/data partition of the phone to the sdcard (root needed) and to pull
+ * these files to the current case folder
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class SQLReaderController {
 
 	// TODO: ich raffe nicht, warum das date render ding nicht funzt in den
 	// tabellen
 
-	// TODO: normale email app
-
-	// Passwörter und cached formdata:
+	// filenames of different databases which can be found on an android
+	// smartphone
 	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
 	public final static String BROWSER2_FILENAME = "browser2.db"; // Done
 	public final static String BROWSER_FILENAME = "browser.db"; // Done
@@ -53,7 +63,8 @@ public class SQLReaderController {
 	public final static String WHATSAPP_FILENAME = "msgstore.db"; // Done
 	public final static String TWITTER_FILENAME = "twitter";
 
-	// found these by examining the database with a db-browser:
+	// found these by examining the databases with a db-browser (used for
+	// contacts):
 	public final static int MIMETYPE_NAME = 7;
 	public final static int MIMETYPE_NUMBER = 5;
 	public final static int MIMETYPE_EMAIL = 1;
@@ -87,6 +98,7 @@ public class SQLReaderController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// different table models:
 		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title", "Description", "Start", "End", "Duration",
 				"Location", "Repeat", "Allday", "Deleted?" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date", "Duration (in s)", "New Call", "Type",
@@ -96,6 +108,9 @@ public class SQLReaderController {
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Person", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Attachment", "Mimetype" });
 		mapsTableModels = new ArrayList<LiveSearchTableModel>();
+		// the following tablemodels are aggregated in hashmaps because they are
+		// displayed in one tab in the SQLReaderView:
+
 		// maps searches:
 		mapsTableModels.add(new LiveSearchTableModel(new Object[] { "Search", "Suggestion", "Latitude", "Longitude", "Date" }));
 		// destination history:
@@ -126,6 +141,12 @@ public class SQLReaderController {
 		facebookTableModels.add(new LiveSearchTableModel(new Object[] { "Sender Name", "Date", "Title", "Type", "Unread?" }));
 	}
 
+	/**
+	 * Searches for db files in the given folder and processes them to show the
+	 * artifacts in the {@link SQLReaderView}
+	 * 
+	 * @return true if at least one db file was found
+	 */
 	public boolean iterateChosenFolder(File folder) {
 		// curFolder = folder;
 		boolean processedSomething = false;
@@ -159,6 +180,7 @@ public class SQLReaderController {
 		return processedSomething;
 	}
 
+	// switch for different db files
 	private void processDB(File file) {
 		try {
 			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
@@ -199,7 +221,11 @@ public class SQLReaderController {
 		}
 	}
 
+	// the following methods read the db files line by line and add them to the
+	// corresponding table model
+
 	private void processBrower(Statement statement) throws SQLException {
+		// bookmarks:
 		ResultSet rs = statement.executeQuery("SELECT title, url, created, bookmark FROM bookmarks WHERE bookmark = 1");
 		while (rs.next()) {
 			String title = rs.getString(1);
@@ -211,6 +237,7 @@ public class SQLReaderController {
 				browserTableModels.get(0).addRow(new Object[] { title, url, created, false });
 			}
 		}
+		// history:
 		rs = statement.executeQuery("SELECT title, url, date, visits FROM bookmarks WHERE bookmark = 0");
 		while (rs.next()) {
 			String title = rs.getString(1);
@@ -219,6 +246,7 @@ public class SQLReaderController {
 			int visits = rs.getInt(4);
 			browserTableModels.get(2).addRow(new Object[] { title, url, visits, lastVisited });
 		}
+		// search history:
 		rs = statement.executeQuery("SELECT search, date FROM searches");
 		while (rs.next()) {
 			String search = rs.getString(1);
@@ -228,6 +256,7 @@ public class SQLReaderController {
 	}
 
 	private void processBrowser2(Statement statement) throws SQLException {
+		// bookmarks:
 		ResultSet rs = statement.executeQuery("SELECT title, url, folder, deleted, created FROM bookmarks");
 		while (rs.next()) {
 			// check, if bookmark isn't a folder:
@@ -239,6 +268,7 @@ public class SQLReaderController {
 				browserTableModels.get(0).addRow(new Object[] { title, url, created, deleted });
 			}
 		}
+		// history:
 		rs = statement.executeQuery("SELECT title, url, date, visits FROM history");
 		while (rs.next()) {
 			String title = rs.getString(1);
@@ -247,6 +277,7 @@ public class SQLReaderController {
 			int visits = rs.getInt(4);
 			browserTableModels.get(2).addRow(new Object[] { title, url, visits, lastVisit });
 		}
+		// search history:
 		rs = statement.executeQuery("SELECT search, date FROM searches");
 		while (rs.next()) {
 			String search = rs.getString(1);
@@ -288,7 +319,7 @@ public class SQLReaderController {
 			contactNames.put(rs.getInt(1), rs.getString(2));
 		}
 
-		// CONTACTS:
+		// contacts:
 		ArrayList<Integer> contactIDs = new ArrayList<Integer>();
 		rs = statement.executeQuery("SELECT _id FROM contacts");
 
@@ -380,7 +411,7 @@ public class SQLReaderController {
 		}
 
 		view.getContactTable().setModel(contactsTableModel);
-		// CALLS:
+		// calls:
 		rs = statement.executeQuery("SELECT name, number, date, duration, new, type, numbertype, geocoded_location FROM calls");
 
 		while (rs.next()) {
@@ -504,6 +535,7 @@ public class SQLReaderController {
 		view.getSmsTable().setModel(smsTableModel);
 
 		// MMS:
+		// collect all message ids:
 		rs = statement.executeQuery("SELECT mid FROM part");
 		ArrayList<Integer> mids = new ArrayList<Integer>();
 
@@ -512,23 +544,24 @@ public class SQLReaderController {
 				mids.add(rs.getInt(1));
 			}
 		}
-
+		// iterate over all message ids:
 		for (int i = 0; i < mids.size(); i++) {
-			// TODO: fragwürdig: type=137 bedeutet das absender?
+			// FIXME: does type=137 in table addresses mean sender?
+			// get all entries for given message id:
 			rs = statement
 					.executeQuery("SELECT mid, name, _data, date, address, text, ct FROM (part JOIN pdu ON part.mid=pdu._id) JOIN addr ON part.mid=addr.msg_id WHERE addr.type=137 AND part.mid = "
 							+ mids.get(i));
 			int id = 0;
-			// String name = "";
 			String data = "";
 			Date date = null;
 			String number = "";
 			String text = "";
 			String mimetype = "";
+			// iterate over cursor for given message id:
 			while (rs.next()) {
+				// would mean only text in column 7 of current row:
 				if (rs.getString(3) != null) {
 					id = rs.getInt(1);
-					// name = rs.getString(2);
 					data = rs.getString(3).substring(rs.getString(3).lastIndexOf('/') + 1);
 					date = new Date(rs.getLong(4) * 1000);
 					number = rs.getString(5);
@@ -543,6 +576,11 @@ public class SQLReaderController {
 		view.addTab(MMSSMS_FILENAME);
 	}
 
+	/**
+	 * Called in the method showTabs in {@link SQLReaderView} if contacts and
+	 * smsmms db were found. In this case the telephone numbers in the sms table
+	 * can be replaced by the contact names
+	 */
 	public void addNamesToSMS() {
 		for (int i = 0; i < smsTableModel.getRowCount(); i++) {
 			if (!((String) smsTableModel.getValueAt(i, 1)).equals("")) {
@@ -560,6 +598,7 @@ public class SQLReaderController {
 
 	// TODO: bilder
 	private void processFacebook(Statement statement) throws SQLException {
+		// facebook friends:
 		ResultSet rs = statement
 				.executeQuery("SELECT user_id, first_name, last_name, cell, other, email, birthday_month, birthday_day, birthday_year FROM friends_data");
 		while (rs.next()) {
@@ -573,7 +612,7 @@ public class SQLReaderController {
 
 			facebookTableModels.get(0).addRow(new Object[] { user_id, fName, lName, cell, other, email, birthday });
 		}
-
+		// facebook notifications:
 		rs = statement.executeQuery("SELECT sender_name, updated, title, object_type, is_unread FROM notifications");
 		while (rs.next()) {
 			String sender = rs.getString(1);
@@ -593,6 +632,8 @@ public class SQLReaderController {
 	private void processFacebookMessages(Statement statement) throws SQLException {
 
 		ArrayList<String> threadIds = new ArrayList<String>();
+		// find all different thread ids and add an item in the combobox for
+		// each thread
 		ResultSet rs = statement.executeQuery("SELECT thread_id FROM threads");
 		while (rs.next()) {
 			threadIds.add(rs.getString(1));
@@ -600,6 +641,7 @@ public class SQLReaderController {
 			facebookMessageTableModels.put(rs.getString(1), new LiveSearchTableModel(new Object[] { "Sender", "Text", "Timestamp",
 					"Latitude", "Longitude", "Source", "Attachment?" }));
 		}
+		// iterate over thread ids and query database for each thread id
 		for (int i = 0; i < threadIds.size(); i++) {
 			LiveSearchTableModel currentModel = facebookMessageTableModels.get(threadIds.get(i));
 			rs = statement
@@ -629,6 +671,8 @@ public class SQLReaderController {
 	}
 
 	private void processWhatsapp(Statement statement) throws SQLException {
+		// find all thread ids and add an item for each thread in the whatsapp
+		// combobox
 		ResultSet rs = statement.executeQuery("SELECT key_remote_jid FROM chat_list");
 		ArrayList<String> ids = new ArrayList<String>();
 		while (rs.next()) {
@@ -637,7 +681,7 @@ public class SQLReaderController {
 			whatsAppTableModels.put(rs.getString(1), new LiveSearchTableModel(new Object[] { "Sent", "Received", "Sent Time",
 					"Received Timestamp", "Latitude", "Longitude", "Filename" }));
 		}
-
+		// iterate over all thread ids
 		for (int i = 0; i < ids.size(); i++) {
 			LiveSearchTableModel currentModel = whatsAppTableModels.get(ids.get(i));
 			rs = statement
@@ -649,6 +693,7 @@ public class SQLReaderController {
 				String latitude = rs.getString(8);
 				String longitude = rs.getString(9);
 				String mimetype = rs.getString(6);
+				// smartphone owner is reveiver:
 				if (rs.getInt(3) == 0) {
 					if (mimetype != null) {
 						// received data
@@ -658,6 +703,7 @@ public class SQLReaderController {
 						// received a message
 						currentModel.addRow(new Object[] { "", data, null, date, latitude, longitude, "" });
 					}
+					// smartphone owner is sender
 				} else if (rs.getInt(3) == 1) {
 					Date receiptDeviceTimestamp = new Date(rs.getLong(10));
 					if (mimetype != null) {
@@ -675,15 +721,19 @@ public class SQLReaderController {
 		view.addTab(WHATSAPP_FILENAME);
 	}
 
+	// decodes the filename of the attachment. Filename is ASCII coded in the
+	// cell metadata
 	private String decodeMetadata(byte[] metadata) {
 		String result = "";
 		if (metadata != null) {
 			for (int j = 0; j < metadata.length; j++) {
 				int character = new Integer(metadata[j] & 0xFF);
+				// attach all ASCII coded characters to resultstring
 				if (character > 32 && character < 127) {
 					result += (char) character;
 				}
 			}
+			// filename is located after the last slash character
 			result = result.substring(0, result.length() - 3);
 			result = result.substring(result.lastIndexOf("/") + 1);
 		}
@@ -691,6 +741,7 @@ public class SQLReaderController {
 	}
 
 	private void processWebview(Statement statement) throws SQLException {
+		// saved passwords:
 		ResultSet rs = statement.executeQuery("SELECT host, username, password FROM password");
 		while (rs.next()) {
 			String host = (rs.getString(1) == null) ? "" : rs.getString(1);
@@ -705,6 +756,7 @@ public class SQLReaderController {
 			String password = (rs.getString(3) == null) ? "" : rs.getString(3);
 			browserTableModels.get(5).addRow(new Object[] { host, username, password });
 		}
+		// saved formdata
 		rs = statement.executeQuery("SELECT name, value FROM formdata");
 		while (rs.next()) {
 			String name = (rs.getString(1) == null) ? "" : rs.getString(1);
@@ -789,6 +841,7 @@ public class SQLReaderController {
 			String messageId = rs.getString(10);
 			messageIds.add(messageId);
 
+			// decompress the compressed message body:
 			try {
 				Inflater decompresser = new Inflater();
 				decompresser.setInput(body);
@@ -805,6 +858,7 @@ public class SQLReaderController {
 			gmailTableModel.addRow(new Object[] { messageId, from, to, cc, bcc, reply, subject, outputString, sent, received, null });
 		}
 
+		// iterate over message ids to extract the attachment, if present
 		for (int i = 0; i < messageIds.size(); i++) {
 			rs = statement.executeQuery("SELECT filename FROM attachments WHERE messages_messageId = " + messageIds.get(i));
 			ArrayList<String> filenames = new ArrayList<String>();
@@ -848,6 +902,8 @@ public class SQLReaderController {
 		String userId = dbFile.getName().substring(0, dbFile.getName().lastIndexOf("."));
 		twitterTableModels.put(userId, new HashMap<String, LiveSearchTableModel>());
 		ArrayList<String> threads = new ArrayList<String>();
+		// different user accounts leads to different db files so for each db
+		// file an item with the user id is added to the twitter combobox:
 		view.getTwitterAccountCombo().addItem(userId);
 		try {
 			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
@@ -861,6 +917,7 @@ public class SQLReaderController {
 							new LiveSearchTableModel(new Object[] { "Type", "Content", "Date", "Recipient Username", "Recipient Name" }));
 				}
 			}
+			// iterate over thread ids to get twitter direct messages:
 			for (int i = 0; i < threads.size(); i++) {
 				rs = statement
 						.executeQuery("SELECT type, content, created, username, name FROM messages JOIN users ON users.user_id=messages.recipient_id WHERE thread='"
@@ -885,6 +942,10 @@ public class SQLReaderController {
 	// TODO: hier vllt noch fehlermeldung, falls kein root
 	// TODO: [com.android.providers.telephony/app_parts] (mms attachments caten
 	// und pullen)
+	/**
+	 * This method starts a shell on the current device and tries to copy all
+	 * different database files to the sd card of the phone. Root is needed!
+	 */
 	public void getDBFilesFromPhone() {
 		String[] commands = new String[21];
 		commands[0] = "su";
@@ -917,6 +978,10 @@ public class SQLReaderController {
 	}
 
 	// TODO: whatsapp media ordner von sdcard pullen
+	/**
+	 * This method pulls the db files from the sd card to the case folder if
+	 * they were copied to sd card by the method getDBFilesFromPhone()
+	 */
 	public void pullDBFilesToCaseFolder() {
 		String dbFiles[] = { WHATSAPP_FILENAME, MMSSMS_FILENAME, WEBVIEW_FILENAME, BROWSER_CACHED_GEOPOSITION, BROWSER2_FILENAME,
 				WEBVIEW_FILENAME, COOKIES_FILENAME, CALENDAR_FILENAME, CONTACTS_FILENAME, MAPS_DESTINATION_HISTORY_FILENAME,
@@ -932,6 +997,12 @@ public class SQLReaderController {
 		adb.executeAndReturn("pull /sdcard/gmailCache/ " + view.getCaseFolder() + File.separator + "gmail/", view, false);
 	}
 
+	/**
+	 * Copies selected row/cell to the system clipboard
+	 * @param currentX set in mouseClicked() in {@link SQLReaderView}
+	 * @param currentY set in mouseClicked() in {@link SQLReaderView}
+	 * @param copyCell true if cell should be copied, false if row should be copied
+	 */
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		// find out which row or which cell is selected (variables

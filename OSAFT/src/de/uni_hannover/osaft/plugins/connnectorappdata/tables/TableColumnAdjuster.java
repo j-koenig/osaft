@@ -8,7 +8,9 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-/*
+/**
+ * @author Rob Camick
+ * \{@link https://tips4java.wordpress.com/2008/11/10/table-column-adjuster/}
  *	Class to manage the widths of colunmns in a table.
  *
  *  Various properties control how the width of the column is calculated.
@@ -32,7 +34,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 	private boolean isDynamicAdjustment;
 	private Map<TableColumn, Integer> columnSizes = new HashMap<TableColumn, Integer>();
 
-	/*
+	/**
 	 *  Specify the table and use default spacing
 	 */
 	public TableColumnAdjuster(JTable table)
@@ -40,7 +42,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		this(table, 6);
 	}
 
-	/*
+	/**
 	 *  Specify the table and spacing
 	 */
 	public TableColumnAdjuster(JTable table, int spacing)
@@ -54,7 +56,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		installActions();
 	}
 
-	/*
+	/**
 	 *  Adjust the widths of all the columns in the table
 	 */
 	public void adjustColumns()
@@ -67,7 +69,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		}
 	}
 
-	/*
+	/**
 	 *  Adjust the width of the specified column in the table
 	 */
 	public void adjustColumn(final int column)
@@ -83,7 +85,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		updateTableColumn(column, preferredWidth);
 	}
 
-	/*
+	/**
 	 *  Calculated the width based on the column name
 	 */
 	private int getColumnHeaderWidth(int column)
@@ -103,7 +105,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		return c.getPreferredSize().width;
 	}
 
-	/*
+	/**
 	 *  Calculate the width based on the widest cell renderer for the
 	 *  given column.
 	 */
@@ -127,7 +129,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		return preferredWidth;
 	}
 
-	/*
+	/**
 	 *  Get the preferred width for the specified cell
 	 */
 	private int getCellDataWidth(int row, int column)
@@ -141,7 +143,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		return width;
 	}
 
-	/*
+	/**
 	 *  Update the TableColumn with the newly calculated width
 	 */
 	private void updateTableColumn(int column, int width)
@@ -164,7 +166,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		tableColumn.setWidth(width);
 	}
 
-	/*
+	/**
 	 *  Restore the widths of the columns in the table to its previous width
 	 */
 	public void restoreColumns()
@@ -177,7 +179,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		}
 	}
 
-	/*
+	/**
 	 *  Restore the width of the specified column to its previous width
 	 */
 	private void restoreColumn(int column)
@@ -192,7 +194,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		}
 	}
 
-	/*
+	/**
 	 *	Indicates whether to include the header in the width calculation
 	 */
 	public void setColumnHeaderIncluded(boolean isColumnHeaderIncluded)
@@ -200,7 +202,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		this.isColumnHeaderIncluded = isColumnHeaderIncluded;
 	}
 
-	/*
+	/**
 	 *	Indicates whether to include the model data in the width calculation
 	 */
 	public void setColumnDataIncluded(boolean isColumnDataIncluded)
@@ -208,7 +210,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		this.isColumnDataIncluded = isColumnDataIncluded;
 	}
 
-	/*
+	/**
 	 *	Indicates whether columns can only be increased in size
 	 */
 	public void setOnlyAdjustLarger(boolean isOnlyAdjustLarger)
@@ -216,7 +218,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		this.isOnlyAdjustLarger = isOnlyAdjustLarger;
 	}
 
-	/*
+	/**
 	 *  Indicate whether changes to the model should cause the width to be
 	 *  dynamically recalculated.
 	 */
@@ -301,7 +303,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		}
 	}
 
-	/*
+	/**
 	 *  Install Actions to give user control of certain functionality.
 	 */
 	private void installActions()
@@ -315,7 +317,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		installToggleAction(false, true,  "toggleLarger",   "control DIVIDE");
 	}
 
-	/*
+	/**
 	 *  Update the input and action maps with a new ColumnAction
 	 */
 	private void installColumnAction(
@@ -327,7 +329,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		table.getActionMap().put(key, action);
 	}
 
-	/*
+	/**
 	 *  Update the input and action maps with new ToggleAction
 	 */
 	private void installToggleAction(
@@ -339,7 +341,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		table.getActionMap().put(key, action);
 	}
 
-	/*
+	/**
 	 *  Action to adjust or restore the width of a single column or all columns
 	 */
 	class ColumnAction extends AbstractAction
@@ -380,7 +382,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 		}
 	}
 
-	/*
+	/**
 	 *  Toggle properties of the TableColumnAdjuster so the user can
 	 *  customize the functionality to their preferences
 	 */

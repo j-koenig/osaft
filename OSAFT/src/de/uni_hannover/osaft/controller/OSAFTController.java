@@ -16,8 +16,11 @@ import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
+/**
+ * @author Jannis Koenig
+ * 
+ */
 public class OSAFTController {
-	// private Runtime runtime;
 	private File caseFolder;
 	private ADBThread adb;
 	private Properties properties;
@@ -29,23 +32,24 @@ public class OSAFTController {
 	public OSAFTController(OSAFTView view, PluginManagerUtil pmu) {
 		this.view = view;
 		this.pmu = pmu;
-		// runtime = Runtime.getRuntime();
 		fc = new JFileChooser();
 		adb = ADBThread.getInstance();
 		initProperties();
 
+		// iterate over all ViewPlugins and to reference the ADBThread instance
 		for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
 			// TODO: exception fangen, wenn cast nich funzt
 			ViewPlugin plugin = (ViewPlugin) iterator.next();
 			plugin.setADBThread(adb);
 		}
 		adb.setView(view);
+		// start the ADBThread
 		Thread adbThread = new Thread(adb);
-		// adbthread waits for adb commands
 		adbThread.start();
 	}
 
 	private void initProperties() {
+		// initialize the properties file:
 		properties = new Properties();
 		File f = new File("osaft.properties");
 		try {
@@ -57,6 +61,8 @@ public class OSAFTController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// if there is no entry for the adb executable, the user has to choose
+		// the path to the binary
 		if (properties.getProperty("adb") == null) {
 			JOptionPane.showMessageDialog(view,
 					"Properties file does not contain the path to adb! Please choose the path to the adb executable", "Information",
@@ -78,6 +84,9 @@ public class OSAFTController {
 
 	}
 
+	/**
+	 * Called if user wants to change the path to the adb executable
+	 */
 	public void changeADBPath() {
 		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		int returnVal = fc.showOpenDialog(view);
@@ -93,12 +102,16 @@ public class OSAFTController {
 		}
 	}
 
+	/**
+	 * Called if user wants to change the current case folder
+	 */
 	public void changeCaseFolder() {
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fc.showOpenDialog(view);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			caseFolder = fc.getSelectedFile();
 
+			// initialize the chosen case folder (generate subfolders)
 			File f = new File(caseFolder.getAbsolutePath() + File.separator + "contact_photos");
 			f.mkdirs();
 			f = new File(caseFolder.getAbsolutePath() + File.separator + "databases" + File.separator + "twitter");

@@ -19,12 +19,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-//CREATED WITH WINDOWBUILDER
+/**
+ * {@link JPanel} that shows detailed contact informations CREATED WITH
+ * WINDOWBUILDER
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class ContactInfoPanel extends JPanel implements ActionListener {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	private JButton btnOpenPicture;
 	private JLabel lblPicture;
@@ -45,10 +48,10 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };
-		gridBagLayout.rowHeights = new int[] { 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0 };
+		gridBagLayout.rowHeights = new int[] { 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gridBagLayout.columnWeights = new double[] { 1.0, 1.0, Double.MIN_VALUE };
-		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		setLayout(gridBagLayout);
 
 		JLabel lblContactPhoto = new JLabel("Contact Picture");
@@ -77,7 +80,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_btnOpenPicture.gridx = 0;
 		gbc_btnOpenPicture.gridy = 2;
 		add(btnOpenPicture, gbc_btnOpenPicture);
-		
+
 		btnOpenFolder = new JButton("Open Folder");
 		btnOpenFolder.setEnabled(false);
 		btnOpenFolder.addActionListener(this);
@@ -96,7 +99,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblName.gridx = 0;
 		gbc_lblName.gridy = 4;
 		add(lblName, gbc_lblName);
-		
+
 		txtName = new JTextField();
 		txtName.setEditable(false);
 		GridBagConstraints gbc_txtName = new GridBagConstraints();
@@ -124,7 +127,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblActualnumbers.insets = new Insets(0, 0, 5, 0);
 		gbc_lblActualnumbers.gridx = 0;
 		gbc_lblActualnumbers.gridy = 7;
-		add(txtNumbers, gbc_lblActualnumbers);		
+		add(txtNumbers, gbc_lblActualnumbers);
 
 		JLabel lblOrganisation = new JLabel("Organisation:");
 		GridBagConstraints gbc_lblOrganisation = new GridBagConstraints();
@@ -133,7 +136,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblOrganisation.gridx = 0;
 		gbc_lblOrganisation.gridy = 9;
 		add(lblOrganisation, gbc_lblOrganisation);
-		
+
 		txtOrganisation = new JTextField();
 		txtOrganisation.setEditable(false);
 		GridBagConstraints gbc_txtOrganisation = new GridBagConstraints();
@@ -152,7 +155,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblEmail.gridx = 0;
 		gbc_lblEmail.gridy = 11;
 		add(lblEmail, gbc_lblEmail);
-		
+
 		txtEmail = new JTextField();
 		txtEmail.setEditable(false);
 		GridBagConstraints gbc_txtEmail = new GridBagConstraints();
@@ -171,7 +174,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblAddress.gridx = 0;
 		gbc_lblAddress.gridy = 13;
 		add(lblAddress, gbc_lblAddress);
-		
+
 		txtAddress = new JTextField();
 		txtAddress.setEditable(false);
 		GridBagConstraints gbc_txtAddress = new GridBagConstraints();
@@ -190,7 +193,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblWebsite.gridx = 0;
 		gbc_lblWebsite.gridy = 15;
 		add(lblWebsite, gbc_lblWebsite);
-		
+
 		txtWebsite = new JTextField();
 		txtWebsite.setEditable(false);
 		GridBagConstraints gbc_txtWebsite = new GridBagConstraints();
@@ -209,7 +212,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblIm.gridx = 0;
 		gbc_lblIm.gridy = 17;
 		add(lblIm, gbc_lblIm);
-		
+
 		txtIm = new JTextField();
 		txtIm.setEditable(false);
 		GridBagConstraints gbc_txtIm = new GridBagConstraints();
@@ -228,7 +231,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblSkype.gridx = 0;
 		gbc_lblSkype.gridy = 19;
 		add(lblSkype, gbc_lblSkype);
-		
+
 		txtSkype = new JTextField();
 		txtSkype.setEditable(false);
 		GridBagConstraints gbc_txtSkype = new GridBagConstraints();
@@ -247,7 +250,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		gbc_lblNotes.gridx = 0;
 		gbc_lblNotes.gridy = 21;
 		add(lblNotes, gbc_lblNotes);
-		
+
 		txtNotes = new JTextField();
 		txtNotes.setEditable(false);
 		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
@@ -269,7 +272,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 				e1.printStackTrace();
 			}
 		}
-		//FIXME: läuft nur unter windows...
+		// FIXME: läuft nur unter windows...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
 			try {
@@ -282,8 +285,12 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 
 	}
 
-	public void setInfo(String name, String numbers, String organisation, String emails,
-			String addresses, String websites, String im, String skype, String notes, File picFile) {
+	/**
+	 * Called if a row in the contacts table is selected. Refreshes the info for
+	 * the current row. Contact picture is available
+	 */
+	public void setInfo(String name, String numbers, String organisation, String emails, String addresses, String websites, String im,
+			String skype, String notes, File picFile) {
 		btnOpenPicture.setEnabled(true);
 		btnOpenFolder.setEnabled(true);
 		currentPic = picFile;
@@ -297,11 +304,10 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 		txtIm.setText(im);
 		txtSkype.setText(skype);
 		txtNotes.setText(notes);
-		
+
 		try {
 			BufferedImage picture = ImageIO.read(picFile);
-			lblPicture.setIcon(new ImageIcon(picture.getScaledInstance(-1,
-					gridBagLayout.rowHeights[1], Image.SCALE_FAST)));
+			lblPicture.setIcon(new ImageIcon(picture.getScaledInstance(-1, gridBagLayout.rowHeights[1], Image.SCALE_FAST)));
 			lblPicture.setText("");
 			lblPicture.revalidate();
 		} catch (IOException e) {
@@ -309,14 +315,17 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 			e.printStackTrace();
 		}
 	}
-
-	public void setInfo(String name, String numbers, String organisation, String emails,
-			String addresses, String websites, String im, String skype, String notes) {
+	/**
+	 * Called if a row in the contacts table is selected. Refreshes the info for
+	 * the current row. Contact picture is not available
+	 */
+	public void setInfo(String name, String numbers, String organisation, String emails, String addresses, String websites, String im,
+			String skype, String notes) {
 		lblPicture.setText("No Picture");
 		lblPicture.setIcon(null);
 		btnOpenPicture.setEnabled(false);
 		btnOpenFolder.setEnabled(false);
-		
+
 		txtName.setText(name);
 		txtNumbers.setText(numbers);
 		txtOrganisation.setText(organisation);

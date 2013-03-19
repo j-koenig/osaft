@@ -17,6 +17,13 @@ import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 
+/**
+ * This class is the corresponding controller to {@link ConnectorAppDataView}.
+ * It offers a method to scan a given folder for csv and processes them.
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class ConnectorAppDataController {
 	public static String BROWSER_HISTORY_FILENAME = "BrowserHistory.csv";
 	public static String BROWSER_SEARCH_FILENAME = "BrowserSearchHistory.csv";
@@ -27,28 +34,31 @@ public class ConnectorAppDataController {
 	public static String SMS_FILENAME = "SMS.csv";
 
 	private ConnectorAppDataView view;
-	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel,
-			browserSearchTableModel, contactsTableModel, mmsTableModel, smsTableModel;
+	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserSearchTableModel,
+			contactsTableModel, mmsTableModel, smsTableModel;
 	private ADBThread adb;
 
 	public ConnectorAppDataController(ConnectorAppDataView view, ADBThread adb) {
 		this.view = view;
 		this.adb = adb;
-		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title",
-				"Description", "Start", "End", "Location", "Allday" });
-		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date",
-				"Duration (in s)", "New Call", "Type", "Number Type" });
-		browserHistoryTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL",
-				"Visits", "Created", "Bookmark?" });
+		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title", "Description", "Start", "End", "Location",
+				"Allday" });
+		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date", "Duration (in s)", "New Call", "Type",
+				"Number Type" });
+		browserHistoryTableModel = new LiveSearchTableModel(new Object[] { "Title", "URL", "Visits", "Created", "Bookmark?" });
 		browserSearchTableModel = new LiveSearchTableModel(new Object[] { "Date", "Search" });
-		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers",
-				"Organisation", "Email", "Address", "Website", "IM", "Skype", "Notes" });
-		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Name", "Date",
-				"Text", "Read", "Seen", "Status" });
-		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text",
-				"Read", "Attachment" });
+		contactsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Name", "Numbers", "Organisation", "Email", "Address",
+				"Website", "IM", "Skype", "Notes" });
+		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Name", "Date", "Text", "Read", "Seen", "Status" });
+		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Read", "Attachment" });
 	}
 
+	/**
+	 * Searches for csv files in the given folder and processes them to show the
+	 * artifacts in the {@link ConnectorAppDataView}
+	 * 
+	 * @return true if at least one csv file was found
+	 */
 	public boolean iterateChosenFolder(File folder) {
 		boolean processedSomething = false;
 		File[] files = folder.listFiles();
@@ -56,9 +66,8 @@ public class ConnectorAppDataController {
 			File curFile = files[i];
 			String fName = curFile.getName();
 			// only given csv files should be processed
-			if (fName.equals(BROWSER_HISTORY_FILENAME) || fName.equals(BROWSER_SEARCH_FILENAME)
-					|| fName.equals(CALENDAR_FILENAME) || fName.equals(CONTACTS_FILENAME)
-					|| fName.equals(CALLS_FILENAME) || fName.equals(MMS_FILENAME)
+			if (fName.equals(BROWSER_HISTORY_FILENAME) || fName.equals(BROWSER_SEARCH_FILENAME) || fName.equals(CALENDAR_FILENAME)
+					|| fName.equals(CONTACTS_FILENAME) || fName.equals(CALLS_FILENAME) || fName.equals(MMS_FILENAME)
 					|| fName.equals(SMS_FILENAME)) {
 				processCSV(curFile);
 				processedSomething = true;
@@ -106,6 +115,9 @@ public class ConnectorAppDataController {
 		}
 	}
 
+	// the following methods read the csv files line by line and add them to the
+	// corresponding table model
+
 	private void processBrowserHistory(BufferedReader br) throws NumberFormatException, IOException {
 		String curLine;
 		while ((curLine = br.readLine()) != null) {
@@ -116,8 +128,7 @@ public class ConnectorAppDataController {
 			int visits = Integer.parseInt(values[2]);
 			Date created = new Date(Long.parseLong(values[3]));
 			boolean isBookmark = Boolean.parseBoolean(values[4]);
-			browserHistoryTableModel
-					.addRow(new Object[] { title, url, visits, created, isBookmark });
+			browserHistoryTableModel.addRow(new Object[] { title, url, visits, created, isBookmark });
 		}
 		view.addTab(BROWSER_HISTORY_FILENAME, browserHistoryTableModel);
 	}
@@ -179,8 +190,7 @@ public class ConnectorAppDataController {
 					skypename = skypename.replace("ESCAPED_COMMA", ",");
 				}
 			}
-			contactsTableModel.addRow(new Object[] { id, name, numbers, organisation, email,
-					addresses, websites, ims, skypename, notes });
+			contactsTableModel.addRow(new Object[] { id, name, numbers, organisation, email, addresses, websites, ims, skypename, notes });
 		}
 		view.addTab(CONTACTS_FILENAME, contactsTableModel);
 	}
@@ -239,8 +249,7 @@ public class ConnectorAppDataController {
 			default:
 				break;
 			}
-			smsTableModel.addRow(new Object[] { number, contactName, date, text, read, seen,
-					statusAsText });
+			smsTableModel.addRow(new Object[] { number, contactName, date, text, read, seen, statusAsText });
 		}
 		view.addTab(SMS_FILENAME, smsTableModel);
 	}
@@ -343,8 +352,7 @@ public class ConnectorAppDataController {
 				break;
 			}
 
-			callsTableModel.addRow(new Object[] { name, number, date, duration, newCall, type,
-					numberType });
+			callsTableModel.addRow(new Object[] { name, number, date, duration, newCall, type, numberType });
 		}
 		view.addTab(CALLS_FILENAME, callsTableModel);
 	}
@@ -364,14 +372,18 @@ public class ConnectorAppDataController {
 			location = location.replace("ESCAPED_COMMA", ",");
 			boolean allDay = Boolean.parseBoolean(values[6]);
 
-			calendarTableModel.addRow(new Object[] { calendarName, title, description, start, end,
-					location, allDay });
+			calendarTableModel.addRow(new Object[] { calendarName, title, description, start, end, location, allDay });
 		}
 		view.addTab(CALENDAR_FILENAME, calendarTableModel);
 	}
 
-	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable,
-			boolean copyCell) {
+	/**
+	 * Copies selected row/cell to the system clipboard
+	 * @param currentX set in mouseClicked() in {@link ConnectorAppDataView}
+	 * @param currentY set in mouseClicked() in {@link ConnectorAppDataView}
+	 * @param copyCell true if cell should be copied, false if row should be copied
+	 */
+	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		// find out which row or which cell is selected (variables
 		// current... have been set in mouseClicked())
@@ -382,8 +394,7 @@ public class ConnectorAppDataController {
 
 		if (copyCell) {
 			// just get the current cell
-			dataToClipboard = currentTable.getModel().getValueAt(rowNumber, columnNumber)
-					.toString();
+			dataToClipboard = currentTable.getModel().getValueAt(rowNumber, columnNumber).toString();
 		} else {
 			StringBuilder sb = new StringBuilder();
 			// iterate over all columns of selected row
@@ -399,7 +410,5 @@ public class ConnectorAppDataController {
 		StringSelection strSel = new StringSelection(dataToClipboard);
 		clipboard.setContents(strSel, null);
 	}
-
-	
 
 }

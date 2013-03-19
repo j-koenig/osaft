@@ -44,9 +44,20 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
+import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
 
+/**
+ * This class implements the {@link ViewPlugin} and forms in cooperation with
+ * the {@link SQLReaderController} the SQL reader plugin. This plugin allows the
+ * extraction of 15 different databases which can contain useful artifacts.
+ * Additionally it displays the artifacts in tables and "infopanels" like the
+ * {@link ConnectorAppDataView}. Partially edited with Googles WindowBuilder
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 @PluginImplementation
 public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionListener, MouseListener, FocusListener, KeyListener {
 
@@ -82,6 +93,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private DBGmailInfoPanel gmailInfo;
 	private DBFacebookMessageInfoPanel facebookMessageInfo;
 
+	/**
+	 * called, when plugin is initialized. Initializes the GUI, the controller
+	 * and the {@link JFileChooser} to select the db files
+	 */
 	@Override
 	@Init
 	public void init() {
@@ -103,6 +118,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void initGUI() {
 		tabs = new JTabbedPane();
 
+		// one panel for each db file
 		calendarPanel = new JPanel(new BorderLayout(0, 0));
 		calendarPanel.setName("Calendar");
 
@@ -145,6 +161,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		ArrayList<JTable> tables = new ArrayList<JTable>();
 
+		// table for each db file
 		calendarTable = new JTable();
 		callTable = new JTable();
 		contactTable = new JTable();
@@ -207,7 +224,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		callPanel.add(callsSearch, BorderLayout.NORTH);
 		callPanel.add(callScrollPane, BorderLayout.CENTER);
 
-		// contacts, mms and sms also provide an "info"-panel
+		// contacts, mms, sms, whatsapp and facebook also provide an "infopanel"
 		contactScrollPane = new JScrollPane(contactTable);
 		JPanel contactWrapper = new JPanel(new BorderLayout());
 		contactWrapper.add(contactScrollPane, BorderLayout.CENTER);
@@ -325,6 +342,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		gmailPanel.add(gmailScrollPane, BorderLayout.CENTER);
 		gmailPanel.add(gmailInfo, BorderLayout.EAST);
 
+		// browser bookmarks, history, cached geopositions, saved password and
+		// cookies are located in one tab and the user can choose between them
+		// with the help of a JComboBox
 		browserScrollPane = new JScrollPane(browserTable);
 		browserSearch = new JTextField("Search");
 		browserSearch.addFocusListener(this);
@@ -368,6 +388,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		preferencesPanel.add(getDBFilesButton);
 	}
 
+	/**
+	 * If the controller finds a db file in the given directory it calls this
+	 * method. The corresponding tab will be added to the tabVector, which will
+	 * be iterated after the search for db files and the containing panels will
+	 * be added to the {@link JTabbedPane}
+	 * 
+	 */
 	public void addTab(String sourceFile) {
 		if (sourceFile.equals(SQLReaderController.BROWSER2_FILENAME) || sourceFile.equals(SQLReaderController.COOKIES_FILENAME)
 				|| sourceFile.equals(SQLReaderController.BROWSER_CACHED_GEOPOSITION)
@@ -377,6 +404,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			}
 		} else if (sourceFile.equals(SQLReaderController.CALENDAR_FILENAME)) {
 			tabVector.add(calendarPanel);
+			// contacts and calls in contacts.db:
 		} else if (sourceFile.equals(SQLReaderController.CONTACTS_FILENAME)) {
 			tabVector.add(contactPanel);
 			tabVector.add(callPanel);
@@ -409,7 +437,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		}
 	}
 
-	// shows tabs in alphabetic order
+	/**
+	 * Shows tabs in alphabetic order. Called by controller when all db files
+	 * were processed and added via addTab()
+	 */
 	public void showTabs() {
 		if (tabVector.contains(smsPanel) && tabVector.contains(contactPanel)) {
 			controller.addNamesToSMS();
@@ -458,7 +489,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void reactToADBResult(String result, String[] executedCommand) {
 		if (executedCommand[0].equals("su")) {
 			controller.pullDBFilesToCaseFolder();
-			// dirty (last file pull in controller.pullDBFilesToCaseFolder()):
+			// FIXME: not the best solution (last file pull in
+			// controller.pullDBFilesToCaseFolder()):
 		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
 			controller.iterateChosenFolder(new File(caseFolder + File.separator + "databases/"));
 		}
@@ -466,6 +498,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		// buttons on preferences tab
 		if (e.getSource().equals(openSQLButton)) {
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -480,10 +513,12 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			}
 		} else if (e.getSource().equals(getDBFilesButton)) {
 			controller.getDBFilesFromPhone();
+			// context menu:
 		} else if (e.getSource().equals(copyCell)) {
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, true);
 		} else if (e.getSource().equals(copyRow)) {
 			controller.copySelectionToClipboard(currentX, currentY, currentTable, false);
+			// comboboxes in tabs:
 		} else if (e.getSource().equals(whatsAppCombo)) {
 			controller.setWhatsappTableModel(whatsAppCombo.getSelectedItem().toString());
 		} else if (e.getSource().equals(facebookMessageCombo)) {
@@ -505,7 +540,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	}
 
-	// update info-panels if selected row changed
+	/**
+	 *  Updates info-panels if selected row changed
+	 */
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		int selectedRow;
@@ -571,14 +608,18 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			}
 		}
 	}
-
+	/**
+	 * Calls openContextMenu() if right click
+	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
 			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
-
+	/**
+	 * Shows the context menu at the clicked position
+	 */
 	private void openContextMenu(MouseEvent e, JTable table) {
 
 		// selects the row which was right-clicked
@@ -622,7 +663,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void keyPressed(KeyEvent arg0) {
 		// not used
 	}
-
+	/**
+	 * Initiates the search and filter algorithm for each typed character in the
+	 * searchboxes
+	 */
 	@Override
 	public void keyReleased(KeyEvent e) {
 		String search = ((JTextField) e.getSource()).getText();
@@ -673,7 +717,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
-		//not used
+		// not used
 	}
 
 	@Override

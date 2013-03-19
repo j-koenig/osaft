@@ -11,6 +11,11 @@ import net.xeoh.plugins.base.impl.PluginManagerFactory;
 import net.xeoh.plugins.base.util.PluginManagerUtil;
 import de.uni_hannover.osaft.view.OSAFTView;
 
+/**
+ * Main class. Sets look and feel and initializes the jspf
+ * @author Jannis Koenig
+ *
+ */
 public class Main {
 
 	public static void main(String[] args) {
@@ -21,6 +26,7 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		//initialize jspf:
 		PluginManager pm = PluginManagerFactory.createPluginManager();
 
 		String classpath = System.getProperty("java.class.path");
