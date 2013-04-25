@@ -53,7 +53,7 @@ public class Call implements Artifact {
 	public String getCSV() {
 		String res = (name != null) ? name.replace(",", "ESCAPED_COMMA") + "," : " ,";
 		res += number + "," + date + "," + duration + "," + newCall + "," + type + ",";
-		res += (numberLabel != null) ? numberLabel.replace(",", "ESCAPED_COMMA") : " " + ",";
+		res += (numberLabel != null) ? numberLabel.replace(",", "ESCAPED_COMMA") + "," : " " + ",";
 		res += (numberType != null) ? numberType.replace(",", "ESCAPED_COMMA") : " ";
 		return res;
 
