@@ -3,16 +3,17 @@ package de.uni_hannover.osaft.plugins.general;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
@@ -35,6 +36,9 @@ public class GeneralInformationView implements ViewPlugin {
 	// final private String modelStatsCommand = "shell cat /system/build.prop";
 	final private String getPropCommand = "shell getprop";
 	final private String imeiCommand = "shell dumpsys iphonesubinfo";
+	final private String[] suCheckCommands = new String[] { "su", "exit", "exit" };
+	final private String[] wifisCommands = new String[] { "su", "cat /data/misc/wifi/wpa_supplicant.conf", "exit", "exit" };
+	final private String installedPackagesCommand = "shell pm list packages";
 
 	private JPanel panel;
 	private ADBThread adb;
@@ -47,9 +51,19 @@ public class GeneralInformationView implements ViewPlugin {
 	private JLabel lblActualPhoneType;
 	private JLabel lblActualBatteryLevel;
 	private JLabel lblActualBatteryTemperature;
+	private JLabel lblActualRootStatus;
+	private JLabel lblInstalledApplications;
+	private JScrollPane scrollPane;
+	private JList list;
+	private JScrollPane scrollPane_1;
+	private JTextArea textArea;
+	private JLabel lblSavedWifis;
 
-	@Init
-	public void init() {
+	/**
+	 * Initializes the GUI
+	 */
+	public GeneralInformationView() {
+		adb = ADBThread.getInstance();
 		initGUI();
 	}
 
@@ -61,9 +75,9 @@ public class GeneralInformationView implements ViewPlugin {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		GridBagLayout gbl_panel = new GridBagLayout();
 		gbl_panel.columnWidths = new int[] { 0, 39, 0, 0 };
-		gbl_panel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		gbl_panel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 1.0, Double.MIN_VALUE };
-		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE };
 		panel.setLayout(gbl_panel);
 
 		JLabel lblPhone = new JLabel("Phone Details:");
@@ -73,6 +87,14 @@ public class GeneralInformationView implements ViewPlugin {
 		gbc_lblPhone.gridx = 0;
 		gbc_lblPhone.gridy = 0;
 		panel.add(lblPhone, gbc_lblPhone);
+
+		lblInstalledApplications = new JLabel("Installed Applications:");
+		GridBagConstraints gbc_lblInstalledApplications = new GridBagConstraints();
+		gbc_lblInstalledApplications.anchor = GridBagConstraints.WEST;
+		gbc_lblInstalledApplications.insets = new Insets(0, 0, 5, 0);
+		gbc_lblInstalledApplications.gridx = 2;
+		gbc_lblInstalledApplications.gridy = 0;
+		panel.add(lblInstalledApplications, gbc_lblInstalledApplications);
 
 		JLabel lblManufacturer = new JLabel("Manufacturer:");
 		GridBagConstraints gbc_lblManufacturer = new GridBagConstraints();
@@ -88,6 +110,18 @@ public class GeneralInformationView implements ViewPlugin {
 		gbc_lblActualManufacturer.gridx = 1;
 		gbc_lblActualManufacturer.gridy = 1;
 		panel.add(lblActualManufacturer, gbc_lblActualManufacturer);
+
+		scrollPane = new JScrollPane();
+		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
+		gbc_scrollPane.gridheight = 10;
+		gbc_scrollPane.insets = new Insets(0, 0, 5, 0);
+		gbc_scrollPane.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane.gridx = 2;
+		gbc_scrollPane.gridy = 1;
+		panel.add(scrollPane, gbc_scrollPane);
+
+		list = new JList();
+		scrollPane.setViewportView(list);
 
 		JLabel lblModel = new JLabel("Model:");
 		GridBagConstraints gbc_lblModel = new GridBagConstraints();
@@ -197,17 +231,52 @@ public class GeneralInformationView implements ViewPlugin {
 		JLabel lblBatteryTemperature = new JLabel("Battery Temperature:");
 		GridBagConstraints gbc_lblBatteryTemperature = new GridBagConstraints();
 		gbc_lblBatteryTemperature.anchor = GridBagConstraints.WEST;
-		gbc_lblBatteryTemperature.insets = new Insets(0, 0, 0, 5);
+		gbc_lblBatteryTemperature.insets = new Insets(0, 0, 5, 5);
 		gbc_lblBatteryTemperature.gridx = 0;
 		gbc_lblBatteryTemperature.gridy = 9;
 		panel.add(lblBatteryTemperature, gbc_lblBatteryTemperature);
 
 		lblActualBatteryTemperature = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualBatteryTemperature = new GridBagConstraints();
-		gbc_lblActualBatteryTemperature.insets = new Insets(0, 0, 0, 5);
+		gbc_lblActualBatteryTemperature.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualBatteryTemperature.gridx = 1;
 		gbc_lblActualBatteryTemperature.gridy = 9;
 		panel.add(lblActualBatteryTemperature, gbc_lblActualBatteryTemperature);
+
+		JLabel lblRootStatus = new JLabel("Root Status:");
+		GridBagConstraints gbc_lblRootStatus = new GridBagConstraints();
+		gbc_lblRootStatus.anchor = GridBagConstraints.WEST;
+		gbc_lblRootStatus.insets = new Insets(0, 0, 5, 5);
+		gbc_lblRootStatus.gridx = 0;
+		gbc_lblRootStatus.gridy = 10;
+		panel.add(lblRootStatus, gbc_lblRootStatus);
+
+		lblActualRootStatus = new JLabel("unknown");
+		GridBagConstraints gbc_lblActualRootStatus = new GridBagConstraints();
+		gbc_lblActualRootStatus.insets = new Insets(0, 0, 5, 5);
+		gbc_lblActualRootStatus.gridx = 1;
+		gbc_lblActualRootStatus.gridy = 10;
+		panel.add(lblActualRootStatus, gbc_lblActualRootStatus);
+
+		lblSavedWifis = new JLabel("Saved WiFis (rooted Phones):");
+		GridBagConstraints gbc_lblSavedWifis = new GridBagConstraints();
+		gbc_lblSavedWifis.anchor = GridBagConstraints.WEST;
+		gbc_lblSavedWifis.insets = new Insets(0, 0, 5, 0);
+		gbc_lblSavedWifis.gridx = 2;
+		gbc_lblSavedWifis.gridy = 11;
+		panel.add(lblSavedWifis, gbc_lblSavedWifis);
+
+		scrollPane_1 = new JScrollPane();
+		GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
+		gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane_1.gridx = 2;
+		gbc_scrollPane_1.gridy = 12;
+		panel.add(scrollPane_1, gbc_scrollPane_1);
+
+		textArea = new JTextArea();
+		textArea.setLineWrap(true);
+		textArea.setEditable(false);
+		scrollPane_1.setViewportView(textArea);
 	}
 
 	@Override
@@ -229,19 +298,14 @@ public class GeneralInformationView implements ViewPlugin {
 		adb.executeAndReturn(batteryStatsCommand, this, false);
 		adb.executeAndReturn(getPropCommand, this, false);
 		adb.executeAndReturn(imeiCommand, this, false);
-	}
-
-	@Override
-	public void setADBThread(ADBThread adb) {
-		this.adb = adb;
-	}
-
-	@Override
-	public void setCaseFolder(File caseFolder) {
+		adb.executeAndReturn(installedPackagesCommand, this, false);
+		adb.interactWithShell(suCheckCommands, this, false);
+		adb.interactWithShell(wifisCommands, this, false);
 	}
 
 	/**
-	 * Depending on the executed command this method sets the information about the phone
+	 * Depending on the executed command this method sets the information about
+	 * the phone
 	 */
 	@Override
 	public void reactToADBResult(String result, String[] executedCommand) {
@@ -277,8 +341,26 @@ public class GeneralInformationView implements ViewPlugin {
 					lblActualImei.setText(resultLineByLine[i].substring(resultLineByLine[i].indexOf("=") + 2));
 				}
 			}
+		} else if (executedCommand.equals(suCheckCommands)) {
+			lblActualRootStatus.setText("rooted");
+			for (int i = 0; i < resultLineByLine.length; i++) {
+				if (resultLineByLine[i].toLowerCase().contains("permission") || resultLineByLine[i].toLowerCase().contains("not found")) {
+					lblActualRootStatus.setText("not rooted");
+				}
+			}
+		} else if (executedCommand[0].equals(installedPackagesCommand)) {
+			String[] packages = new String[resultLineByLine.length];
+			for (int i = 0; i < resultLineByLine.length; i++) {
+				packages[i] = resultLineByLine[i].split(":")[1];
+			}
+			list.setListData(packages);
+		} else if (executedCommand.equals(wifisCommands)) {
+			if (!result.toLowerCase().contains("/data/misc/wifi/wpa_supplicant.conf: permission denied")) {
+				for (int i = 8; i < resultLineByLine.length-3; i++) {
+					textArea.setText(textArea.getText() + resultLineByLine[i] + "\n");
+				}
+			}
 		}
-
 	}
 
 	private String extractProp(String longProp) {

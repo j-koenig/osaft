@@ -5,15 +5,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Properties;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import net.xeoh.plugins.base.util.PluginManagerUtil;
 import de.uni_hannover.osaft.adb.ADBThread;
-import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 import de.uni_hannover.osaft.view.OSAFTView;
 
 /**
@@ -21,27 +19,20 @@ import de.uni_hannover.osaft.view.OSAFTView;
  * 
  */
 public class OSAFTController {
-	private File caseFolder;
 	private ADBThread adb;
 	private Properties properties;
 	private JFileChooser fc;
 	private OSAFTView view;
-	private PluginManagerUtil pmu;
 	private String currentDevice;
+	private CasefolderWriter cfw;
 
-	public OSAFTController(OSAFTView view, PluginManagerUtil pmu) {
+	public OSAFTController(OSAFTView view) {
 		this.view = view;
-		this.pmu = pmu;
 		fc = new JFileChooser();
 		adb = ADBThread.getInstance();
+		cfw = CasefolderWriter.getInstance();
+		cfw.setView(view);
 		initProperties();
-
-		// iterate over all ViewPlugins and to reference the ADBThread instance
-		for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
-			// TODO: exception fangen, wenn cast nich funzt
-			ViewPlugin plugin = (ViewPlugin) iterator.next();
-			plugin.setADBThread(adb);
-		}
 		adb.setView(view);
 		// start the ADBThread
 		Thread adbThread = new Thread(adb);
@@ -74,12 +65,7 @@ public class OSAFTController {
 		String possibleCaseFolder = properties.getProperty("casefolder");
 		if (possibleCaseFolder != null) {
 			view.setCurrentCaseText(possibleCaseFolder);
-			caseFolder = new File(possibleCaseFolder);
-			// refresh path to casefolder for each plugin
-			for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
-				ViewPlugin plugin = (ViewPlugin) iterator.next();
-				plugin.setCaseFolder(caseFolder);
-			}
+			cfw.setCaseFolder(new File(possibleCaseFolder));
 		}
 
 	}
@@ -109,24 +95,16 @@ public class OSAFTController {
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fc.showOpenDialog(view);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			caseFolder = fc.getSelectedFile();
+			File caseFolder = fc.getSelectedFile();
 
 			// initialize the chosen case folder (generate subfolders)
-			File f = new File(caseFolder.getAbsolutePath() + File.separator + "contact_photos");
-			f.mkdirs();
-			f = new File(caseFolder.getAbsolutePath() + File.separator + "databases" + File.separator + "twitter");
-			f.mkdirs();
-			f = new File(caseFolder.getAbsolutePath() + File.separator + "gmail");
-			f.mkdirs();
-			f = new File(caseFolder.getAbsolutePath() + File.separator + "mms_parts");
-			f.mkdirs();
-			f = new File(caseFolder.getAbsolutePath() + File.separator + "whatsapp");
-			f.mkdirs();
-			// refresh path to casefolder for each plugin
-			for (Iterator<ViewPlugin> iterator = pmu.getPlugins(ViewPlugin.class).iterator(); iterator.hasNext();) {
-				ViewPlugin plugin = (ViewPlugin) iterator.next();
-				plugin.setCaseFolder(caseFolder);
-			}
+			cfw.setCaseFolder(caseFolder);
+			cfw.mkDir("contact_photos");
+			cfw.mkDir("gmail");
+			cfw.mkDir("databases" + File.separator + "twitter");
+			cfw.mkDir("gmail");
+			cfw.mkDir("mms_parts");
+			cfw.mkDir("whatsapp");
 			view.setCurrentCaseText(caseFolder.toString());
 			properties.setProperty("casefolder", caseFolder.toString());
 			storeProperties();

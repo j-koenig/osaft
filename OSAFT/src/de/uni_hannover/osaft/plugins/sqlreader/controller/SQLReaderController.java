@@ -4,11 +4,7 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -20,15 +16,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.zip.Inflater;
 
-import javax.imageio.ImageIO;
 import javax.swing.JTable;
 
 import org.jsoup.Jsoup;
 
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
-import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 
 /**
  * To {@link SQLReaderView} associated controller. Provides a method to scan a
@@ -84,10 +79,12 @@ public class SQLReaderController {
 	// private File curFolder;
 	private HashMap<Integer, String> contactNames;
 	private ADBThread adb;
+	private CasefolderWriter cfw;
 
-	public SQLReaderController(SQLReaderView view, ADBThread adb) {
+	public SQLReaderController(SQLReaderView view) {
 		this.view = view;
-		this.adb = adb;
+		adb = ADBThread.getInstance();
+		cfw = CasefolderWriter.getInstance();
 		contactNames = new HashMap<Integer, String>();
 		whatsAppTableModels = new HashMap<String, LiveSearchTableModel>();
 		facebookMessageTableModels = new HashMap<String, LiveSearchTableModel>();
@@ -385,15 +382,7 @@ public class SQLReaderController {
 				case MIMETYPE_PHOTO:
 					byte[] photoByteArray = rs.getBytes(8);
 					if (photoByteArray != null) {
-						try {
-							InputStream in = new ByteArrayInputStream(photoByteArray);
-							BufferedImage photo = ImageIO.read(in);
-							ImageIO.write(photo, "png", new File(view.getCaseFolder() + File.separator + "contact_photos" + File.separator
-									+ id + ".png"));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+						cfw.writeRawImage(photoByteArray, String.valueOf(id) ,"contact_photos" + File.separator);
 					}
 					break;
 				default:
@@ -612,6 +601,7 @@ public class SQLReaderController {
 
 			facebookTableModels.get(0).addRow(new Object[] { user_id, fName, lName, cell, other, email, birthday });
 		}
+		//TODO: scheints nich mehr zu geben
 		// facebook notifications:
 		rs = statement.executeQuery("SELECT sender_name, updated, title, object_type, is_unread FROM notifications");
 		while (rs.next()) {
@@ -987,14 +977,15 @@ public class SQLReaderController {
 				WEBVIEW_FILENAME, COOKIES_FILENAME, CALENDAR_FILENAME, CONTACTS_FILENAME, MAPS_DESTINATION_HISTORY_FILENAME,
 				MAPS_SEARCH_HISTORY_FILENAME, FACEBOOK_FILENAME, FACEBOOK_THREADS_FILENAME };
 		for (int i = 0; i < dbFiles.length; i++) {
-			adb.executeAndReturn("pull /sdcard/" + dbFiles[i] + " " + view.getCaseFolder() + File.separator + "databases/", view, false);
+			cfw.pullFileToCaseFolder("/sdcard/" + dbFiles[i], "databases" + File.separator, view);
 		}
 		// pull twitter dbs
-		adb.executeAndReturn("pull /sdcard/twitterDBs/ " + view.getCaseFolder() + File.separator + "databases/twitter/", view, true);
-
-		// pull gmail files seperate concerning special filename:
-		adb.executeAndReturn("pull /sdcard/mailstore.db " + view.getCaseFolder() + File.separator + "databases/", view, false);
-		adb.executeAndReturn("pull /sdcard/gmailCache/ " + view.getCaseFolder() + File.separator + "gmail/", view, false);
+		cfw.pullFileToCaseFolder("/sdcard/twitterDBs/", "databases" + File.separator + "twitter" + File.separator, view);
+		
+		
+		// pull gmail files seperate concerning special filename:		
+		cfw.pullFileToCaseFolder("/sdcard/mailstore.db", "databases" + File.separator, view);
+		cfw.pullFileToCaseFolder("/sdcard/gmailCache/", "gmail" + File.separator, view);
 	}
 
 	/**
@@ -1073,10 +1064,6 @@ public class SQLReaderController {
 
 	public void setFacebookTableModel(int index) {
 		view.getFacebookTable().setModel(facebookTableModels.get(index));
-	}
-
-	public void setADBThread(ADBThread adb) {
-		this.adb = adb;
 	}
 
 }

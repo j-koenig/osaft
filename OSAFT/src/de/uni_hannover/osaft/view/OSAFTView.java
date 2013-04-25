@@ -68,7 +68,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		pluginButtonList = new ArrayList<JButton>();
 
 		actualCurrentCaseLabel = new JLabel("No folder chosen");
-		controller = new OSAFTController(this, pmu);
+		controller = new OSAFTController(this);
 		initGUI();
 
 		controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
@@ -186,10 +186,17 @@ public class OSAFTView extends JFrame implements ActionListener {
 			}
 		});
 
+		int generalInformationButtonPosition = 0;
+		
 		// iterate over different viewplugins and add a JButton and the
 		// corresponding view to the cardlayouted viewPanel
 		for (Iterator<ViewPlugin> iterator = plugins.iterator(); iterator.hasNext();) {
 			ViewPlugin vp = (ViewPlugin) iterator.next();
+			//checks on which poisition general information button is
+			//TODO: hardcoded string compare is ugly; maybe IDs as identification for plugins?
+			if(vp.getName().equals("General Information")) {
+				generalInformationButtonPosition = pluginButtonList.size();
+			}
 			viewPluginList.add(vp);
 			JButton b = new JButton(vp.getName());
 			pluginButtonList.add(b);
@@ -197,10 +204,11 @@ public class OSAFTView extends JFrame implements ActionListener {
 			b.setMaximumSize(new Dimension(Integer.MAX_VALUE, (int) b.getMaximumSize().getHeight()));
 			buttonPanel.add(b);
 			// adds all plugins to the cardlayout of viewPanel
-			// TODO: falls plugin nicht richtig funktioniert: nicht hinzufügen!
 			viewPanel.add(vp.getView(), String.valueOf(viewPluginList.indexOf(vp)));
-
 		}
+		//shows general information tab on startup
+//		viewPanelLayout.show(viewPanel, String.valueOf(generalInformationButtonPosition));
+		pluginButtonList.get(generalInformationButtonPosition).doClick();
 	}
 
 	@Override

@@ -34,9 +34,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableModel;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.controller.ConnectorAppDataController;
@@ -78,21 +78,21 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JPopupMenu contextMenu;
 	private JMenuItem copyCell, copyRow;
 	private JTextField contactSearch, calendarSearch, browserHSearch, browserSSearch, smsSearch, mmsSearch, callsSearch;
-	private ADBThread adb;
 
+	private ADBThread adb;
+	
 	// used for contextmenu
 	private int currentX, currentY;
 	private JTable currentTable;
 
 	/**
-	 * called, when plugin is initialized. Initializes the GUI, the controller
-	 * and the {@link JFileChooser} to select the csv files
+	 * Initializes the GUI, the controller and the {@link JFileChooser} to
+	 * select the csv files
 	 * 
 	 * @wbp.parser.entryPoint
 	 */
-	@Init
-	public void init() {
-
+	public ConnectorAppDataView() {
+		adb = ADBThread.getInstance();
 		tabVector = new Vector<JPanel>();
 		initGUI();
 		fc = new JFileChooser();
@@ -100,7 +100,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		fc.setAcceptAllFileFilterUsed(false);
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-		controller = new ConnectorAppDataController(this, adb);
+		controller = new ConnectorAppDataController(this);
 	}
 
 	public void initGUI() {
@@ -520,16 +520,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		// if (e.getSource().equals(contactSearch)) {
 		// contactSearch.setText("Search");
 		// }
-	}
-
-	@Override
-	public void setADBThread(ADBThread adb) {
-		this.adb = adb;
-	}
-
-	@Override
-	public void setCaseFolder(File caseFolder) {
-		// plugin doesn't need to save something
 	}
 
 	@Override

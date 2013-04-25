@@ -13,7 +13,6 @@ import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
-import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 
@@ -36,11 +35,9 @@ public class ConnectorAppDataController {
 	private ConnectorAppDataView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserSearchTableModel,
 			contactsTableModel, mmsTableModel, smsTableModel;
-	private ADBThread adb;
 
-	public ConnectorAppDataController(ConnectorAppDataView view, ADBThread adb) {
+	public ConnectorAppDataController(ConnectorAppDataView view) {
 		this.view = view;
-		this.adb = adb;
 		calendarTableModel = new LiveSearchTableModel(new Object[] { "Calendar", "Title", "Description", "Start", "End", "Location",
 				"Allday" });
 		callsTableModel = new LiveSearchTableModel(new Object[] { "Name", "Number", "Date", "Duration (in s)", "New Call", "Type",

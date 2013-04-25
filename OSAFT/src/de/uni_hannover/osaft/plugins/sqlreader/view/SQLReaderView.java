@@ -38,7 +38,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import net.xeoh.plugins.base.annotations.events.Init;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
@@ -47,6 +46,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuste
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ContactInfoPanel;
 import de.uni_hannover.osaft.plugins.sqlreader.controller.SQLReaderController;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 
 /**
  * This class implements the {@link ViewPlugin} and forms in cooperation with
@@ -79,8 +79,8 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private Vector<JPanel> tabVector;
 
 	private SQLReaderController controller;
-	private File caseFolder;
 	private ADBThread adb;
+	private CasefolderWriter cfw;
 	private JComboBox whatsAppCombo, mapsCombo, browserCombo, facebookMessageCombo, facebookCombo, twitterAccountCombo, twitterThreadCombo;
 
 	// used for contextmenu
@@ -94,14 +94,14 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private DBFacebookMessageInfoPanel facebookMessageInfo;
 
 	/**
-	 * called, when plugin is initialized. Initializes the GUI, the controller
-	 * and the {@link JFileChooser} to select the db files
+	 * Initializes the GUI, the controller and the {@link JFileChooser} to
+	 * select the db files
 	 */
-	@Override
-	@Init
-	public void init() {
-
-		controller = new SQLReaderController(this, adb);
+	public SQLReaderView() {
+		cfw = CasefolderWriter.getInstance();
+		adb = ADBThread.getInstance();
+		
+		controller = new SQLReaderController(this);
 		tabVector = new Vector<JPanel>();
 		initGUI();
 
@@ -109,7 +109,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 		fc.setAcceptAllFileFilterUsed(false);
 		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
 	}
 
 	/**
@@ -475,24 +474,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	@Override
-	public void setADBThread(ADBThread adb) {
-		this.adb = adb;
-		controller.setADBThread(adb);
-	}
-
-	@Override
-	public void setCaseFolder(File caseFolder) {
-		this.caseFolder = caseFolder;
-	}
-
-	@Override
 	public void reactToADBResult(String result, String[] executedCommand) {
 		if (executedCommand[0].equals("su")) {
 			controller.pullDBFilesToCaseFolder();
 			// FIXME: not the best solution (last file pull in
 			// controller.pullDBFilesToCaseFolder()):
 		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
-			controller.iterateChosenFolder(new File(caseFolder + File.separator + "databases/"));
+			controller.iterateChosenFolder(new File(cfw.getCaseFolder() + File.separator + "databases/"));
 		}
 	}
 
@@ -541,7 +529,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	}
 
 	/**
-	 *  Updates info-panels if selected row changed
+	 * Updates info-panels if selected row changed
 	 */
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
@@ -557,7 +545,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String text = mmsTable.getValueAt(selectedRow, 3).toString();
 				String filename = mmsTable.getValueAt(selectedRow, 4).toString();
 				String mimetype = mmsTable.getValueAt(selectedRow, 5).toString();
-				mmsInfo.setInfo(text, mimetype, caseFolder, filename);
+				mmsInfo.setInfo(text, mimetype, cfw.getCaseFolder(), filename);
 			}
 		} else if (e.getSource().equals(contactTable.getSelectionModel())) {
 			selectedRow = contactTable.getSelectedRow();
@@ -572,7 +560,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String im = contactTable.getValueAt(selectedRow, 9).toString();
 				String skype = contactTable.getValueAt(selectedRow, 10).toString();
 				String notes = contactTable.getValueAt(selectedRow, 11).toString();
-				File f = new File(caseFolder + File.separator + "contact_photos" + File.separator + id + ".png");
+				File f = new File(cfw.getCaseFolder() + File.separator + "contact_photos" + File.separator + id + ".png");
 				if (f.isFile()) {
 					contactInfo.setInfo(name, numbers, organisation, emails, addresses, websites, im, skype, notes, f);
 				} else {
@@ -585,13 +573,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				String text = (whatsappTable.getValueAt(selectedRow, 0).equals("")) ? whatsappTable.getValueAt(selectedRow, 1).toString()
 						: whatsappTable.getValueAt(selectedRow, 0).toString();
 				String filename = whatsappTable.getValueAt(selectedRow, 6).toString();
-				whatsappInfo.setInfo(text, caseFolder, filename);
+				whatsappInfo.setInfo(text, cfw.getCaseFolder(), filename);
 			}
 		} else if (e.getSource().equals(facebookMessageTable.getSelectionModel())) {
 			selectedRow = facebookMessageTable.getSelectedRow();
 			if (selectedRow != -1) {
 				String text = facebookMessageTable.getValueAt(selectedRow, 1).toString();
-				facebookMessageInfo.setInfo(text, caseFolder, "");
+				facebookMessageInfo.setInfo(text, cfw.getCaseFolder(), "");
 			}
 
 		} else if (e.getSource().equals(gmailTable.getSelectionModel())) {
@@ -601,13 +589,14 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 				if (gmailTable.getValueAt(selectedRow, 10) != null) {
 					@SuppressWarnings("unchecked")
 					ArrayList<String> filenames = (ArrayList<String>) gmailTable.getValueAt(selectedRow, 10);
-					gmailInfo.setInfo(text, caseFolder, filenames);
+					gmailInfo.setInfo(text, cfw.getCaseFolder(), filenames);
 				} else {
-					gmailInfo.setInfo(text, caseFolder, null);
+					gmailInfo.setInfo(text, cfw.getCaseFolder(), null);
 				}
 			}
 		}
 	}
+
 	/**
 	 * Calls openContextMenu() if right click
 	 */
@@ -617,6 +606,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			openContextMenu(e, (JTable) e.getSource());
 		}
 	}
+
 	/**
 	 * Shows the context menu at the clicked position
 	 */
@@ -663,6 +653,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void keyPressed(KeyEvent arg0) {
 		// not used
 	}
+
 	/**
 	 * Initiates the search and filter algorithm for each typed character in the
 	 * searchboxes
@@ -752,14 +743,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	public JTable getWhatsappTable() {
 		return whatsappTable;
-	}
-
-	public File getCaseFolder() {
-		return caseFolder;
-	}
-
-	public ADBThread getAdb() {
-		return adb;
 	}
 
 	public JComboBox getWhatsappCombo() {

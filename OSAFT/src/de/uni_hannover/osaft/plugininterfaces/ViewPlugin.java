@@ -28,24 +28,9 @@ public interface ViewPlugin extends Plugin {
 	public JComponent getView();
 
 	/**
-	 * called, everytime the button for this plugin was clicked
+	 * called, everytime the button for this plugin is clicked
 	 */
 	public void triggered();
-
-	/**
-	 * called, when plugin is initialized at application start
-	 */
-	public void init();
-
-	/**
-	 * enables acces to the {@link ADBThread}
-	 */
-	public void setADBThread(ADBThread adb);
-
-	/**
-	 * sets current case folder. Needed if plugin wants to store something
-	 */
-	public void setCaseFolder(File caseFolder);
 
 	/**
 	 * when {@link ADBThread} is ready, this method is called to update the GUI
