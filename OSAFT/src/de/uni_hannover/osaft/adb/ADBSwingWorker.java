@@ -58,6 +58,7 @@ public class ADBSwingWorker extends SwingWorker<String, Object> {
 					@Override
 					public void run() {
 						view.getProgressDialog().setVisible(true);
+						view.getProgressDialog().setTitle("Executing ADB command " + "\"" + commands[0] + "\"");
 					}
 				});
 			}

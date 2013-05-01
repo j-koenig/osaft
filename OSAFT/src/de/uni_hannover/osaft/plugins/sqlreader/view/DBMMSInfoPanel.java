@@ -20,6 +20,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
  * 
  */
 public class DBMMSInfoPanel extends MMSInfoPanel {
+	//TODO: gucken dass das mit dem ordner öffnen geht
 
 	private static final long serialVersionUID = 1L;
 	/**
@@ -29,6 +30,7 @@ public class DBMMSInfoPanel extends MMSInfoPanel {
 	public void setInfo(String text, String mimetype, File directory, String filename) {
 		txtrText.setText("Text: \n" + text);
 		lblActualFilename.setText(filename);
+		currentFile = new File(directory + File.separator + "mms_parts" + File.separator + filename);
 		btnOpenFile.setEnabled(true);
 		btnOpenFolder.setEnabled(true);
 
@@ -41,7 +43,6 @@ public class DBMMSInfoPanel extends MMSInfoPanel {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				System.out.println("CANT FIND FILE!");
 			}
 		} else {
 			lblPreview.setIcon(null);

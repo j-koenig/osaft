@@ -32,8 +32,6 @@ import net.xeoh.plugins.base.util.PluginManagerUtil;
 import de.uni_hannover.osaft.controller.OSAFTController;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 
-//TODO: config file für pfad zu adb; adb auf pc, mac linux ausführbar machen
-//TODO: einstellungsmenü für pfad zu adb ändern
 /**
  * Main view element. Partially edited with Googles WindowBuilder
  * 
@@ -51,14 +49,14 @@ public class OSAFTView extends JFrame implements ActionListener {
 	private PluginManagerUtil pmu;
 	private CardLayout viewPanelLayout;
 	private JMenuBar menuBar;
-	private JMenu mnFile;
-	private JMenu mnEdit;
-	private JMenuItem mntmExit;
+	private JMenu mnFile, mnEdit;
+	private JMenuItem mntmExit, mntmChangeADB;
 	final private JDialog progressDialog;
 	private JLabel actualCurrentCaseLabel;
 	private JButton refreshDevicesButton;
 	private JComboBox devicesCombo;
 	private JButton btnChange;
+	private int generalInformationButtonPosition;
 
 	public OSAFTView(String title, PluginManagerUtil pmu) {
 		super(title);
@@ -69,6 +67,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 
 		actualCurrentCaseLabel = new JLabel("No folder chosen");
 		controller = new OSAFTController(this);
+		generalInformationButtonPosition = 0;
 		initGUI();
 
 		controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
@@ -80,7 +79,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 		dpb.setIndeterminate(true);
 		progressDialog.getContentPane().add(BorderLayout.CENTER, dpb);
 		progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		progressDialog.setSize(300, 10);
+		progressDialog.setSize(500, 10);
 		progressDialog.setLocationRelativeTo(null);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -179,6 +178,10 @@ public class OSAFTView extends JFrame implements ActionListener {
 		mnEdit = new JMenu("Edit");
 		menuBar.add(mnEdit);
 
+		mntmChangeADB = new JMenuItem("Change path to adb binary");
+		mntmChangeADB.addActionListener(this);
+		mnEdit.add(mntmChangeADB);
+
 		ArrayList<ViewPlugin> plugins = new ArrayList<ViewPlugin>(pmu.getPlugins(ViewPlugin.class));
 		Collections.sort(plugins, new Comparator<ViewPlugin>() {
 			public int compare(ViewPlugin p1, ViewPlugin p2) {
@@ -186,15 +189,14 @@ public class OSAFTView extends JFrame implements ActionListener {
 			}
 		});
 
-		int generalInformationButtonPosition = 0;
-		
 		// iterate over different viewplugins and add a JButton and the
 		// corresponding view to the cardlayouted viewPanel
 		for (Iterator<ViewPlugin> iterator = plugins.iterator(); iterator.hasNext();) {
 			ViewPlugin vp = (ViewPlugin) iterator.next();
-			//checks on which poisition general information button is
-			//TODO: hardcoded string compare is ugly; maybe IDs as identification for plugins?
-			if(vp.getName().equals("General Information")) {
+			// checks on which poisition general information button is
+			// TODO: hardcoded string comparison is ugly; maybe IDs as
+			// identification for plugins?
+			if (vp.getName().equals("General Information")) {
 				generalInformationButtonPosition = pluginButtonList.size();
 			}
 			viewPluginList.add(vp);
@@ -206,8 +208,7 @@ public class OSAFTView extends JFrame implements ActionListener {
 			// adds all plugins to the cardlayout of viewPanel
 			viewPanel.add(vp.getView(), String.valueOf(viewPluginList.indexOf(vp)));
 		}
-		//shows general information tab on startup
-//		viewPanelLayout.show(viewPanel, String.valueOf(generalInformationButtonPosition));
+		// shows general information tab on startup
 		pluginButtonList.get(generalInformationButtonPosition).doClick();
 	}
 
@@ -220,9 +221,14 @@ public class OSAFTView extends JFrame implements ActionListener {
 		} else if (e.getSource().equals(devicesCombo)) {
 			if (devicesCombo.getItemCount() != 0) {
 				controller.setCurrentDevice(devicesCombo.getSelectedItem().toString());
+				if (generalInformationButtonPosition > 0) {
+					pluginButtonList.get(generalInformationButtonPosition).doClick();
+				}
 			}
 		} else if (e.getSource().equals(btnChange)) {
 			controller.changeCaseFolder();
+		} else if (e.getSource().equals(mntmChangeADB)) {
+			controller.changeADBPath();
 		} else {
 			JButton b = (JButton) e.getSource();
 			int index = pluginButtonList.indexOf(b);

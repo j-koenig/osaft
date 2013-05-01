@@ -64,7 +64,6 @@ public class OSAFTController {
 
 		String possibleCaseFolder = properties.getProperty("casefolder");
 		if (possibleCaseFolder != null) {
-			view.setCurrentCaseText(possibleCaseFolder);
 			cfw.setCaseFolder(new File(possibleCaseFolder));
 		}
 
@@ -78,6 +77,10 @@ public class OSAFTController {
 		int returnVal = fc.showOpenDialog(view);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			File file = fc.getSelectedFile();
+			if (!file.getName().equals("adb") && !file.getName().equals("adb.exe")) {
+				JOptionPane.showMessageDialog(view, "Please choose a valid executable", "Warning", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 			properties.setProperty("adb", file.toString());
 			storeProperties();
 			adb.setADBExecutable(properties.getProperty("adb"));
@@ -98,14 +101,7 @@ public class OSAFTController {
 			File caseFolder = fc.getSelectedFile();
 
 			// initialize the chosen case folder (generate subfolders)
-			cfw.setCaseFolder(caseFolder);
-			cfw.mkDir("contact_photos");
-			cfw.mkDir("gmail");
-			cfw.mkDir("databases" + File.separator + "twitter");
-			cfw.mkDir("gmail");
-			cfw.mkDir("mms_parts");
-			cfw.mkDir("whatsapp");
-			view.setCurrentCaseText(caseFolder.toString());
+			cfw.setCaseFolderAndCreateSubfolders(caseFolder);
 			properties.setProperty("casefolder", caseFolder.toString());
 			storeProperties();
 		}

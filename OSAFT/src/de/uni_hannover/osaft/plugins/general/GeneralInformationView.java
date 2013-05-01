@@ -19,8 +19,6 @@ import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
 //TODO: muss noch shcön klickibunti sein
-//TODO: liste mit allen apps? "pm list packages"
-//TODO: alle jemals verbundenen wifis? is das hier an der richtigen stelle?
 
 /**
  * This class implements the {@link ViewPlugin} and presents information about
@@ -106,6 +104,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualManufacturer = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualManufacturer = new GridBagConstraints();
+		gbc_lblActualManufacturer.anchor = GridBagConstraints.WEST;
 		gbc_lblActualManufacturer.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualManufacturer.gridx = 1;
 		gbc_lblActualManufacturer.gridy = 1;
@@ -133,6 +132,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualModel = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualModel = new GridBagConstraints();
+		gbc_lblActualModel.anchor = GridBagConstraints.WEST;
 		gbc_lblActualModel.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualModel.gridx = 1;
 		gbc_lblActualModel.gridy = 2;
@@ -148,6 +148,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualID = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualID = new GridBagConstraints();
+		gbc_lblActualID.anchor = GridBagConstraints.WEST;
 		gbc_lblActualID.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualID.gridx = 1;
 		gbc_lblActualID.gridy = 3;
@@ -163,6 +164,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualAndroidVersion = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualAndroidVersion = new GridBagConstraints();
+		gbc_lblActualAndroidVersion.anchor = GridBagConstraints.WEST;
 		gbc_lblActualAndroidVersion.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualAndroidVersion.gridx = 1;
 		gbc_lblActualAndroidVersion.gridy = 4;
@@ -178,6 +180,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualSerialNo = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualSerialNo = new GridBagConstraints();
+		gbc_lblActualSerialNo.anchor = GridBagConstraints.WEST;
 		gbc_lblActualSerialNo.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualSerialNo.gridx = 1;
 		gbc_lblActualSerialNo.gridy = 5;
@@ -193,6 +196,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualImei = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualImei = new GridBagConstraints();
+		gbc_lblActualImei.anchor = GridBagConstraints.WEST;
 		gbc_lblActualImei.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualImei.gridx = 1;
 		gbc_lblActualImei.gridy = 6;
@@ -208,6 +212,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualPhoneType = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualPhoneType = new GridBagConstraints();
+		gbc_lblActualPhoneType.anchor = GridBagConstraints.WEST;
 		gbc_lblActualPhoneType.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualPhoneType.gridx = 1;
 		gbc_lblActualPhoneType.gridy = 7;
@@ -223,6 +228,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualBatteryLevel = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualBatteryLevel = new GridBagConstraints();
+		gbc_lblActualBatteryLevel.anchor = GridBagConstraints.WEST;
 		gbc_lblActualBatteryLevel.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualBatteryLevel.gridx = 1;
 		gbc_lblActualBatteryLevel.gridy = 8;
@@ -238,6 +244,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualBatteryTemperature = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualBatteryTemperature = new GridBagConstraints();
+		gbc_lblActualBatteryTemperature.anchor = GridBagConstraints.WEST;
 		gbc_lblActualBatteryTemperature.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualBatteryTemperature.gridx = 1;
 		gbc_lblActualBatteryTemperature.gridy = 9;
@@ -253,6 +260,7 @@ public class GeneralInformationView implements ViewPlugin {
 
 		lblActualRootStatus = new JLabel("unknown");
 		GridBagConstraints gbc_lblActualRootStatus = new GridBagConstraints();
+		gbc_lblActualRootStatus.anchor = GridBagConstraints.WEST;
 		gbc_lblActualRootStatus.insets = new Insets(0, 0, 5, 5);
 		gbc_lblActualRootStatus.gridx = 1;
 		gbc_lblActualRootStatus.gridy = 10;
@@ -295,6 +303,7 @@ public class GeneralInformationView implements ViewPlugin {
 	 */
 	@Override
 	public void triggered() {
+		textArea.setText("");
 		adb.executeAndReturn(batteryStatsCommand, this, false);
 		adb.executeAndReturn(getPropCommand, this, false);
 		adb.executeAndReturn(imeiCommand, this, false);
@@ -350,8 +359,10 @@ public class GeneralInformationView implements ViewPlugin {
 			}
 		} else if (executedCommand[0].equals(installedPackagesCommand)) {
 			String[] packages = new String[resultLineByLine.length];
+			if (resultLineByLine.length > 1) {
 			for (int i = 0; i < resultLineByLine.length; i++) {
 				packages[i] = resultLineByLine[i].split(":")[1];
+			}
 			}
 			list.setListData(packages);
 		} else if (executedCommand.equals(wifisCommands)) {

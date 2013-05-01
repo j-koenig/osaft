@@ -1,7 +1,5 @@
 package de.uni_hannover.osaft.plugininterfaces;
 
-import java.io.File;
-
 import javax.swing.JComponent;
 
 import net.xeoh.plugins.base.Plugin;

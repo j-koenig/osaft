@@ -150,7 +150,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 		// TODO: funzt unter windows, aber nicht ubuntu. ka...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
-			System.out.println(currentFile.getParent());
+			//System.out.println(currentFile.getParent());
 			try {
 				dt.open(new File(currentFile.getParent()));
 			} catch (IOException e1) {

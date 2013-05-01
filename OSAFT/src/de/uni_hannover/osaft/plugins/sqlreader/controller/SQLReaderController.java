@@ -24,6 +24,7 @@ import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
 import de.uni_hannover.osaft.util.CasefolderWriter;
+import de.uni_hannover.osaft.util.GeoLocation;
 
 /**
  * To {@link SQLReaderView} associated controller. Provides a method to scan a
@@ -36,9 +37,6 @@ import de.uni_hannover.osaft.util.CasefolderWriter;
  * 
  */
 public class SQLReaderController {
-
-	// TODO: ich raffe nicht, warum das date render ding nicht funzt in den
-	// tabellen
 
 	// filenames of different databases which can be found on an android
 	// smartphone
@@ -145,9 +143,13 @@ public class SQLReaderController {
 	 * @return true if at least one db file was found
 	 */
 	public boolean iterateChosenFolder(File folder) {
-		// curFolder = folder;
 		boolean processedSomething = false;
-		File[] files = folder.listFiles();
+		File databaseFolder = new File(folder.getAbsolutePath() + File.separator + "databases" + File.separator);
+		if (!databaseFolder.exists()) {
+			return false;
+		}
+		cfw.setCaseFolder(folder);
+		File[] files = databaseFolder.listFiles();
 		for (int i = 0; i < files.length; i++) {
 			File curFile = files[i];
 			String fName = curFile.getName();
@@ -164,13 +166,14 @@ public class SQLReaderController {
 		}
 
 		// special treatment for twitter dbs:
-		File twitterFolder = new File(folder.getAbsolutePath() + File.separator + "twitter");
+		File twitterFolder = new File(databaseFolder.getAbsolutePath() + File.separator + "twitter");
 		if (twitterFolder.exists()) {
 			File[] twitterFiles = twitterFolder.listFiles();
 			for (int i = 0; i < twitterFiles.length; i++) {
 				File curFile = twitterFiles[i];
-				processTwitter(curFile);
-
+				if (curFile.getName().matches("[0-9]{3,}\\.db")) {
+					processTwitter(curFile);
+				}
 			}
 		}
 		view.showTabs();
@@ -382,7 +385,7 @@ public class SQLReaderController {
 				case MIMETYPE_PHOTO:
 					byte[] photoByteArray = rs.getBytes(8);
 					if (photoByteArray != null) {
-						cfw.writeRawImage(photoByteArray, String.valueOf(id) ,"contact_photos" + File.separator);
+						cfw.writeRawImage(photoByteArray, String.valueOf(id), "contact_photos" + File.separator);
 					}
 					break;
 				default:
@@ -585,7 +588,6 @@ public class SQLReaderController {
 		}
 	}
 
-	// TODO: bilder
 	private void processFacebook(Statement statement) throws SQLException {
 		// facebook friends:
 		ResultSet rs = statement
@@ -601,24 +603,27 @@ public class SQLReaderController {
 
 			facebookTableModels.get(0).addRow(new Object[] { user_id, fName, lName, cell, other, email, birthday });
 		}
-		//TODO: scheints nich mehr zu geben
-		// facebook notifications:
-		rs = statement.executeQuery("SELECT sender_name, updated, title, object_type, is_unread FROM notifications");
-		while (rs.next()) {
-			String sender = rs.getString(1);
-			Date updated = new Date(rs.getLong(2) * 1000);
-			String title = rs.getString(3);
-			String type = rs.getString(4);
-			boolean unread = rs.getInt(5) == 1;
-
-			facebookTableModels.get(1).addRow(new Object[] { sender, updated, title, type, unread });
-		}
+				
+		// FIXME: notifications not available in fb.db anymore
+		// rs =
+		// statement.executeQuery("SELECT sender_name, updated, title, object_type, is_unread FROM notifications");
+		// while (rs.next()) {
+		// String sender = rs.getString(1);
+		// Date updated = new Date(rs.getLong(2) * 1000);
+		// String title = rs.getString(3);
+		// String type = rs.getString(4);
+		// boolean unread = rs.getInt(5) == 1;
+		//
+		// facebookTableModels.get(1).addRow(new Object[] { sender, updated,
+		// title, type, unread });
+		// }
 
 		view.getFacebookTable().setModel(facebookTableModels.get(0));
 		view.addTab(FACEBOOK_FILENAME);
 	}
 
-	// TODO: rausfinden wo bilder gespeichert werden
+	// attachment files seem to be loaded from the internet on demand and not
+	// saved locally
 	private void processFacebookMessages(Statement statement) throws SQLException {
 
 		ArrayList<String> threadIds = new ArrayList<String>();
@@ -629,13 +634,13 @@ public class SQLReaderController {
 			threadIds.add(rs.getString(1));
 			view.getFacebookMessageCombo().addItem(rs.getString(1));
 			facebookMessageTableModels.put(rs.getString(1), new LiveSearchTableModel(new Object[] { "Sender", "Text", "Timestamp",
-					"Latitude", "Longitude", "Source", "Attachment?" }));
+					"Latitude", "Longitude", "Source", "Attachment?", "Filename" }));
 		}
 		// iterate over thread ids and query database for each thread id
 		for (int i = 0; i < threadIds.size(); i++) {
 			LiveSearchTableModel currentModel = facebookMessageTableModels.get(threadIds.get(i));
 			rs = statement
-					.executeQuery("SELECT text, sender, timestamp_ms, attachments, coordinates, source FROM messages WHERE msg_type = 0 AND thread_id = '"
+					.executeQuery("SELECT text, sender, timestamp_ms, attachments, coordinates, source, pending_send_media_attachment FROM messages WHERE msg_type = 0 AND thread_id = '"
 							+ threadIds.get(i) + "' ORDER BY timestamp_ms ASC");
 			while (rs.next()) {
 				String text = rs.getString(1);
@@ -643,17 +648,21 @@ public class SQLReaderController {
 				sender = sender.substring(sender.indexOf("\"name") + 8, sender.lastIndexOf("\""));
 				Date time = new Date(rs.getLong(3));
 				boolean attachments = !rs.getString(4).equals("[]");
-				String lat = rs.getString(5);
-				if (lat != null) {
-					lat = lat.substring(lat.indexOf("latitude") + 10, lat.indexOf(",\"longitude"));
-				}
 				String lng = rs.getString(5);
+				String lat = lng;
 				if (lng != null) {
+					lat = lat.substring(lat.indexOf("latitude") + 10, lat.indexOf(",\"longitude"));
 					lng = lng.substring(lng.indexOf("longitude") + 11, lng.indexOf(",\"accuracy"));
+					cfw.addLocation(new GeoLocation(Double.parseDouble(lat), Double.parseDouble(lng), "Facebook; Sender: " + sender, time));
 				}
 				String src = rs.getString(6);
+				String sentMedia = rs.getString(7);
+				if (sentMedia != null) {
+					sentMedia = sentMedia
+							.substring(sentMedia.indexOf("com.facebook.katana/files/") + 26, sentMedia.indexOf("mimeType") - 3);
+				}
 
-				currentModel.addRow(new Object[] { sender, text, time, lat, lng, src, attachments });
+				currentModel.addRow(new Object[] { sender, text, time, lat, lng, src, attachments, sentMedia });
 			}
 		}
 		view.getFacebookMessageTable().setModel(facebookMessageTableModels.get(threadIds.get(0)));
@@ -683,6 +692,8 @@ public class SQLReaderController {
 				String latitude = rs.getString(8);
 				String longitude = rs.getString(9);
 				String mimetype = rs.getString(6);
+				Double lat = Double.parseDouble(latitude);
+				Double lon = Double.parseDouble(longitude);
 				// smartphone owner is reveiver:
 				if (rs.getInt(3) == 0) {
 					if (mimetype != null) {
@@ -692,6 +703,9 @@ public class SQLReaderController {
 					} else {
 						// received a message
 						currentModel.addRow(new Object[] { "", data, null, date, latitude, longitude, "" });
+					}
+					if (lat != 0 && lon != 0) {
+						cfw.addLocation(new GeoLocation(lat, lon, "Whatsapp; Sender: " + ids.get(i), date));
 					}
 					// smartphone owner is sender
 				} else if (rs.getInt(3) == 1) {
@@ -703,6 +717,9 @@ public class SQLReaderController {
 					} else {
 						// sent message
 						currentModel.addRow(new Object[] { data, "", date, receiptDeviceTimestamp, latitude, longitude, "" });
+					}
+					if (lat != 0 && lon != 0) {
+						cfw.addLocation(new GeoLocation(lat, lon, "Whatsapp; Sent by owner", date));
 					}
 				}
 			}
@@ -771,6 +788,8 @@ public class SQLReaderController {
 
 			browserTableModels.get(1).addRow(
 					new Object[] { latitude, longitude, altitude, accuracy, altitudeAccuracy, heading, speed, timestamp });
+			cfw.addLocation(new GeoLocation(Double.parseDouble(latitude), Double.parseDouble(longitude), "Browser Cached Geoposition",
+					timestamp));
 		}
 		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(BROWSER_CACHED_GEOPOSITION);
@@ -785,6 +804,11 @@ public class SQLReaderController {
 			String longitude = (rs.getString(4).equals("200000000")) ? "" : formatLatLon(rs.getString(4));
 			Date timestamp = new Date(rs.getLong(5));
 			mapsTableModels.get(0).addRow(new Object[] { search, suggestion, latitude, longitude, timestamp });
+
+			if (!latitude.equals("") && !longitude.equals("")) {
+				cfw.addLocation(new GeoLocation(Double.parseDouble(latitude), Double.parseDouble(longitude), "Maps Search History",
+						timestamp));
+			}
 		}
 		view.getMapsTable().setModel(mapsTableModels.get(0));
 		view.addTab(MAPS_SEARCH_HISTORY_FILENAME);
@@ -802,6 +826,10 @@ public class SQLReaderController {
 			String source_lat = formatLatLon(rs.getString(6));
 			String source_lng = formatLatLon(rs.getString(7));
 			mapsTableModels.get(1).addRow(new Object[] { time, dest_lat, dest_lng, dest_title, dest_addr, source_lat, source_lng });
+			cfw.addLocation(new GeoLocation(Double.parseDouble(dest_lat), Double.parseDouble(dest_lng),
+					"Maps Destination History: Destination", time));
+			cfw.addLocation(new GeoLocation(Double.parseDouble(source_lat), Double.parseDouble(source_lng),
+					"Maps Destination History: Source", time));
 		}
 		view.getMapsTable().setModel(mapsTableModels.get(0));
 		view.addTab(MAPS_DESTINATION_HISTORY_FILENAME);
@@ -835,7 +863,7 @@ public class SQLReaderController {
 			try {
 				Inflater decompresser = new Inflater();
 				decompresser.setInput(body);
-				// TODO: buffersize seems to be big enough
+				// FIXME: buffersize seems to be big enough
 				byte[] buffer = new byte[body.length * 4];
 				int resultlength = decompresser.inflate(buffer);
 				decompresser.end();
@@ -869,7 +897,7 @@ public class SQLReaderController {
 		view.addTab(GMAIL_FILENAME);
 	}
 
-	// TODO: was is mit dem datum los???
+	// FIXME: timestamp in strange format
 	private void processCookies(Statement statement) throws SQLException {
 		ResultSet rs = statement
 				.executeQuery("SELECT host_key, name, value, path, expires_utc, secure, httponly, last_access_utc FROM cookies");
@@ -929,15 +957,12 @@ public class SQLReaderController {
 		view.addTab(TWITTER_FILENAME);
 	}
 
-	// TODO: hier vllt noch fehlermeldung, falls kein root
-	// TODO: [com.android.providers.telephony/app_parts] (mms attachments caten
-	// und pullen)
 	/**
 	 * This method starts a shell on the current device and tries to copy all
 	 * different database files to the sd card of the phone. Root is needed!
 	 */
 	public void getDBFilesFromPhone() {
-		String[] commands = new String[21];
+		String[] commands = new String[25];
 		commands[0] = "su";
 		// Database files:
 		commands[1] = "cat /data/data/com.whatsapp/databases/msgstore.db > /sdcard/msgstore.db";
@@ -956,18 +981,23 @@ public class SQLReaderController {
 		commands[14] = "cat /data/data/com.google.android.gm/databases/mailstore*.db > /sdcard/mailstore.db";
 		// google mail cached attachments:
 		commands[15] = "mkdir /sdcard/gmailCache";
-		// copies all cached attachments from gmail to sdcard:
+		// copy all cached attachments from gmail to sdcard:
 		commands[16] = "for f in /data/data/com.google.android.gm/cache/*/*; do cat $f > /sdcard/gmailCache/${f##*/}; done";
 		// create folder for twitter dbs:
 		commands[17] = "mkdir /sdcard/twitterDBs";
-		// copies all twitter user dbs to sdcard (except "global.db" and "0.db")
+		// copy all twitter user dbs to sdcard (except "global.db" and "0.db")
 		commands[18] = "for f in /data/data/com.twitter.android/databases/*.db; do if [[ \"$f\" != *global.db && \"$f\" != *0.db ]]; then cat $f > /sdcard/twitterDBs/${f##*/}; fi; done ";
-		commands[19] = "exit";
-		commands[20] = "exit";
+		// create folder for facebook data:
+		commands[19] = "mkdir /sdcard/facebookFiles";
+		// copy all facebook message attachments:
+		commands[20] = "for f in /data/data/com.facebook.katana/files/*; do cat $f > /sdcard/facebookFiles/${f##*/}; done";
+		commands[21] = "mkdir /sdcard/mms_parts";
+		commands[22] = "for f in /data/data/com.android.providers.telephony/app_parts/*; do cat $f > /sdcard/mms_parts/${f##*/}; done";
+		commands[23] = "exit";
+		commands[24] = "exit";
 		adb.interactWithShell(commands, view, true);
 	}
 
-	// TODO: whatsapp media ordner von sdcard pullen
 	/**
 	 * This method pulls the db files from the sd card to the case folder if
 	 * they were copied to sd card by the method getDBFilesFromPhone()
@@ -977,22 +1007,34 @@ public class SQLReaderController {
 				WEBVIEW_FILENAME, COOKIES_FILENAME, CALENDAR_FILENAME, CONTACTS_FILENAME, MAPS_DESTINATION_HISTORY_FILENAME,
 				MAPS_SEARCH_HISTORY_FILENAME, FACEBOOK_FILENAME, FACEBOOK_THREADS_FILENAME };
 		for (int i = 0; i < dbFiles.length; i++) {
-			cfw.pullFileToCaseFolder("/sdcard/" + dbFiles[i], "databases" + File.separator, view);
+			cfw.pullFileToCaseFolder("/sdcard/" + dbFiles[i], "databases" + File.separator, view, false);
 		}
 		// pull twitter dbs
-		cfw.pullFileToCaseFolder("/sdcard/twitterDBs/", "databases" + File.separator + "twitter" + File.separator, view);
-		
-		
-		// pull gmail files seperate concerning special filename:		
-		cfw.pullFileToCaseFolder("/sdcard/mailstore.db", "databases" + File.separator, view);
-		cfw.pullFileToCaseFolder("/sdcard/gmailCache/", "gmail" + File.separator, view);
+		cfw.pullFileToCaseFolder("/sdcard/twitterDBs/", "databases" + File.separator + "twitter" + File.separator, view, true);
+
+		// pull mms_parts
+		cfw.pullFileToCaseFolder("/sdcard/mms_parts/", "mms_parts", view, true);
+
+		// pull facebook
+		cfw.pullFileToCaseFolder("/sdcard/facebookFiles/", "facebook", view, false);
+
+		// pull whatsapp media folder:
+		cfw.pullFileToCaseFolder("/sdcard/WhatsApp/Media", "whatsapp", view, true);
+
+		// pull gmail files separate concerning special filename:
+		cfw.pullFileToCaseFolder("/sdcard/mailstore.db", "databases" + File.separator, view, false);
+		cfw.pullFileToCaseFolder("/sdcard/gmailCache/", "gmail" + File.separator, view, true);
 	}
 
 	/**
 	 * Copies selected row/cell to the system clipboard
-	 * @param currentX set in mouseClicked() in {@link SQLReaderView}
-	 * @param currentY set in mouseClicked() in {@link SQLReaderView}
-	 * @param copyCell true if cell should be copied, false if row should be copied
+	 * 
+	 * @param currentX
+	 *            set in mouseClicked() in {@link SQLReaderView}
+	 * @param currentY
+	 *            set in mouseClicked() in {@link SQLReaderView}
+	 * @param copyCell
+	 *            true if cell should be copied, false if row should be copied
 	 */
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();

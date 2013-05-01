@@ -38,7 +38,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
@@ -79,7 +78,6 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	private Vector<JPanel> tabVector;
 
 	private SQLReaderController controller;
-	private ADBThread adb;
 	private CasefolderWriter cfw;
 	private JComboBox whatsAppCombo, mapsCombo, browserCombo, facebookMessageCombo, facebookCombo, twitterAccountCombo, twitterThreadCombo;
 
@@ -99,8 +97,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	 */
 	public SQLReaderView() {
 		cfw = CasefolderWriter.getInstance();
-		adb = ADBThread.getInstance();
-		
+
 		controller = new SQLReaderController(this);
 		tabVector = new Vector<JPanel>();
 		initGUI();
@@ -378,9 +375,10 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		contextMenu.add(copyCell);
 		contextMenu.add(copyRow);
 
-		openSQLButton = new JButton("Open SQL DBs");
+		openSQLButton = new JButton("Open SQL DBs from casefolder");
 		openSQLButton.addActionListener(this);
 		openSQLButton.setToolTipText("Twitter DB files should be located in subfolder 'twitterDBs'");
+		//TODO: deactivate, if phone not rooted
 		getDBFilesButton = new JButton("Get DB Files (requires root)");
 		getDBFilesButton.addActionListener(this);
 		preferencesPanel.add(openSQLButton);
@@ -427,8 +425,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			}
 		} else if (sourceFile.equals(SQLReaderController.GMAIL_FILENAME)) {
 			tabVector.add(gmailPanel);
-			// TODO resizing der spalten! mit dem adjuster geht das aber ma gar
-			// nich...
+			// TODO automatic resize columns
 		} else if (sourceFile.equals(SQLReaderController.FACEBOOK_THREADS_FILENAME)) {
 			tabVector.add(facebookMessagePanel);
 		} else if (sourceFile.equals(SQLReaderController.TWITTER_FILENAME)) {
@@ -461,14 +458,13 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 
 	@Override
 	public String getName() {
-		return "SQLReader";
+		return "Databases";
 	}
 
 	@Override
 	public JComponent getView() {
 		return tabs;
 	}
-
 	@Override
 	public void triggered() {
 	}
@@ -480,8 +476,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			// FIXME: not the best solution (last file pull in
 			// controller.pullDBFilesToCaseFolder()):
 		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
-			controller.iterateChosenFolder(new File(cfw.getCaseFolder() + File.separator + "databases/"));
+			controller.iterateChosenFolder(cfw.getCaseFolder());
 		}
+
 	}
 
 	@Override
@@ -579,7 +576,9 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 			selectedRow = facebookMessageTable.getSelectedRow();
 			if (selectedRow != -1) {
 				String text = facebookMessageTable.getValueAt(selectedRow, 1).toString();
-				facebookMessageInfo.setInfo(text, cfw.getCaseFolder(), "");
+				String filename = (facebookMessageTable.getValueAt(selectedRow, 7) != null) ? facebookMessageTable.getValueAt(selectedRow,
+						7).toString() : null;
+				facebookMessageInfo.setInfo(text, cfw.getCaseFolder(), filename);
 			}
 
 		} else if (e.getSource().equals(gmailTable.getSelectionModel())) {
