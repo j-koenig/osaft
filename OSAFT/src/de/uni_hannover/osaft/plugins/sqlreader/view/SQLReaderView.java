@@ -474,7 +474,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		if (executedCommand[0].equals("su")) {
 			controller.pullDBFilesToCaseFolder();
 			// FIXME: not the best solution (last file pull in
-			// controller.pullDBFilesToCaseFolder()):
+			// controller.pullDBFilesToCaseFolder()): VLLT EINFACH DAS IF WEGLASSEN UND NUR ALS ELSE FALL
 		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
 			controller.iterateChosenFolder(cfw.getCaseFolder());
 		}
@@ -485,6 +485,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public void actionPerformed(ActionEvent e) {
 		// buttons on preferences tab
 		if (e.getSource().equals(openSQLButton)) {
+			fc.setCurrentDirectory(cfw.getCaseFolder().getParentFile());
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File folder = fc.getSelectedFile();

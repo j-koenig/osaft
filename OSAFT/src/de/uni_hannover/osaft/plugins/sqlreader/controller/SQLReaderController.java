@@ -40,20 +40,20 @@ public class SQLReaderController {
 
 	// filenames of different databases which can be found on an android
 	// smartphone
-	public final static String WEBVIEW_FILENAME = "webview.db"; // Done
-	public final static String BROWSER2_FILENAME = "browser2.db"; // Done
-	public final static String BROWSER_FILENAME = "browser.db"; // Done
+	public final static String WEBVIEW_FILENAME = "webview.db"; 
+	public final static String BROWSER2_FILENAME = "browser2.db"; 
+	public final static String BROWSER_FILENAME = "browser.db"; 
 	public final static String COOKIES_FILENAME = "webviewCookiesChromium.db";
-	public final static String BROWSER_CACHED_GEOPOSITION = "CachedGeoposition.db"; // Done
-	public final static String MMSSMS_FILENAME = "mmssms.db"; // Done
-	public final static String CALENDAR_FILENAME = "calendar.db"; // Done
-	public final static String CONTACTS_FILENAME = "contacts2.db"; // Done
-	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db"; // Done
-	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; // Done
-	public final static String GMAIL_FILENAME = "mailstore"; // done?
-	public final static String FACEBOOK_FILENAME = "fb.db"; // done
-	public final static String FACEBOOK_THREADS_FILENAME = "threads_db2"; // done
-	public final static String WHATSAPP_FILENAME = "msgstore.db"; // Done
+	public final static String BROWSER_CACHED_GEOPOSITION = "CachedGeoposition.db"; 
+	public final static String MMSSMS_FILENAME = "mmssms.db"; 
+	public final static String CALENDAR_FILENAME = "calendar.db"; 
+	public final static String CONTACTS_FILENAME = "contacts2.db"; 
+	public final static String MAPS_SEARCH_HISTORY_FILENAME = "search_history.db";
+	public final static String MAPS_DESTINATION_HISTORY_FILENAME = "da_destination_history"; 
+	public final static String GMAIL_FILENAME = "mailstore"; 
+	public final static String FACEBOOK_FILENAME = "fb.db"; 
+	public final static String FACEBOOK_THREADS_FILENAME = "threads_db2";
+	public final static String WHATSAPP_FILENAME = "msgstore.db"; 
 	public final static String TWITTER_FILENAME = "twitter";
 
 	// found these by examining the databases with a db-browser (used for
@@ -286,6 +286,10 @@ public class SQLReaderController {
 		}
 		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(BROWSER2_FILENAME);
+		
+		System.out.println("browser search:" + browserTableModels.get(3).getRowCount());
+		System.out.println("browser bookmarks:" + browserTableModels.get(0).getRowCount());
+		System.out.println("browser history:" + browserTableModels.get(2).getRowCount());
 	}
 
 	private void processCalendar(Statement statement) throws SQLException {
@@ -310,6 +314,7 @@ public class SQLReaderController {
 		}
 		view.getCalendarTable().setModel(calendarTableModel);
 		view.addTab(CALENDAR_FILENAME);
+		System.out.println("calendar:" +calendarTableModel.getRowCount());
 	}
 
 	private void processContacts(Statement statement) throws SQLException {
@@ -430,6 +435,9 @@ public class SQLReaderController {
 			String geoLocation = rs.getString(8);
 			callsTableModel.addRow(new Object[] { name, number, date, duration, newCall, type, numberType, geoLocation });
 		}
+
+		System.out.println("contacts:" + contactsTableModel.getRowCount());
+		System.out.println("calls:" + callsTableModel.getRowCount());
 
 		view.getCallTable().setModel(callsTableModel);
 		view.addTab(CONTACTS_FILENAME);
@@ -564,6 +572,9 @@ public class SQLReaderController {
 			}
 			mmsTableModel.addRow(new Object[] { id, number, date, text, data, mimetype });
 		}
+
+		System.out.println("sms:" + smsTableModel.getRowCount());
+		System.out.println("mms:" + mmsTableModel.getRowCount());
 		view.getMmsTable().setModel(mmsTableModel);
 		view.addTab(MMSSMS_FILENAME);
 	}
@@ -603,7 +614,7 @@ public class SQLReaderController {
 
 			facebookTableModels.get(0).addRow(new Object[] { user_id, fName, lName, cell, other, email, birthday });
 		}
-				
+
 		// FIXME: notifications not available in fb.db anymore
 		// rs =
 		// statement.executeQuery("SELECT sender_name, updated, title, object_type, is_unread FROM notifications");
@@ -618,6 +629,7 @@ public class SQLReaderController {
 		// title, type, unread });
 		// }
 
+		System.out.println("facebook:" + facebookTableModels.get(0).getRowCount());
 		view.getFacebookTable().setModel(facebookTableModels.get(0));
 		view.addTab(FACEBOOK_FILENAME);
 	}
@@ -666,6 +678,9 @@ public class SQLReaderController {
 			}
 		}
 		view.getFacebookMessageTable().setModel(facebookMessageTableModels.get(threadIds.get(0)));
+		for (LiveSearchTableModel table : facebookMessageTableModels.values()) {
+			System.out.println("facebook messages:" + table.getRowCount());
+		}
 		view.addTab(FACEBOOK_THREADS_FILENAME);
 	}
 
@@ -724,7 +739,11 @@ public class SQLReaderController {
 				}
 			}
 		}
+		
 		view.getWhatsappTable().setModel(whatsAppTableModels.get(ids.get(0)));
+		for (LiveSearchTableModel table : whatsAppTableModels.values()) {			
+			System.out.println("whatsaopp messages:" + table.getRowCount());
+		}
 		view.addTab(WHATSAPP_FILENAME);
 	}
 
@@ -770,6 +789,8 @@ public class SQLReaderController {
 			String value = (rs.getString(2) == null) ? "" : rs.getString(2);
 			browserTableModels.get(4).addRow(new Object[] { name, value });
 		}
+		System.out.println("browser pass:" + browserTableModels.get(5).getRowCount());
+		System.out.println("browser formdata:" + browserTableModels.get(4).getRowCount());
 		view.getBrowserTable().setModel(browserTableModels.get(0));
 		view.addTab(WEBVIEW_FILENAME);
 	}
@@ -892,7 +913,7 @@ public class SQLReaderController {
 				}
 			}
 		}
-
+		System.out.println("gmail:" + gmailTableModel.getRowCount());
 		view.getGmailTable().setModel(gmailTableModel);
 		view.addTab(GMAIL_FILENAME);
 	}
@@ -963,8 +984,11 @@ public class SQLReaderController {
 	 */
 	public void getDBFilesFromPhone() {
 		String[] commands = new String[25];
+		// TODO: als arraylist und dann am ende .toArray()
+		ArrayList<String> cmds = new ArrayList<String>();
 		commands[0] = "su";
-		// Database files:
+		// copy database files to sdcard (cp is not available in android shell,
+		// so we use this little trick: cat src > dst):
 		commands[1] = "cat /data/data/com.whatsapp/databases/msgstore.db > /sdcard/msgstore.db";
 		commands[2] = "cat /data/data/com.android.providers.telephony/databases/mmssms.db > /sdcard/mmssms.db";
 		commands[3] = "cat /data/data/com.google.android.browser/databases/webview.db > /sdcard/webview.db";
@@ -1021,7 +1045,7 @@ public class SQLReaderController {
 		// pull whatsapp media folder:
 		cfw.pullFileToCaseFolder("/sdcard/WhatsApp/Media", "whatsapp", view, true);
 
-		// pull gmail files separate concerning special filename:
+		// pull gmail files separately:
 		cfw.pullFileToCaseFolder("/sdcard/mailstore.db", "databases" + File.separator, view, false);
 		cfw.pullFileToCaseFolder("/sdcard/gmailCache/", "gmail" + File.separator, view, true);
 	}

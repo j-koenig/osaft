@@ -15,6 +15,7 @@ import javax.swing.JTable;
 
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 
 /**
  * This class is the corresponding controller to {@link ConnectorAppDataView}.
@@ -35,6 +36,7 @@ public class ConnectorAppDataController {
 	private ConnectorAppDataView view;
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserSearchTableModel,
 			contactsTableModel, mmsTableModel, smsTableModel;
+	private CasefolderWriter cfw;
 
 	public ConnectorAppDataController(ConnectorAppDataView view) {
 		this.view = view;
@@ -48,6 +50,7 @@ public class ConnectorAppDataController {
 				"Website", "IM", "Skype", "Notes" });
 		smsTableModel = new LiveSearchTableModel(new Object[] { "Number", "Name", "Date", "Text", "Read", "Seen", "Status" });
 		mmsTableModel = new LiveSearchTableModel(new Object[] { "ID", "Number", "Date", "Text", "Read", "Attachment" });
+		cfw = CasefolderWriter.getInstance();
 	}
 
 	/**
@@ -372,6 +375,10 @@ public class ConnectorAppDataController {
 			calendarTableModel.addRow(new Object[] { calendarName, title, description, start, end, location, allDay });
 		}
 		view.addTab(CALENDAR_FILENAME, calendarTableModel);
+	}
+	
+	public void pullCSVFiles() {
+		cfw.pullFileToCaseFolder("/sdcard/artifacts", view, false);
 	}
 
 	/**

@@ -43,6 +43,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.controller.ConnectorAppDa
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.CustomDateCellRenderer;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.TableColumnAdjuster;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 
 /**
  * This class implements the {@link ViewPlugin}. This Plugin allows to read the
@@ -79,6 +80,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	private JLabel currentFolderLabel, actualCurrentFolderLabel;
 
 	private ADBThread adb;
+	private CasefolderWriter cfw;
 
 	// used for contextmenu
 	private int currentX, currentY;
@@ -92,6 +94,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	 */
 	public ConnectorAppDataView() {
 		adb = ADBThread.getInstance();
+		cfw = CasefolderWriter.getInstance();
 		tabVector = new Vector<JPanel>();
 		initGUI();
 		fc = new JFileChooser();
@@ -261,6 +264,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		preferencesPanel.add(openCSVButton);
 		preferencesPanel.add(pushAppButton);
 		preferencesPanel.add(uninstallAppButton);
+		preferencesPanel.add(pullCSVButton);
 		tabs.add(preferencesPanel);
 
 		// init context menu
@@ -298,6 +302,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == openCSVButton) {
 			// open filechooser
+			fc.setCurrentDirectory(cfw.getCaseFolder());
 			int returnVal = fc.showOpenDialog(tabs);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File folder = fc.getSelectedFile();
@@ -320,6 +325,9 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 					JOptionPane.INFORMATION_MESSAGE);
 			// TODO: fehlermeldung wenn datei nich gefunden: (jfilechooser?)
 			adb.executeAndReturn("install ArtifactExtract.apk", this, true);
+		}
+		if (e.getSource()==pullCSVButton) {
+			controller.pullCSVFiles();
 		}
 		
 		if (e.getSource() == uninstallAppButton) {
@@ -533,9 +541,6 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 
 	@Override
 	public void focusLost(FocusEvent e) {
-		// if (e.getSource().equals(contactSearch)) {
-		// contactSearch.setText("Search");
-		// }
 	}
 
 	@Override

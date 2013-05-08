@@ -74,7 +74,6 @@ public class OSAFTView extends JFrame implements ActionListener {
 	}
 
 	private void initGUI() {
-
 		JProgressBar dpb = new JProgressBar();
 		dpb.setIndeterminate(true);
 		progressDialog.getContentPane().add(BorderLayout.CENTER, dpb);
