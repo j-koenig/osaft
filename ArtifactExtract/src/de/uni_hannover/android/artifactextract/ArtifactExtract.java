@@ -4,11 +4,15 @@ import java.io.IOException;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.KeyguardManager;
+import android.app.KeyguardManager.KeyguardLock;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.view.ViewPager.LayoutParams;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Toast;
@@ -28,6 +32,15 @@ public class ArtifactExtract extends Activity {
 	private Gatherer gatherer;
 	// all found data is saved in the directory "artifacts" on the sd card
 	private final String DIRECTORY = Environment.getExternalStorageDirectory() + "/artifacts/";
+	
+	@Override
+	public void onResume() {
+//		KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Activity.KEYGUARD_SERVICE);
+//		KeyguardLock lock = keyguardManager.newKeyguardLock(KEYGUARD_SERVICE);
+//		lock.disableKeyguard();
+//		Log.d("bypass", "resume da");
+		super.onResume();
+	}
 
 	@Override
 	/**
@@ -35,6 +48,9 @@ public class ArtifactExtract extends Activity {
 	 */
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		//shows the app, even if screen lock is active
+		this.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);		
 
 		// check for sd card
 		if (!SDCardHandler.isMounted()) {
