@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Jannis Koenig.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *     Jannis Koenig - initial API and implementation
+ ******************************************************************************/
 package de.uni_hannover.osaft.plugins.sqlreader.controller;
 
 import java.awt.Point;
@@ -22,6 +32,7 @@ import javax.swing.JTable;
 
 import org.jsoup.Jsoup;
 
+import de.uni_hannover.osaft.Main;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.sqlreader.view.SQLReaderView;
@@ -84,6 +95,7 @@ public class SQLReaderController {
 	private static final Logger log = Logger.getLogger(SQLReaderController.class.getName());
 
 	public SQLReaderController(SQLReaderView view) {
+		log.addHandler(Main.fh);
 		this.view = view;
 		adb = ADBThread.getInstance();
 		cfw = CasefolderWriter.getInstance();

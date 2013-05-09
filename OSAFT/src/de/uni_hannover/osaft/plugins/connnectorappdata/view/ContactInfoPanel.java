@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Jannis Koenig.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *     Jannis Koenig - initial API and implementation
+ ******************************************************************************/
 package de.uni_hannover.osaft.plugins.connnectorappdata.view;
 
 import java.awt.Desktop;
@@ -20,6 +30,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import de.uni_hannover.osaft.Main;
 
 /**
  * {@link JPanel} that shows detailed contact informations CREATED WITH
@@ -49,6 +61,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 	private static final Logger log = Logger.getLogger(ContactInfoPanel.class.getName());
 
 	public ContactInfoPanel() {
+		log.addHandler(Main.fh);
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 0, 0 };

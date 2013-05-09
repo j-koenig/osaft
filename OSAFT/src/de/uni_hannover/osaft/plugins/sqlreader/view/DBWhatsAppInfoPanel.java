@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Jannis Koenig.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *     Jannis Koenig - initial API and implementation
+ ******************************************************************************/
 package de.uni_hannover.osaft.plugins.sqlreader.view;
 
 import java.awt.Image;
@@ -10,6 +20,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+import de.uni_hannover.osaft.Main;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 
@@ -30,6 +41,12 @@ public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 	 * Called if a row in the gmail table is selected. Refreshes the info for
 	 * the current row.
 	 */
+	
+	public DBWhatsAppInfoPanel() {
+		super();
+		log.addHandler(Main.fh);
+	}
+	
 	public void setInfo(String text, File directory, String filename) {
 		txtrText.setText("Text: \n" + text);
 		if (!filename.equals("")) {

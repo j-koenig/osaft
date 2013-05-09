@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Jannis Koenig.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *     Jannis Koenig - initial API and implementation
+ ******************************************************************************/
 package de.uni_hannover.osaft.plugins.connnectorappdata.tables;
 
 import java.awt.*;
@@ -9,8 +19,6 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 /**
- * @author Rob Camick
- * \{@link https://tips4java.wordpress.com/2008/11/10/table-column-adjuster/}
  *	Class to manage the widths of colunmns in a table.
  *
  *  Various properties control how the width of the column is calculated.
@@ -23,6 +31,8 @@ import javax.swing.table.*;
  *  of the columns must fit inside the table. So if you increase one column, one
  *  or more of the other columns must decrease. Because of this the resize mode
  *  of RESIZE_ALL_COLUMNS will work the best.
+ *  
+ *  Author: Rob Camick
  */
 public class TableColumnAdjuster implements PropertyChangeListener, TableModelListener
 {
@@ -344,6 +354,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 	/**
 	 *  Action to adjust or restore the width of a single column or all columns
 	 */
+	@SuppressWarnings("serial")
 	class ColumnAction extends AbstractAction
 	{
     	private boolean isSelectedColumn;
@@ -386,6 +397,7 @@ public class TableColumnAdjuster implements PropertyChangeListener, TableModelLi
 	 *  Toggle properties of the TableColumnAdjuster so the user can
 	 *  customize the functionality to their preferences
 	 */
+	@SuppressWarnings("serial")
 	class ToggleAction extends AbstractAction
 	{
 		private boolean isToggleDynamic;

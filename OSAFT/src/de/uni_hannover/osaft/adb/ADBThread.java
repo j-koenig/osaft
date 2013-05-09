@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Jannis Koenig.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0
+ * which accompanies this distribution, and is available at
+ * http://www.gnu.org/licenses/gpl.html
+ * 
+ * Contributors:
+ *     Jannis Koenig - initial API and implementation
+ ******************************************************************************/
 package de.uni_hannover.osaft.adb;
 
 import java.io.BufferedReader;
@@ -10,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import de.uni_hannover.osaft.Main;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
@@ -35,6 +46,7 @@ public class ADBThread implements Runnable {
 	private static final Logger log =  Logger.getLogger(ADBThread.class.getName());
 
 	private ADBThread() {
+		log.addHandler(Main.fh);
 		commands = new LinkedBlockingQueue<ADBSwingWorker>();
 		rt = Runtime.getRuntime();
 	}
