@@ -8,6 +8,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -31,6 +33,7 @@ public class ADBSwingWorker extends SwingWorker<String, Object> {
 	private ViewPlugin plugin;
 	private int exitCode;
 	private boolean showProgressBar;
+	private static final Logger log = Logger.getLogger(ADBSwingWorker.class.getName());
 
 	public ADBSwingWorker(String[] commands, String adbExecutable, String currentDevice, OSAFTView view, ViewPlugin plugin,
 			boolean showProgressBar) {
@@ -96,6 +99,7 @@ public class ADBSwingWorker extends SwingWorker<String, Object> {
 			else {
 				// execute the single command on the chosen device
 				Process p = rt.exec(adbExecutable + " -s " + currentDevice + " " + commands[0]);
+
 				Reader r = new InputStreamReader(p.getInputStream());
 				BufferedReader in = new BufferedReader(r);
 				String line;
@@ -110,9 +114,9 @@ public class ADBSwingWorker extends SwingWorker<String, Object> {
 				exitCode = p.waitFor();
 			}
 		} catch (IOException e) {
-			// TODO
+			log.log(Level.WARNING, e.toString(), e);
 		} catch (InterruptedException e) {
-			// TODO
+			log.log(Level.WARNING, e.toString(), e);
 		}
 		return output;
 	}
@@ -130,11 +134,9 @@ public class ADBSwingWorker extends SwingWorker<String, Object> {
 		try {
 			plugin.reactToADBResult(get(), commands);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 	}
 

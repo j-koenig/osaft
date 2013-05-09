@@ -4,6 +4,8 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -22,6 +24,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(DBWhatsAppInfoPanel.class.getName());
 
 	/**
 	 * Called if a row in the gmail table is selected. Refreshes the info for
@@ -43,8 +46,7 @@ public class DBWhatsAppInfoPanel extends MMSInfoPanel {
 					lblPreview.setText("");
 					lblPreview.revalidate();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.log(Level.WARNING, e.toString(), e);
 				}
 			} else if(filename.startsWith("VID")){
 				currentFile = new File(directory + File.separator + "whatsapp" + File.separator + "WhatsApp Video" + File.separator

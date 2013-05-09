@@ -78,7 +78,11 @@ public class OSAFTView extends JFrame implements ActionListener {
 		dpb.setIndeterminate(true);
 		progressDialog.getContentPane().add(BorderLayout.CENTER, dpb);
 		progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		progressDialog.setSize(500, 10);
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			progressDialog.setSize(500, 60);
+		} else {
+			progressDialog.setSize(500, 10);
+		}
 		progressDialog.setLocationRelativeTo(null);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

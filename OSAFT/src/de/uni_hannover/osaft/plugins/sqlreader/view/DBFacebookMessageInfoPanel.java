@@ -5,6 +5,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -24,6 +26,7 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
 public class DBFacebookMessageInfoPanel extends MMSInfoPanel {
 
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(DBFacebookMessageInfoPanel.class.getName());
 
 	/**
 	 * Called if a row in the gmail table is selected. Refreshes the info for
@@ -46,9 +49,7 @@ public class DBFacebookMessageInfoPanel extends MMSInfoPanel {
 					btnOpenFile.setEnabled(true);
 					btnOpenFolder.setEnabled(true);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					System.out.println("CANT FIND FILE!");
+					log.log(Level.WARNING, e.toString(), e);
 				}
 			} else {
 				lblPreview.setIcon(null);

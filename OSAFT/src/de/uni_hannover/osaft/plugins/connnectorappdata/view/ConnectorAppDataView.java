@@ -323,8 +323,7 @@ public class ConnectorAppDataView extends MouseAdapter implements ViewPlugin, Ac
 		if (e.getSource() == pushAppButton) {
 			JOptionPane.showMessageDialog(tabs, "Connector App will be installed phone now.", "Information",
 					JOptionPane.INFORMATION_MESSAGE);
-			// TODO: fehlermeldung wenn datei nich gefunden: (jfilechooser?)
-			adb.executeAndReturn("install ArtifactExtract.apk", this, true);
+			controller.installApp();
 		}
 		if (e.getSource()==pullCSVButton) {
 			controller.pullCSVFiles();

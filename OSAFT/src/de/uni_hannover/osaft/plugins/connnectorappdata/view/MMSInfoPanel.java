@@ -13,6 +13,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -42,6 +44,8 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 	protected JLabel lblPreview;
 	protected JPanel panel;
 	protected File currentFile;
+
+	private static final Logger log = Logger.getLogger(MMSInfoPanel.class.getName());
 
 	public MMSInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -142,20 +146,17 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 			try {
 				dt.open(currentFile);
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		}
 
-		// TODO: funzt unter windows, aber nicht ubuntu. ka...
+		// FIXME: works on windows but not on ubuntu..
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
-			//System.out.println(currentFile.getParent());
 			try {
 				dt.open(new File(currentFile.getParent()));
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		}
 
@@ -192,7 +193,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 			}
 
 			lblActualFilename.setText(currentFile.getName());
-			//get mimetype of found file
+			// get mimetype of found file
 			String mimeType = URLConnection.guessContentTypeFromName(currentFile.getName());
 			// picture file
 			if (mimeType != null && mimeType.startsWith("image")) {
@@ -202,8 +203,7 @@ public class MMSInfoPanel extends JPanel implements ActionListener {
 					lblPreview.setText("");
 					lblPreview.revalidate();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.log(Level.WARNING, e.toString(), e);
 				}
 			} else {
 				lblPreview.setIcon(null);

@@ -4,6 +4,8 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -20,9 +22,8 @@ import de.uni_hannover.osaft.plugins.connnectorappdata.view.MMSInfoPanel;
  * 
  */
 public class DBMMSInfoPanel extends MMSInfoPanel {
-	//TODO: gucken dass das mit dem ordner öffnen geht
-
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(DBMMSInfoPanel.class.getName());
 	/**
 	 * Called if a row in the mms table is selected. Refreshes the info for the
 	 * current row.
@@ -41,8 +42,7 @@ public class DBMMSInfoPanel extends MMSInfoPanel {
 				lblPreview.setText("");
 				lblPreview.revalidate();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		} else {
 			lblPreview.setIcon(null);

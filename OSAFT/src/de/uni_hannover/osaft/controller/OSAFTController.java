@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -15,6 +17,8 @@ import de.uni_hannover.osaft.util.CasefolderWriter;
 import de.uni_hannover.osaft.view.OSAFTView;
 
 /**
+ * Corresponding controller to {@link OSAFTView}
+ * 
  * @author Jannis Koenig
  * 
  */
@@ -25,6 +29,9 @@ public class OSAFTController {
 	private OSAFTView view;
 	private String currentDevice;
 	private CasefolderWriter cfw;
+	private File jarFolder;
+	
+	private static final Logger log = Logger.getLogger(OSAFTController.class.getName());
 
 	public OSAFTController(OSAFTView view) {
 		this.view = view;
@@ -32,6 +39,7 @@ public class OSAFTController {
 		adb = ADBThread.getInstance();
 		cfw = CasefolderWriter.getInstance();
 		cfw.setView(view);
+		jarFolder = cfw.getJarFolder();
 		initProperties();
 		adb.setView(view);
 		// start the ADBThread
@@ -42,15 +50,15 @@ public class OSAFTController {
 	private void initProperties() {
 		// initialize the properties file:
 		properties = new Properties();
-		File f = new File("osaft.properties");
+		File f = (jarFolder == null) ? new File("osaft.properties") : new File(jarFolder.getAbsolutePath() + File.separator
+				+ "osaft.properties");
 		try {
 			if (!f.exists()) {
 				f.createNewFile();
 			}
 			properties.load(new FileInputStream(f));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 		// if there is no entry for the adb executable, the user has to choose
 		// the path to the binary
@@ -109,10 +117,11 @@ public class OSAFTController {
 
 	private void storeProperties() {
 		try {
-			properties.store(new FileOutputStream(new File("osaft.properties")), "");
+			File f = (jarFolder == null) ? new File("osaft.properties") : new File(jarFolder.getAbsolutePath() + File.separator
+					+ "osaft.properties");
+			properties.store(new FileOutputStream(f), "");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 	}
 

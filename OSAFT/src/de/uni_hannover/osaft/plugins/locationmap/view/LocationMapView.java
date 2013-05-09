@@ -18,13 +18,20 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
-import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.plugins.locationmap.controller.LocationMapController;
 import de.uni_hannover.osaft.util.CasefolderWriter;
 import de.uni_hannover.osaft.util.GeoLocation;
 
+/**
+ * This class implements the {@link ViewPlugin}. It shows a map of the world and
+ * allows adding MapMarkers to display all found geolocations. The corresponding
+ * controller is {@link LocationMapController}.
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 @PluginImplementation
 public class LocationMapView implements ViewPlugin, MouseMotionListener, MouseListener {
 
@@ -47,6 +54,7 @@ public class LocationMapView implements ViewPlugin, MouseMotionListener, MouseLi
 		positionLabel = new JLabel();
 		instructionLabel = new JLabel("Right Mouse To Move, Mousewheel To Zoom", JLabel.RIGHT);
 		mainPanel.add(positionLabel, BorderLayout.SOUTH);
+		// mainPanel.add(instructionLabel, BorderLayout.NORTH);
 		map = new JMapViewer();
 		map.addMouseListener(this);
 		map.addMouseMotionListener(this);
@@ -132,7 +140,7 @@ public class LocationMapView implements ViewPlugin, MouseMotionListener, MouseLi
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		//
+		// not used
 	}
 
 	@Override

@@ -191,7 +191,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		tables.add(facebookMessageTable);
 		tables.add(twitterTable);
 
-		// TODO scheint hier irgendwie nich zu funzen
+		// FIXME: does not work here, don't know why...
 		// Date objects will be rendered differently
 		CustomDateCellRenderer cdcr = new CustomDateCellRenderer();
 
@@ -378,7 +378,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		openSQLButton = new JButton("Open SQL DBs from casefolder");
 		openSQLButton.addActionListener(this);
 		openSQLButton.setToolTipText("Twitter DB files should be located in subfolder 'twitterDBs'");
-		//TODO: deactivate, if phone not rooted
+		// TODO: deactivate, if phone not rooted
 		getDBFilesButton = new JButton("Get DB Files (requires root)");
 		getDBFilesButton.addActionListener(this);
 		preferencesPanel.add(openSQLButton);
@@ -465,6 +465,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 	public JComponent getView() {
 		return tabs;
 	}
+
 	@Override
 	public void triggered() {
 	}
@@ -474,7 +475,7 @@ public class SQLReaderView implements ViewPlugin, ActionListener, ListSelectionL
 		if (executedCommand[0].equals("su")) {
 			controller.pullDBFilesToCaseFolder();
 			// FIXME: not the best solution (last file pull in
-			// controller.pullDBFilesToCaseFolder()): VLLT EINFACH DAS IF WEGLASSEN UND NUR ALS ELSE FALL
+			// controller.pullDBFilesToCaseFolder())
 		} else if (executedCommand[0].startsWith("pull /sdcard/gmailCache/")) {
 			controller.iterateChosenFolder(cfw.getCaseFolder());
 		}

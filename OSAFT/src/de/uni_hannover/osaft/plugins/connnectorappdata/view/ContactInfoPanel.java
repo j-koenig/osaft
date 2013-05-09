@@ -10,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -43,6 +45,8 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 	private JTextField txtSkype;
 	private JTextField txtNotes;
 	private JButton btnOpenFolder;
+	
+	private static final Logger log = Logger.getLogger(ContactInfoPanel.class.getName());
 
 	public ContactInfoPanel() {
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -268,18 +272,16 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 			try {
 				dt.open(currentPic);
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		}
-		// FIXME: läuft nur unter windows...
+		// FIXME: works on windows but not on linux
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
 			try {
 				dt.open(new File(currentPic.getParent()));
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		}
 
@@ -311,8 +313,7 @@ public class ContactInfoPanel extends JPanel implements ActionListener {
 			lblPicture.setText("");
 			lblPicture.revalidate();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 	}
 	/**

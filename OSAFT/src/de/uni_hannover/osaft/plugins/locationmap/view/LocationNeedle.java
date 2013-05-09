@@ -10,7 +10,14 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 
 import de.uni_hannover.osaft.util.GeoLocation;
 
-public class LocationNeedle implements MapMarker{
+/**
+ * Wrapper class for {@link GeoLocation}-objects. Objects of this class are
+ * drawable on the {@link LocationMapView}
+ * 
+ * @author Jannis Koenig
+ * 
+ */
+public class LocationNeedle implements MapMarker {
 
 	private Rectangle r;
 	private Color c;
@@ -31,11 +38,11 @@ public class LocationNeedle implements MapMarker{
 	public double getLon() {
 		return loc.getLon();
 	}
-	
+
 	public String getSource() {
 		return loc.getSource();
 	}
-	
+
 	public Date getTimestamp() {
 		return loc.getTimestamp();
 	}
@@ -51,9 +58,9 @@ public class LocationNeedle implements MapMarker{
 	public Rectangle getRect() {
 		return r;
 	}
-	
-	public String toString() { 
+
+	public String toString() {
 		return loc.toString();
 	}
-	
+
 }

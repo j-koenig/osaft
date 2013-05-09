@@ -3,6 +3,8 @@ package de.uni_hannover.osaft;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -10,6 +12,7 @@ import javax.swing.UIManager;
 import net.xeoh.plugins.base.PluginManager;
 import net.xeoh.plugins.base.impl.PluginManagerFactory;
 import net.xeoh.plugins.base.util.PluginManagerUtil;
+import de.uni_hannover.osaft.util.CasefolderWriter;
 import de.uni_hannover.osaft.view.OSAFTView;
 
 /**
@@ -19,13 +22,14 @@ import de.uni_hannover.osaft.view.OSAFTView;
  * 
  */
 public class Main {
+	private static Logger log = Logger.getLogger(Main.class.getName());
 
 	public static void main(String[] args) {
 
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Throwable e) {
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 
 		// initialize jspf:
@@ -38,6 +42,7 @@ public class Main {
 		// containing plugins
 		if (jarPos != -1) {
 			String path = classpath.substring(jarPathPos, jarPos);
+			CasefolderWriter.getInstance().setJarFolder(new File(path));
 			// if pluginfolder does not exist: create it
 			File pluginFolder = new File(path + "plugins/");
 			if (!pluginFolder.exists()) {
@@ -45,8 +50,11 @@ public class Main {
 			}			
 			pm.addPluginsFrom(pluginFolder.toURI());
 		}
+		
+		pm.addPluginsFrom(new File("plugins/").toURI());
+		
 
-		// FIXME:scheint auch einfach so zu funzen!
+		// FIXME maybe it works also like this:
 //		File pluginFolder = new File("plugins/");
 //		if (!pluginFolder.exists()) {
 //			pluginFolder.mkdir();
@@ -56,8 +64,7 @@ public class Main {
 		try {
 			pm.addPluginsFrom(new URI("classpath://*"));
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 		final PluginManagerUtil pmu = new PluginManagerUtil(pm);
 		SwingUtilities.invokeLater(new Runnable() { 

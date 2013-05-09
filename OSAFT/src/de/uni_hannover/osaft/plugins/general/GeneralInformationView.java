@@ -17,8 +17,9 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
+import java.awt.Font;
 
-//TODO: muss noch shcön klickibunti sein
+//TODO: add more style to UI
 
 /**
  * This class implements the {@link ViewPlugin} and presents information about
@@ -79,6 +80,7 @@ public class GeneralInformationView implements ViewPlugin {
 		panel.setLayout(gbl_panel);
 
 		JLabel lblPhone = new JLabel("Phone Details:");
+		lblPhone.setFont(new Font("Dialog", Font.BOLD, 14));
 		GridBagConstraints gbc_lblPhone = new GridBagConstraints();
 		gbc_lblPhone.anchor = GridBagConstraints.WEST;
 		gbc_lblPhone.insets = new Insets(0, 0, 5, 5);
@@ -324,7 +326,9 @@ public class GeneralInformationView implements ViewPlugin {
 				if (resultLineByLine[i].contains("level")) {
 					lblActualBatteryLevel.setText(extractProp(resultLineByLine[i]));
 				} else if (resultLineByLine[i].contains("temperature")) {
-					lblActualBatteryTemperature.setText(extractProp(resultLineByLine[i]));
+					double temp = Double.parseDouble(extractProp(resultLineByLine[i]));
+					temp = temp / 10;
+					lblActualBatteryTemperature.setText(temp + "° C");
 				}
 
 			}
@@ -360,14 +364,17 @@ public class GeneralInformationView implements ViewPlugin {
 		} else if (executedCommand[0].equals(installedPackagesCommand)) {
 			String[] packages = new String[resultLineByLine.length];
 			if (resultLineByLine.length > 1) {
-			for (int i = 0; i < resultLineByLine.length; i++) {
-				packages[i] = resultLineByLine[i].split(":")[1];
-			}
+				for (int i = 0; i < resultLineByLine.length; i++) {
+					if (resultLineByLine[i].length() > 1) {
+						packages[i] = resultLineByLine[i].split(":")[1];
+					}
+				}
 			}
 			list.setListData(packages);
 		} else if (executedCommand.equals(wifisCommands)) {
+			// FIXME: formatting on windows
 			if (!result.toLowerCase().contains("/data/misc/wifi/wpa_supplicant.conf: permission denied")) {
-				for (int i = 8; i < resultLineByLine.length-3; i++) {
+				for (int i = 8; i < resultLineByLine.length - 3; i++) {
 					textArea.setText(textArea.getText() + resultLineByLine[i] + "\n");
 				}
 			}

@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
@@ -29,6 +31,8 @@ public class ADBThread implements Runnable {
 	// Singleton:
 	private static ADBThread instance;
 	private Runtime rt;
+	
+	private static final Logger log =  Logger.getLogger(ADBThread.class.getName());
 
 	private ADBThread() {
 		commands = new LinkedBlockingQueue<ADBSwingWorker>();
@@ -51,19 +55,14 @@ public class ADBThread implements Runnable {
 				// swingworker is done):
 				asw.get();
 			} catch (InterruptedException e) {
-				// TODO: handle exception
+				log.log(Level.WARNING, e.toString(), e);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.log(Level.WARNING, e.toString(), e);
 			}
 
 		}
 
 	}
-
-	// TODO: unterscheidung zwischen win und unix (nötig?)
-	// TODO: checken ob pfad zu adb richtig is (also adb funktioniert)
-
 	/**
 	 * This methods provides the possibility to execute a single adb command. It
 	 * queues the command in the {@link BlockingQueue} and returns the result to
@@ -135,11 +134,9 @@ public class ADBThread implements Runnable {
 
 			return output;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 		return output;
 	}

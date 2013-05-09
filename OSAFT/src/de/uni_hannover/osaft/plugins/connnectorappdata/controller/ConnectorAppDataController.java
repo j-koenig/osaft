@@ -9,10 +9,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
+import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugins.connnectorappdata.tables.LiveSearchTableModel;
 import de.uni_hannover.osaft.plugins.connnectorappdata.view.ConnectorAppDataView;
 import de.uni_hannover.osaft.util.CasefolderWriter;
@@ -37,6 +40,8 @@ public class ConnectorAppDataController {
 	private LiveSearchTableModel calendarTableModel, callsTableModel, browserHistoryTableModel, browserSearchTableModel,
 			contactsTableModel, mmsTableModel, smsTableModel;
 	private CasefolderWriter cfw;
+	
+	private static final Logger log = Logger.getLogger(ConnectorAppDataController.class.getName());
 
 	public ConnectorAppDataController(ConnectorAppDataView view) {
 		this.view = view;
@@ -99,8 +104,7 @@ public class ConnectorAppDataController {
 				processBrowserHistory(br);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		} catch (IndexOutOfBoundsException e) {
 			JOptionPane.showMessageDialog(view.getView(), "One or more csv files are corrupted", "Warning", JOptionPane.WARNING_MESSAGE);
 		} finally {
@@ -108,8 +112,7 @@ public class ConnectorAppDataController {
 				try {
 					br.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.log(Level.WARNING, e.toString(), e);
 				}
 			}
 		}
@@ -376,16 +379,30 @@ public class ConnectorAppDataController {
 		}
 		view.addTab(CALENDAR_FILENAME, calendarTableModel);
 	}
-	
+
 	public void pullCSVFiles() {
-		cfw.pullFileToCaseFolder("/sdcard/artifacts", view, false);
+		cfw.pullFileToCaseFolder("/sdcard/artifacts", view, true);
+	}
+
+	public void installApp() {
+		File app = (cfw.getJarFolder() == null) ? new File("ArtifactExtract.apk") : new File(cfw.getJarFolder() + File.separator
+				+ "ArtifactExtract.apk");
+		if (app.exists()) {
+			ADBThread.getInstance().executeAndReturn("install " + app.getAbsolutePath(), view, true);
+		} else {
+			JOptionPane.showMessageDialog(view.getView(), "ArtifactExtract.apk not found!", "Warning", JOptionPane.WARNING_MESSAGE);
+		}
 	}
 
 	/**
 	 * Copies selected row/cell to the system clipboard
-	 * @param currentX set in mouseClicked() in {@link ConnectorAppDataView}
-	 * @param currentY set in mouseClicked() in {@link ConnectorAppDataView}
-	 * @param copyCell true if cell should be copied, false if row should be copied
+	 * 
+	 * @param currentX
+	 *            set in mouseClicked() in {@link ConnectorAppDataView}
+	 * @param currentY
+	 *            set in mouseClicked() in {@link ConnectorAppDataView}
+	 * @param copyCell
+	 *            true if cell should be copied, false if row should be copied
 	 */
 	public void copySelectionToClipboard(int currentX, int currentY, JTable currentTable, boolean copyCell) {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();

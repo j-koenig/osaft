@@ -4,8 +4,9 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
+
 //@PluginImplementation
-public class TestPlugin implements ViewPlugin{
+public class TestPlugin implements ViewPlugin {
 
 	@Override
 	public String getName() {
@@ -14,19 +15,17 @@ public class TestPlugin implements ViewPlugin{
 
 	@Override
 	public JComponent getView() {
-		return new JButton("sr<hg");
+		return new JButton("Test");
 	}
 
 	@Override
 	public void triggered() {
-		// TODO Auto-generated method stub
-		
+		// do nothing
 	}
 
 	@Override
 	public void reactToADBResult(String result, String[] executedCommands) {
-		// TODO Auto-generated method stub
-		
+		// do nothing
 	}
 
 }

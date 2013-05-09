@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -36,6 +38,7 @@ import javax.swing.SwingConstants;
 public class DBGmailInfoPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
+	private static final Logger log = Logger.getLogger(DBGmailInfoPanel.class.getName());
 	private JButton btnOpenFile, btnOpenFolder;
 	private GridBagLayout gbl_mmsInfo;
 	private JTextArea txtrText;
@@ -142,21 +145,18 @@ public class DBGmailInfoPanel extends JPanel implements ActionListener {
 			Desktop dt = Desktop.getDesktop();
 			try {
 				dt.open(currentFile);
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (IOException ex) {
+				log.log(Level.WARNING, ex.toString(), ex);
 			}
 		}
 
-		// TODO: funzt unter windows, aber nicht ubuntu. ka...
+		// FIXME: works on windows, but not on ubuntu...
 		else if (e.getSource().equals(btnOpenFolder)) {
 			Desktop dt = Desktop.getDesktop();
-			System.out.println(currentFile.getParent());
 			try {
 				dt.open(new File(currentFile.getParent()));
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (IOException ex) {
+				log.log(Level.WARNING, ex.toString(), ex);
 			}
 		} else if (e.getSource().equals(filenameComboBox)) {
 			if (filenameComboBox.getItemCount() != 0) {
@@ -182,9 +182,7 @@ public class DBGmailInfoPanel extends JPanel implements ActionListener {
 				lblPreview.setText("");
 				lblPreview.revalidate();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.out.println("CANT FIND FILE!");
+				log.log(Level.WARNING, e.toString(), e);
 			}
 		} else {
 			lblPreview.setIcon(null);

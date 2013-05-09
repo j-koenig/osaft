@@ -13,6 +13,8 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -21,6 +23,14 @@ import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
+/**
+ * This class implements the singleton pattern and offers methods to save files
+ * in the current case folder. It manages the access to the folder and makes it
+ * possible to pull files from the phone to the case folder.
+ * 
+ * @author Jannis Koenig
+ * 
+ */
 public class CasefolderWriter {
 
 	private static CasefolderWriter instance;
@@ -28,11 +38,16 @@ public class CasefolderWriter {
 	private ADBThread adb;
 	private OSAFTView view;
 	private ArrayList<GeoLocation> geoLocations;
+	private File jarFolder;
+	private static final Logger log = Logger.getLogger(CasefolderWriter.class.getName());
 
 	private CasefolderWriter() {
 		adb = ADBThread.getInstance();
 	}
 
+	/**
+	 * Writes raw image data to an image file-.
+	 */
 	public void writeRawImage(byte[] rawImage, String filename, String subfolder) {
 		if (casefolder == null) {
 			showWarning();
@@ -43,12 +58,17 @@ public class CasefolderWriter {
 			BufferedImage photo = ImageIO.read(in);
 			ImageIO.write(photo, "png", new File(casefolder + File.separator + subfolder + filename + ".png"));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 	}
 
+	/**
+	 * Pulls files from the phone to the given subfolder in the current case
+	 * folder
+	 * 
+	 */
 	public void pullFileToCaseFolder(String file, String subfolder, ViewPlugin view, boolean progressBar) {
+		// FIXME: problems on windows while big pulls
 		if (casefolder == null) {
 			showWarning();
 			return;
@@ -56,6 +76,9 @@ public class CasefolderWriter {
 		adb.executeAndReturn("pull " + file + " " + casefolder + File.separator + subfolder, view, progressBar);
 	}
 
+	/**
+	 * Pulls files to the current casefolder
+	 */
 	public void pullFileToCaseFolder(String file, ViewPlugin view, boolean progressBar) {
 		if (casefolder == null) {
 			showWarning();
@@ -79,6 +102,9 @@ public class CasefolderWriter {
 		return casefolder;
 	}
 
+	/**
+	 * Generates a new casefolder and subfolder-structure
+	 */
 	public void setCaseFolderAndCreateSubfolders(File casefolder) {
 		setCaseFolder(casefolder);
 		mkDir("contact_photos");
@@ -96,11 +122,13 @@ public class CasefolderWriter {
 		try {
 			loadLocationObject();
 		} catch (Exception e) {
-			// TODO
-			e.printStackTrace();
+			log.log(Level.WARNING, e.toString(), e);
 		}
 	}
 
+	/**
+	 * Deserializes a geolocation ArrayList from the casefolder
+	 */
 	@SuppressWarnings("unchecked")
 	private void loadLocationObject() throws FileNotFoundException, IOException, ClassNotFoundException {
 		File locationsFile = new File(casefolder.getAbsolutePath() + File.separator + "locations.object");
@@ -113,6 +141,10 @@ public class CasefolderWriter {
 		}
 	}
 
+	/**
+	 * Serializes the current geolocation ArrayList and saves it to the
+	 * casefolder
+	 */
 	private void saveLocationObject() throws FileNotFoundException, IOException {
 		File locationsFile = new File(casefolder.getAbsolutePath() + File.separator + "locations.object");
 		ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(locationsFile)));
@@ -125,7 +157,7 @@ public class CasefolderWriter {
 		try {
 			saveLocationObject();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			log.log(Level.WARNING, e.toString(), e);
 		}
 
 	}
@@ -136,6 +168,14 @@ public class CasefolderWriter {
 
 	public void setView(OSAFTView view) {
 		this.view = view;
+	}
+
+	public void setJarFolder(File jarFolder) {
+		this.jarFolder = jarFolder;
+	}
+
+	public File getJarFolder() {
+		return jarFolder;
 	}
 
 	private void showWarning() {
