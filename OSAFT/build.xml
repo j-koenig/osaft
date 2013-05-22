@@ -40,6 +40,7 @@
             </manifest>
             <zipfileset src="jar-in-jar-loader.zip"/>
             <fileset dir="${build.dir}"/>
+            <fileset dir="${lib.dir}" includes="*.txt"/>
             <zipfileset dir="${lib.dir}" includes="jspf.core-1.0.2.jar"/>
             <zipfileset dir="${lib.dir}" includes="sqlite-jdbc-3.7.2.jar"/>
             <zipfileset dir="${lib.dir}" includes="jsoup-1.7.2.jar"/>

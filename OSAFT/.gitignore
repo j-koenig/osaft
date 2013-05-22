@@ -3,3 +3,5 @@
 *.class
 /ArtifactExtract.apk
 /doc
+/build
+/classdiagrams
