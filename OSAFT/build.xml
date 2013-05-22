@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="OSAFT" default="build-jar" basedir=".">
+
+	<property name="src.dir" value="src" />
+	<property name="bin.dir" value="bin" />
+	<property name="build.dir" value="build" />
+	<property name="lib.dir" value="lib" />
+	<property name="final.jar" value="${bin.dir}/OSAFT.jar" />
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${bin.dir}" />
+	</target>
+
+	<target name="init" depends="clean">
+		<mkdir dir="${bin.dir}" />
+		<mkdir dir="${build.dir}" />
+	</target>
+
+	<target name="build" depends="init">
+		<javac destdir="${build.dir}">
+			<src path="${src.dir}" />
+			<classpath>
+				<path location="lib/JMapViewer.jar" />
+				<path location="lib/jsoup-1.7.2.jar" />
+				<path location="lib/jspf.core-1.0.2.jar" />
+				<path location="lib/sqlite-jdbc-3.7.2.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="build-jar" depends="build">
+		<delete file="${final.jar}" />
+		<jar destfile="${final.jar}">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="de.uni_hannover.osaft.Main"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="./ jspf.core-1.0.2.jar sqlite-jdbc-3.7.2.jar jsoup-1.7.2.jar JMapViewer.jar"/>
+            </manifest>
+            <zipfileset src="jar-in-jar-loader.zip"/>
+            <fileset dir="${build.dir}"/>
+            <zipfileset dir="${lib.dir}" includes="jspf.core-1.0.2.jar"/>
+            <zipfileset dir="${lib.dir}" includes="sqlite-jdbc-3.7.2.jar"/>
+            <zipfileset dir="${lib.dir}" includes="jsoup-1.7.2.jar"/>
+            <zipfileset dir="${lib.dir}" includes="JMapViewer.jar"/>
+        </jar>		
+	</target>
+</project>

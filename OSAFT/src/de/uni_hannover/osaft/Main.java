@@ -25,6 +25,7 @@ import javax.swing.UIManager;
 import net.xeoh.plugins.base.PluginManager;
 import net.xeoh.plugins.base.impl.PluginManagerFactory;
 import net.xeoh.plugins.base.util.PluginManagerUtil;
+import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.util.CasefolderWriter;
 import de.uni_hannover.osaft.view.OSAFTView;
 
@@ -71,6 +72,8 @@ public class Main {
 			e1.printStackTrace();
 		}
 		log.addHandler(fh);
+		CasefolderWriter.getInstance().setFileHandler(fh);
+		ADBThread.getInstance().setFileHandler(fh);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {

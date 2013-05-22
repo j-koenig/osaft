@@ -17,10 +17,10 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import de.uni_hannover.osaft.Main;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
 
@@ -46,7 +46,6 @@ public class ADBThread implements Runnable {
 	private static final Logger log =  Logger.getLogger(ADBThread.class.getName());
 
 	private ADBThread() {
-		log.addHandler(Main.fh);
 		commands = new LinkedBlockingQueue<ADBSwingWorker>();
 		rt = Runtime.getRuntime();
 	}
@@ -170,6 +169,10 @@ public class ADBThread implements Runnable {
 
 	public void setCurrentDevice(String curDev) {
 		currentDevice = curDev;
+	}
+	
+	public void setFileHandler(FileHandler fh) {
+		log.addHandler(fh);
 	}
 
 }

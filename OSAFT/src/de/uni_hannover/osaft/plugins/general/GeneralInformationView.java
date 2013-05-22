@@ -10,6 +10,7 @@
  ******************************************************************************/
 package de.uni_hannover.osaft.plugins.general;
 
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -27,7 +28,6 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
-import java.awt.Font;
 
 //TODO: add more style to UI
 

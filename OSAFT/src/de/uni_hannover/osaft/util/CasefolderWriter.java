@@ -23,13 +23,13 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
-import de.uni_hannover.osaft.Main;
 import de.uni_hannover.osaft.adb.ADBThread;
 import de.uni_hannover.osaft.plugininterfaces.ViewPlugin;
 import de.uni_hannover.osaft.view.OSAFTView;
@@ -53,7 +53,6 @@ public class CasefolderWriter {
 	private static final Logger log = Logger.getLogger(CasefolderWriter.class.getName());
 
 	private CasefolderWriter() {
-		log.addHandler(Main.fh);
 		adb = ADBThread.getInstance();
 	}
 
@@ -201,4 +200,7 @@ public class CasefolderWriter {
 		return instance;
 	}
 
+	public void setFileHandler(FileHandler fh) {
+		log.addHandler(fh);
+	}
 }
